@@ -170,52 +170,86 @@ class SupabaseAuthService implements AuthService {
   /// authenticates with Supabase using the obtained tokens.
   Future<AuthResponse> _nativeGoogleSignIn() async {
     try {
-      // First, try to sign out from any previous Google Sign-In session
-      // This helps prevent cached credentials issues
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      try {
-        await googleSignIn.signOut();
-        logger.i('Signed out of previous Google session', category: LogCategory.auth);
-      } catch (e) {
-        // Ignore errors during sign out
-        logger.i('No previous Google session to sign out from', category: LogCategory.auth);
-      }
+      logger.i('Starting Google Sign-In process', category: LogCategory.auth);
+      debugPrint('SupabaseAuthService: Starting Google Sign-In process');
       
       // Get client IDs from config
       final webClientId = GoogleAuthConfig.webClientId;
       final iosClientId = GoogleAuthConfig.iosClientId;
+      final androidClientId = GoogleAuthConfig.androidClientId;
       
-      // Re-initialize Google Sign-In with appropriate client IDs
-      final GoogleSignIn newGoogleSignIn = GoogleSignIn(
+      debugPrint('SupabaseAuthService: Using web client ID: ${webClientId.substring(0, 10)}...');
+      debugPrint('SupabaseAuthService: Using iOS client ID: ${iosClientId.substring(0, 10)}...');
+      if (androidClientId.isNotEmpty) {
+        debugPrint('SupabaseAuthService: Using Android client ID: ${androidClientId.substring(0, 10)}...');
+      }
+      
+      // Initialize Google Sign-In with appropriate client IDs based on platform
+      final GoogleSignIn googleSignIn = GoogleSignIn(
         clientId: iosClientId,  // Used for iOS
-        serverClientId: webClientId,  // Used for Android and as a fallback
-        scopes: ['email', 'profile', 'openid'],  // Added openid scope which is required for ID tokens
+        serverClientId: webClientId,  // Used for web and as a fallback
+        scopes: ['email', 'profile', 'openid'],  // openid scope is required for ID tokens
       );
       
-      // Sign in with Google - with additional error handling
-      logger.i('Initiating Google sign-in', category: LogCategory.auth);
-      final googleUser = await newGoogleSignIn.signIn().catchError((error) {
-        logger.e('Error during Google sign-in process', category: LogCategory.auth, error: error);
-        throw Exception('Failed to initiate Google sign-in: $error');
-      });
+      // Log the current configuration for debugging
+      logger.i('Google Sign-In configured with:' +
+               '\nWeb Client ID: ${webClientId.substring(0, 10)}...' +
+               '\niOS Client ID: ${iosClientId.substring(0, 10)}...', 
+               category: LogCategory.auth);
       
+      // Check if user is already signed in
+      try {
+        final isSignedIn = await googleSignIn.isSignedIn();
+        debugPrint('SupabaseAuthService: User is already signed in: $isSignedIn');
+        
+        // Try to silently sign in if possible
+        if (isSignedIn) {
+          debugPrint('SupabaseAuthService: Attempting to reuse existing Google session');
+          final googleUser = await googleSignIn.signInSilently();
+          if (googleUser != null) {
+            debugPrint('SupabaseAuthService: Silent sign-in successful for: ${googleUser.email}');
+            final googleAuth = await googleUser.authentication;
+            final idToken = googleAuth.idToken;
+            final accessToken = googleAuth.accessToken;
+            
+            if (idToken != null) {
+              debugPrint('SupabaseAuthService: Got valid ID token from silent sign-in, proceeding to Supabase auth');
+              return await _signInToSupabaseWithGoogleTokens(idToken, accessToken);
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore errors during silent sign-in check
+        debugPrint('SupabaseAuthService: Error checking existing session: $e');
+        logger.i('Error checking Google session: $e', category: LogCategory.auth);
+      }
+      
+      // Perform interactive sign-in
+      logger.i('Initiating interactive Google sign-in', category: LogCategory.auth);
+      debugPrint('SupabaseAuthService: Initiating interactive Google sign-in');
+      
+      final googleUser = await googleSignIn.signIn();
+      
+      // Handle user cancellation
       if (googleUser == null) {
+        debugPrint('SupabaseAuthService: Google sign-in was canceled by user');
         logger.w('Google sign-in was canceled by user', category: LogCategory.auth);
         throw Exception('Google sign-in was canceled');
       }
       
-      logger.i('Google sign-in successful, getting authentication tokens', category: LogCategory.auth);
+      debugPrint('SupabaseAuthService: Google sign-in successful for user: ${googleUser.email}');
+      logger.i('Google sign-in successful for user: ${googleUser.email}', category: LogCategory.auth);
       
-      // Get auth details from Google with additional error handling
-      final googleAuth = await googleUser.authentication.catchError((error) {
-        logger.e('Error getting Google authentication tokens', category: LogCategory.auth, error: error);
-        throw Exception('Failed to get authentication tokens: $error');
-      });
-      
+      // Get auth details from Google
+      final googleAuth = await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
       final idToken = googleAuth.idToken;
       
       // Log token information (safely)
+      debugPrint(
+        'SupabaseAuthService: Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}' +
+        ' ID Token: ${idToken != null ? "[present]" : "[missing]"}'
+      );
       logger.i(
         'Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}' +
         ' ID Token: ${idToken != null ? "[present]" : "[missing]"}',
@@ -223,40 +257,71 @@ class SupabaseAuthService implements AuthService {
       );
       
       // Validate tokens
-      if (accessToken == null) {
-        logger.e('No Access Token received from Google', category: LogCategory.auth);
-        throw Exception('No Access Token found. Please try again or contact support.');
-      }
-      
       if (idToken == null) {
+        debugPrint('SupabaseAuthService: No ID Token received from Google');
         logger.e('No ID Token received from Google', category: LogCategory.auth);
-        throw Exception('No ID Token found. Please try again or contact support.');
+        throw Exception('Authentication failed: Missing ID token');
       }
       
-      // Sign in to Supabase with the Google ID token
-      logger.i('Signing in to Supabase with Google tokens', category: LogCategory.auth);
+      return await _signInToSupabaseWithGoogleTokens(idToken, accessToken);
+    } catch (e) {
+      // Provide more user-friendly error messages
+      logger.logSignInFailure('Google', e);
+      debugPrint('SupabaseAuthService: Error during Google sign-in: $e');
+      
+      if (e.toString().contains('network_error')) {
+        throw Exception('Google Sign-In failed: Network error. Please check your internet connection.');
+      } else if (e.toString().contains('sign_in_failed') || e.toString().contains('sign_in_canceled')) {
+        throw Exception('Google Sign-In was canceled or failed. Please try again.');
+      } else if (e.toString().contains('ApiException: 10')) {
+        throw Exception('Google Sign-In failed: Developer configuration error. Please contact support.');
+      } else if (e.toString().contains('PlatformException')) {
+        throw Exception('Google Sign-In failed: ${e.toString().split(',')[0]}');
+      } else {
+        rethrow;
+      }
+    }
+  }
+  
+  /// Helper method to sign in to Supabase with Google tokens
+  Future<AuthResponse> _signInToSupabaseWithGoogleTokens(String idToken, String? accessToken) async {
+    debugPrint('SupabaseAuthService: Signing in to Supabase with Google tokens');
+    logger.i('Signing in to Supabase with Google tokens', category: LogCategory.auth);
+    
+    try {
       final response = await _supabaseService.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: accessToken,
-      ).catchError((error) {
-        logger.e('Error signing in to Supabase with Google tokens', category: LogCategory.auth, error: error);
-        throw Exception('Failed to authenticate with Supabase: $error');
-      });
+      );
       
       if (response.user != null) {
+        debugPrint('SupabaseAuthService: Successfully signed in to Supabase with Google: ${response.user!.email}');
         logger.logSignInSuccess(
           'Google', 
           response.user!.id,
           email: response.user!.email,
         );
       } else {
+        debugPrint('SupabaseAuthService: Google sign-in successful but no user returned from Supabase');
         logger.w('Google sign-in successful but no user returned from Supabase', category: LogCategory.auth);
       }
       
       return response;
+    } catch (supabaseError) {
+      debugPrint('SupabaseAuthService: Error signing in to Supabase with Google tokens: $supabaseError');
+      logger.e('Error signing in to Supabase with Google tokens', 
+        category: LogCategory.auth, error: supabaseError);
+      throw Exception('Failed to authenticate with Supabase: $supabaseError');
+    }
+  }
+  
+  @override
+  Future<void> resetPassword(String email) async {
+    try {
+      await _supabaseService.client.auth.resetPasswordForEmail(email);
     } catch (e) {
-      logger.logSignInFailure('Google', e);
+      debugPrint('Error resetting password: $e');
       rethrow;
     }
   }
@@ -264,33 +329,9 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> signOut() async {
     try {
-      final userId = _supabaseService.currentUser?.id;
-      final email = _supabaseService.currentUser?.email;
-      
       await _supabaseService.client.auth.signOut();
-      
-      if (userId != null) {
-        logger.i('User signed out | User ID: $userId | Email: ${email ?? 'unknown'}', category: LogCategory.auth);
-      }
     } catch (e) {
-      logger.e('Error signing out', category: LogCategory.auth, error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<void> resetPassword(String email) async {
-    try {
-      logger.i('Requesting password reset for email: $email', category: LogCategory.auth);
-      
-      await _supabaseService.client.auth.resetPasswordForEmail(
-        email,
-        redirectTo: kIsWeb ? null : 'io.supabase.immigru://reset-callback/',
-      );
-      
-      logger.i('Password reset email sent to: $email', category: LogCategory.auth);
-    } catch (e) {
-      logger.e('Error resetting password for email: $email', category: LogCategory.auth, error: e);
+      debugPrint('Error signing out: $e');
       rethrow;
     }
   }

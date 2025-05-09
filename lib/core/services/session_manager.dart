@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:immigru/domain/entities/auth_context.dart';
+import 'package:immigru/domain/entities/user.dart' as domain;
 import 'package:immigru/domain/repositories/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -102,6 +103,29 @@ class SessionManager extends ChangeNotifier {
   /// Reset password for a user
   Future<void> resetPassword(String email) async {
     await _authService.resetPassword(email);
+  }
+  
+  /// Get the current authenticated user
+  Future<domain.User?> getCurrentUser() async {
+    try {
+      // Access the current user directly from the auth context
+      if (isAuthenticated) {
+        final supabaseUser = _authService.authContext.currentUser;
+        if (supabaseUser != null) {
+          return domain.User(
+            id: supabaseUser.id,
+            email: supabaseUser.email ?? '',
+            name: supabaseUser.userMetadata?['name'] as String? ?? 'User',
+            photoUrl: supabaseUser.userMetadata?['avatar_url'] as String?,
+            phone: supabaseUser.phone,
+          );
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting current user: $e');
+      return null;
+    }
   }
   
   @override

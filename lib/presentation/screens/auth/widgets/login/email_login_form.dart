@@ -12,6 +12,7 @@ class EmailLoginForm extends StatelessWidget {
   final AuthState state;
   final Function() togglePasswordVisibility;
   final Function(BuildContext, AuthState) onSubmit;
+  final VoidCallback? onGoogleSignInPressed;
 
   const EmailLoginForm({
     Key? key,
@@ -23,6 +24,7 @@ class EmailLoginForm extends StatelessWidget {
     required this.state,
     required this.togglePasswordVisibility,
     required this.onSubmit,
+    this.onGoogleSignInPressed,
   }) : super(key: key);
 
   @override
@@ -227,7 +229,14 @@ class EmailLoginForm extends StatelessWidget {
   Widget _buildGoogleSignInButton(BuildContext context) {
     return GoogleSignInButton(
       isLoading: state.isLoading,
-      onPressed: () {},
+      onPressed: () {
+        // Pass the click event up to the parent widget if callback is provided
+        if (onGoogleSignInPressed != null) {
+          onGoogleSignInPressed!();
+        } else {
+          debugPrint('Google Sign-In button pressed, but no callback was provided');
+        }
+      },
       isDarkMode: isDarkMode,
     );
   }

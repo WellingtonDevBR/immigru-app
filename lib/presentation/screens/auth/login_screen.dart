@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/constants/app_colors.dart';
-import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
@@ -117,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       state: state,
       togglePasswordVisibility: _togglePasswordVisibility,
       onSubmit: _submitForm,
+      onGoogleSignInPressed: () => _signInWithGoogle(context),
     );
   }
   
@@ -143,9 +143,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final isSmallScreen = size.width < 600;
     final viewPadding = MediaQuery.of(context).viewPadding;
     
-    return BlocProvider(
-      create: (context) => sl<AuthBloc>(),
-      child: Scaffold(
+    // Use the existing AuthBloc from the parent context instead of creating a new one
+    return Scaffold(
         backgroundColor: isDarkMode ? AppColors.darkBackground : Colors.white,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(0),
@@ -346,7 +345,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             );
            },
         ),
-      ),
     );
   }
 }
