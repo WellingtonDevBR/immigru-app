@@ -1,13 +1,24 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/services/session_manager.dart';
 import 'package:immigru/domain/entities/user.dart';
+import 'package:immigru/domain/usecases/auth_usecases.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SessionManager _sessionManager;
+  final SendOtpToPhoneUseCase _sendOtpToPhoneUseCase;
+  final VerifyPhoneOtpUseCase _verifyPhoneOtpUseCase;
   
-  AuthBloc(this._sessionManager) : super(AuthState.initial()) {
+  AuthBloc({
+    required SessionManager sessionManager,
+    required SendOtpToPhoneUseCase sendOtpToPhoneUseCase,
+    required VerifyPhoneOtpUseCase verifyPhoneOtpUseCase,
+  }) : 
+    _sessionManager = sessionManager,
+    _sendOtpToPhoneUseCase = sendOtpToPhoneUseCase,
+    _verifyPhoneOtpUseCase = verifyPhoneOtpUseCase,
+    super(AuthState.initial()) {
     on<AuthLoginEvent>(_onLogin);
     on<AuthSignupEvent>(_onSignup);
     on<AuthLogoutEvent>(_onLogout);
@@ -94,7 +105,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthState.loading());
       
-      final response = await _sessionManager.signInWithPhone(
+      // Use the dedicated use case for phone verification
+      final response = await _verifyPhoneOtpUseCase(
         phone: event.phone,
         otpCode: event.otpCode,
       );
@@ -104,11 +116,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           id: response.user!.id,
           email: response.user!.email ?? '',
           name: response.user!.userMetadata?['name'] as String? ?? 'User',
+          phone: event.phone, // Use the phone number from the event
         );
         
         emit(AuthState.authenticated(user));
       } else {
-        emit(AuthState.error('Phone login failed'));
+        emit(AuthState.error('Phone verification failed'));
       }
     } catch (e) {
       emit(AuthState.error(e.toString()));
@@ -119,7 +132,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthState.loading());
       
-      await _sessionManager.sendOtpToPhone(phone: event.phone);
+      // Use the dedicated use case for sending OTP
+      await _sendOtpToPhoneUseCase(phone: event.phone);
       
       emit(AuthState.otpSent());
     } catch (e) {

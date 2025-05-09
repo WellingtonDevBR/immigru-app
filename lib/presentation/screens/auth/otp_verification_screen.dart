@@ -20,11 +20,14 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> with SingleTickerProviderStateMixin {
-  final TextEditingController _otpController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isVerifying = false;
+  
+  // Animation controllers
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
   
   // For individual OTP digit fields
   final List<TextEditingController> _digitControllers = List.generate(6, (_) => TextEditingController());
@@ -47,6 +50,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
       ),
     );
     
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
     _animationController.forward();
     
     // Setup focus listeners for OTP fields
@@ -66,14 +85,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
   
   @override
   void dispose() {
-    _otpController.dispose();
     _animationController.dispose();
     
-    for (var controller in _digitControllers) {
+    for (final controller in _digitControllers) {
       controller.dispose();
     }
     
-    for (var node in _focusNodes) {
+    for (final node in _focusNodes) {
       node.dispose();
     }
     
@@ -172,48 +190,80 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
               ),
             ),
           ),
-          body: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 30),
-                        
-                        // Icon and header
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.sms_outlined,
-                            size: 40,
-                            color: primaryColor,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 30),
+                      
+                      // Animated icon container
+                      SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, -0.5),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(
+                          parent: _animationController,
+                          curve: Curves.elasticOut,
+                        )),
+                        child: ScaleTransition(
+                          scale: Tween<double>(
+                            begin: 0.5,
+                            end: 1.0,
+                          ).animate(CurvedAnimation(
+                            parent: _animationController,
+                            curve: Curves.elasticOut,
+                          )),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primaryColor.withOpacity(0.2),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.sms_outlined,
+                              size: 40,
+                              color: primaryColor,
+                            ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        Text(
-                          'Verification Code',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Animated title and instructions
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Text(
+                            'Verification Code',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 12),
-                        
-                        Text(
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Text(
                           'We have sent a verification code to',
                           style: TextStyle(
                             fontSize: 16,
@@ -221,10 +271,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
-                        const SizedBox(height: 8),
-                        
-                        Text(
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Text(
                           widget.phoneNumber,
                           style: TextStyle(
                             fontSize: 16,
@@ -233,11 +286,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
-                        const SizedBox(height: 40),
-                        
-                        // OTP input fields
-                        Row(
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // OTP input fields
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(
                             6,
@@ -299,50 +355,65 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                             ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 40),
-                        
-                        // Verify button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: _isVerifying || state.isLoading
-                                ? null
-                                : _verifyOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Verify button
+                      SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.5),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(
+                          parent: _animationController,
+                          curve: Curves.easeOutCubic,
+                        )),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _isVerifying || state.isLoading
+                                  ? null
+                                  : _verifyOtp,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                                disabledBackgroundColor: primaryColor.withOpacity(0.6),
                               ),
-                              elevation: 0,
-                              disabledBackgroundColor: primaryColor.withOpacity(0.6),
+                              child: _isVerifying || state.isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Verify & Continue',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
                             ),
-                            child: _isVerifying || state.isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
-                                  )
-                                : const Text(
-                                    'Verify & Continue',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Resend code option
-                        Row(
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Resend code option
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
@@ -363,10 +434,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                             ),
                           ],
                         ),
-                        
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
               ),

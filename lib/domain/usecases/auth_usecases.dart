@@ -1,6 +1,28 @@
 import 'package:immigru/domain/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Use case for sending OTP to phone number
+class SendOtpToPhoneUseCase {
+  final AuthRepository _repository;
+
+  SendOtpToPhoneUseCase(this._repository);
+
+  Future<void> call({required String phone}) {
+    return _repository.sendOtpToPhone(phone: phone);
+  }
+}
+
+/// Use case for verifying phone with OTP
+class VerifyPhoneOtpUseCase {
+  final AuthRepository _repository;
+
+  VerifyPhoneOtpUseCase(this._repository);
+
+  Future<AuthResponse> call({required String phone, required String otpCode}) {
+    return _repository.verifyPhoneOtp(phone: phone, otpCode: otpCode);
+  }
+}
+
 /// Use case for signing in with email and password
 class SignInWithEmailUseCase {
   final AuthRepository _repository;

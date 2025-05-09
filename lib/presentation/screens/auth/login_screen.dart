@@ -92,15 +92,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
   
   void _handlePhoneLogin(BuildContext context) {
-    _logger.debug('Login', 'Handling phone login in the same screen');
-    // This method is called from the PhoneLoginButton when verification is complete
-    // Navigate to home screen if authentication is successful
-    if (context.read<AuthBloc>().state.isAuthenticated) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    }
+    _logger.debug('Login', 'Handling phone login navigation');
+    // This method is now just a callback for the PhoneLoginButton
+    // The actual navigation to OTP screen happens in the PhoneLoginButton
+    // The AuthBloc state is handled by the OtpVerificationScreen
   }
   
   void _navigateToSignup(BuildContext context) {

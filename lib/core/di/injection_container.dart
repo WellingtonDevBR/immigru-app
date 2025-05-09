@@ -23,7 +23,11 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // Register BLoCs
-  sl.registerFactory<AuthBloc>(() => AuthBloc(sl<SessionManager>()));
+  sl.registerFactory<AuthBloc>(() => AuthBloc(
+    sessionManager: sl<SessionManager>(),
+    sendOtpToPhoneUseCase: sl<SendOtpToPhoneUseCase>(),
+    verifyPhoneOtpUseCase: sl<VerifyPhoneOtpUseCase>(),
+  ));
 
   // Register repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -67,6 +71,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ResetPasswordUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => IsAuthenticatedUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => SendOtpToPhoneUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => VerifyPhoneOtpUseCase(sl<AuthRepository>()));
   
   // Data use cases
   sl.registerLazySingleton(() => GetDataFromTableUseCase(sl<DataRepository>()));

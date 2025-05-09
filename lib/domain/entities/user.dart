@@ -5,6 +5,7 @@ class User extends Equatable {
   final String email;
   final String? name;
   final String? photoUrl;
+  final String? phone;
   
   // Alias for photoUrl to match our UI naming convention
   String? get avatarUrl => photoUrl;
@@ -14,6 +15,7 @@ class User extends Equatable {
     required this.email,
     this.name,
     this.photoUrl,
+    this.phone,
   });
   
   // Create a copy of this User with the given fields replaced
@@ -22,15 +24,17 @@ class User extends Equatable {
     String? email,
     String? name,
     String? photoUrl,
+    String? phone,
   }) {
     return User(
       id: id ?? this.id,
       email: email ?? this.email,
       name: name ?? this.name,
       photoUrl: photoUrl ?? this.photoUrl,
+      phone: phone ?? this.phone,
     );
   }
 
   @override
-  List<Object?> get props => [id, email, name, photoUrl];
+  List<Object?> get props => [id, email, name, photoUrl, phone];
 }

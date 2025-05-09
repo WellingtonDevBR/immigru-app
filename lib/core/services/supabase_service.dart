@@ -128,6 +128,20 @@ class SupabaseService {
   Future<void> resetPassword(String email) async {
     await _client.auth.resetPasswordForEmail(email);
   }
+  
+  /// Send OTP to phone number
+  Future<void> sendOtpToPhone({required String phone}) async {
+    await _client.auth.signInWithOtp(phone: phone);
+  }
+  
+  /// Verify phone OTP and sign in
+  Future<AuthResponse> signInWithPhone({required String phone, required String otpCode}) async {
+    return await _client.auth.verifyOTP(
+      phone: phone,
+      token: otpCode,
+      type: OtpType.sms,
+    );
+  }
 
   /// Get data from a table
   Future<List<Map<String, dynamic>>> getDataFromTable(
