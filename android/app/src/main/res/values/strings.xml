@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Immigru</string>
+    <!-- Google Sign-in Section -->
+    <string name="server_client_id">972645499865-d2uhhrjcmt1kftiok9mmcdon39u22ctt.apps.googleusercontent.com</string>
+</resources>
