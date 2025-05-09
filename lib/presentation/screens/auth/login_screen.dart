@@ -7,7 +7,7 @@ import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
-import 'package:immigru/presentation/screens/auth/phone_login_screen.dart';
+// Phone login is now integrated directly in the login screen
 import 'package:immigru/presentation/screens/auth/signup_screen.dart';
 import 'package:immigru/presentation/screens/auth/widgets/login/login_widgets.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
@@ -31,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _obscurePassword = true;
   late TabController _tabController;
   String? _errorMessage;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -92,12 +91,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     context.read<AuthBloc>().add(AuthGoogleLoginEvent());
   }
   
-  void _navigateToPhoneLogin(BuildContext context) {
-    _logger.debug('Login', 'Navigating to phone login screen');
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PhoneLoginScreen()),
-    );
+  void _handlePhoneLogin(BuildContext context) {
+    _logger.debug('Login', 'Handling phone login in the same screen');
+    // This method is called from the PhoneLoginButton when verification is complete
+    // Navigate to home screen if authentication is successful
+    if (context.read<AuthBloc>().state.isAuthenticated) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    }
   }
   
   void _navigateToSignup(BuildContext context) {
@@ -128,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       isDarkMode: isDarkMode,
       primaryColor: primaryColor,
       state: state,
-      onPhoneLogin: _navigateToPhoneLogin,
+      onPhoneLogin: _handlePhoneLogin,
       onGoogleSignIn: _signInWithGoogle,
     );
   }
@@ -163,10 +166,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            setState(() {
-              _isLoading = state.isLoading;
-            });
-            
             if (state.hasError) {
               // Store error message in state instead of showing a snackbar
               setState(() {

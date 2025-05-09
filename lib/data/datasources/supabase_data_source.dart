@@ -7,12 +7,15 @@ abstract class SupabaseDataSource {
   Future<AuthResponse> signUpWithEmail({required String email, required String password});
   Future<void> signOut();
   Future<void> resetPassword(String email);
+  Future<void> sendOtpToPhone({required String phone});
+  Future<AuthResponse> verifyPhoneOtp({required String phone, required String otpCode});
   Future<List<Map<String, dynamic>>> getDataFromTable(String tableName, {List<String>? columns, String? filter});
   Future<List<Map<String, dynamic>>> insertIntoTable(String tableName, Map<String, dynamic> data);
   Future<List<Map<String, dynamic>>> updateInTable(String tableName, Map<String, dynamic> data, {required String filter});
   Future<List<Map<String, dynamic>>> deleteFromTable(String tableName, {required String filter});
   User? get currentUser;
   bool get isAuthenticated;
+  SupabaseClient get client;
 }
 
 /// Implementation of the SupabaseDataSource using the SupabaseService
@@ -26,6 +29,9 @@ class SupabaseDataSourceImpl implements SupabaseDataSource {
 
   @override
   bool get isAuthenticated => _supabaseService.isAuthenticated;
+  
+  @override
+  SupabaseClient get client => _supabaseService.client;
 
   @override
   Future<List<Map<String, dynamic>>> deleteFromTable(String tableName, {required String filter}) {
@@ -64,6 +70,20 @@ class SupabaseDataSourceImpl implements SupabaseDataSource {
   @override
   Future<void> signOut() {
     return _supabaseService.signOut();
+  }
+  
+  @override
+  Future<void> sendOtpToPhone({required String phone}) async {
+    await _supabaseService.client.auth.signInWithOtp(phone: phone);
+  }
+  
+  @override
+  Future<AuthResponse> verifyPhoneOtp({required String phone, required String otpCode}) async {
+    return await _supabaseService.client.auth.verifyOTP(
+      phone: phone,
+      token: otpCode,
+      type: OtpType.sms,
+    );
   }
 
   @override

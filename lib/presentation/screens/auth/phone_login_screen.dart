@@ -7,6 +7,7 @@ import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
 import 'package:flutter/services.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
   const PhoneLoginScreen({Key? key}) : super(key: key);
@@ -21,6 +22,29 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final _otpController = TextEditingController();
   bool _otpSent = false;
   bool _isSubmitting = false;
+  String _completePhoneNumber = '';
+  String _initialCountryCode = 'US'; // Default country code
+  
+  @override
+  void initState() {
+    super.initState();
+    _detectUserCountry();
+  }
+  
+  // Detect user's country based on device locale
+  void _detectUserCountry() {
+    try {
+      final locale = WidgetsBinding.instance.window.locale.countryCode;
+      if (locale != null && locale.isNotEmpty) {
+        setState(() {
+          _initialCountryCode = locale;
+        });
+      }
+    } catch (e) {
+      // Fallback to default US if there's an error
+      print('Error detecting country: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -35,7 +59,11 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         _isSubmitting = true;
       });
       
-      final phone = _phoneController.text.trim();
+      // Use the complete phone number with country code
+      final phone = _completePhoneNumber.isNotEmpty 
+          ? _completePhoneNumber 
+          : _phoneController.text.trim();
+          
       context.read<AuthBloc>().add(AuthSendOtpEvent(phone: phone));
     }
   }
@@ -46,9 +74,13 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         _isSubmitting = true;
       });
       
-      final phone = _phoneController.text.trim();
+      // Use the complete phone number with country code
+      final phone = _completePhoneNumber.isNotEmpty 
+          ? _completePhoneNumber 
+          : _phoneController.text.trim();
       final otpCode = _otpController.text.trim();
       
+      // Verify OTP with Supabase and sign in
       context.read<AuthBloc>().add(
         AuthPhoneLoginEvent(
           phone: phone,
@@ -207,12 +239,18 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                TextFormField(
+                                IntlPhoneField(
                                   controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
                                   enabled: !_otpSent || isLandscape,
                                   style: TextStyle(
                                     color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                  dropdownTextStyle: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                  dropdownIcon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: isDarkMode ? Colors.white70 : Colors.black54,
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter your phone number',
@@ -225,22 +263,34 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                         : Colors.grey.withOpacity(0.05),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                                      borderSide: BorderSide(
+                                        color: isDarkMode ? Colors.white30 : Colors.black12,
+                                      ),
                                     ),
-                                    prefixIcon: Icon(
-                                      Icons.phone,
-                                      color: isDarkMode ? Colors.white54 : Colors.black38,
-                                      size: 20,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: isDarkMode ? Colors.white30 : Colors.black12,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: primaryColor,
+                                      ),
                                     ),
                                   ),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
+                                  initialCountryCode: _initialCountryCode,
+                                  onChanged: (phone) {
+                                    setState(() {
+                                      _completePhoneNumber = phone.completeNumber;
+                                    });
+                                  },
+                                  validator: (phone) {
+                                    if (phone == null || phone.number.isEmpty) {
                                       return 'Please enter your phone number';
                                     }
-                                    if (value.length < 10) {
+                                    if (phone.number.length < 8) {
                                       return 'Please enter a valid phone number';
                                     }
                                     return null;
@@ -259,47 +309,84 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                TextFormField(
-                                  controller: _otpController,
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
-                                    letterSpacing: 8,
-                                    fontSize: 18,
+                                Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  child: TextFormField(
+                                    controller: _otpController,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                      letterSpacing: 12,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: '• • • • • •',
+                                      hintStyle: TextStyle(
+                                        color: isDarkMode ? Colors.white54 : Colors.black38,
+                                        letterSpacing: 12,
+                                        fontSize: 22,
+                                      ),
+                                      filled: true,
+                                      fillColor: isDarkMode 
+                                          ? Colors.grey.withOpacity(0.1) 
+                                          : Colors.grey.withOpacity(0.05),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: primaryColor.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: primaryColor.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                                      prefixIcon: Icon(
+                                        Icons.lock_outline,
+                                        color: isDarkMode ? Colors.white54 : Colors.black38,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(6),
+                                    ],
+                                    validator: _otpSent ? (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter the verification code';
+                                      }
+                                      if (value.length < 6) {
+                                        return 'Please enter a valid verification code';
+                                      }
+                                      return null;
+                                    } : null,
                                   ),
-                                  decoration: InputDecoration(
-                                    hintText: '• • • • • •',
-                                    hintStyle: TextStyle(
-                                      color: isDarkMode ? Colors.white54 : Colors.black38,
-                                      letterSpacing: 8,
+                                ),
+                                
+                                // OTP instructions
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  child: Text(
+                                    'Enter the 6-digit code sent to your phone number',
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                                      fontSize: 14,
                                     ),
-                                    filled: true,
-                                    fillColor: isDarkMode 
-                                        ? Colors.grey.withOpacity(0.1) 
-                                        : Colors.grey.withOpacity(0.05),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.lock_outline,
-                                      color: isDarkMode ? Colors.white54 : Colors.black38,
-                                      size: 20,
-                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                    LengthLimitingTextInputFormatter(6),
-                                  ],
-                                  validator: _otpSent ? (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the verification code';
-                                    }
-                                    if (value.length < 6) {
-                                      return 'Please enter a valid verification code';
-                                    }
-                                    return null;
-                                  } : null,
                                 ),
                                 const SizedBox(height: 16),
                               ],
@@ -328,37 +415,43 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                               const SizedBox(height: 24),
                               
                               // Action Button
-                              ElevatedButton(
-                                onPressed: _isSubmitting 
-                                    ? null 
-                                    : () => _otpSent 
-                                        ? _verifyOtp(context) 
-                                        : _sendOtp(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: ElevatedButton(
+                                  onPressed: _isSubmitting 
+                                      ? null 
+                                      : () => _otpSent 
+                                          ? _verifyOtp(context) 
+                                          : _sendOtp(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 0,
+                                    disabledBackgroundColor: primaryColor.withOpacity(0.6),
                                   ),
-                                  elevation: 0,
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : Text(
+                                          _otpSent ? 'Verify & Login' : 'Send Verification Code',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
                                 ),
-                                child: _isSubmitting
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : Text(
-                                        _otpSent ? 'Verify & Login' : 'Send Verification Code',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
                               ),
                             ],
                           ),

@@ -33,4 +33,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<AuthResponse> signUpWithEmail({required String email, required String password}) {
     return _dataSource.signUpWithEmail(email: email, password: password);
   }
+  
+  @override
+  Future<void> sendOtpToPhone({required String phone}) {
+    return _dataSource.sendOtpToPhone(phone: phone);
+  }
+  
+  @override
+  Future<AuthResponse> verifyPhoneOtp({required String phone, required String otpCode}) {
+    return _dataSource.verifyPhoneOtp(phone: phone, otpCode: otpCode);
+  }
 }

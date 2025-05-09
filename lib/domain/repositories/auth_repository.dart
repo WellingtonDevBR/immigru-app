@@ -8,6 +8,12 @@ abstract class AuthRepository {
   /// Sign up with email and password
   Future<AuthResponse> signUpWithEmail({required String email, required String password});
   
+  /// Send OTP to phone number
+  Future<void> sendOtpToPhone({required String phone});
+  
+  /// Verify phone OTP and sign in
+  Future<AuthResponse> verifyPhoneOtp({required String phone, required String otpCode});
+  
   /// Sign out the current user
   Future<void> signOut();
   
