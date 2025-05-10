@@ -5,11 +5,17 @@ import 'package:immigru/presentation/widgets/feature/feature_item.dart';
 class FeatureGrid extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onFeatureSelected;
+  final bool isTablet;
+  final bool isDesktop;
+  final Function(int)? onItemTap;
 
   const FeatureGrid({
     Key? key,
     required this.selectedIndex,
     required this.onFeatureSelected,
+    this.isTablet = false,
+    this.isDesktop = false,
+    this.onItemTap,
   }) : super(key: key);
 
   @override

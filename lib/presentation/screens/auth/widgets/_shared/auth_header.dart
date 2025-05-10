@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// Widget for the login screen header with app logo and theme toggle
-class LoginHeader extends StatelessWidget {
+class AuthHeader extends StatelessWidget {
   final bool isDarkMode;
   final Color primaryColor;
   final VoidCallback onThemeToggle;
+  final String title;
+  final IconData icon;
 
-  const LoginHeader({
+  const AuthHeader({
     Key? key,
     required this.isDarkMode,
     required this.primaryColor,
     required this.onThemeToggle,
+    this.title = 'Immigru',
+    this.icon = Icons.flight_takeoff_rounded,
   }) : super(key: key);
 
   @override
@@ -37,14 +40,14 @@ class LoginHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.flight_takeoff_rounded,
+                  icon,
                   color: primaryColor,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                'Immigru',
+                title,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -54,7 +57,6 @@ class LoginHeader extends StatelessWidget {
               ),
             ],
           ),
-          // Theme toggle button
           Container(
             decoration: BoxDecoration(
               color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),

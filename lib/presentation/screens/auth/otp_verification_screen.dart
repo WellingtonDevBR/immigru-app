@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/constants/app_colors.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
+import 'package:immigru/presentation/theme/app_colors.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;

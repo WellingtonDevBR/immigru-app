@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
-import 'package:immigru/presentation/screens/auth/widgets/login/google_sign_in_button.dart';
+import 'package:immigru/presentation/screens/auth/widgets/_shared/auth_google.dart';
 
 /// Widget for email login form
 class EmailLoginForm extends StatelessWidget {
@@ -34,14 +34,6 @@ class EmailLoginForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Email field
-          Text(
-            'Email',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
           TextFormField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
@@ -78,16 +70,6 @@ class EmailLoginForm extends StatelessWidget {
             },
           ),
           const SizedBox(height: 16),
-          
-          // Password field
-          Text(
-            'Password',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
           TextFormField(
             controller: passwordController,
             obscureText: obscurePassword,
@@ -135,7 +117,7 @@ class EmailLoginForm extends StatelessWidget {
           
           // Forgot Password
           Align(
-            alignment: Alignment.centerRight,
+            alignment: Alignment.centerRight, 
             child: TextButton(
               onPressed: () {
                 // TODO: Implement forgot password
@@ -227,8 +209,9 @@ class EmailLoginForm extends StatelessWidget {
   }
   
   Widget _buildGoogleSignInButton(BuildContext context) {
-    return GoogleSignInButton(
+    return GoogleAuthButton (
       isLoading: state.isLoading,
+      text: 'Sign in with Google',
       onPressed: () {
         // Pass the click event up to the parent widget if callback is provided
         if (onGoogleSignInPressed != null) {

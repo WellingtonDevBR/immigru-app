@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/core/services/logger_service.dart';
+import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
 import 'package:immigru/presentation/screens/auth/login_screen.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
+import 'package:immigru/presentation/screens/welcome/welcome_screen.dart';
 import 'package:immigru/presentation/theme/app_theme.dart';
 
 class ImmigruApp extends StatelessWidget {
@@ -72,8 +74,28 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
           _logger.info('App', 'User authenticated, showing home screen');
           return HomeScreen(user: state.user);
         } else {
-          _logger.info('App', 'User not authenticated, showing login screen');
-          return const LoginScreen();
+          return FutureBuilder<bool>(
+            future: sl<OnboardingService>().hasSeenWelcomeScreen(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              
+              final hasSeenWelcomeScreen = snapshot.data ?? false;
+              
+              if (hasSeenWelcomeScreen) {
+                _logger.info('App', 'User not authenticated, showing login screen');
+                return const LoginScreen();
+              } else {
+                _logger.info('App', 'First-time user, showing welcome screen');
+                return const WelcomeScreen();
+              }
+            },
+          );
         }
       },
     );

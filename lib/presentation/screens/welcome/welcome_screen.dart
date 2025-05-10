@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/core/constants/app_colors.dart';
 import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/presentation/screens/auth/login_screen.dart';
 import 'dart:ui';
+
+import 'package:immigru/presentation/theme/app_colors.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
