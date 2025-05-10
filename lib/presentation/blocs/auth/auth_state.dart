@@ -9,6 +9,7 @@ class AuthState extends Equatable {
   final String? errorMessage;
   final bool isOtpSent;
   final bool isPasswordResetSent;
+  final bool needsEmailVerification;
 
   const AuthState({
     this.user,
@@ -18,6 +19,7 @@ class AuthState extends Equatable {
     this.errorMessage,
     this.isOtpSent = false,
     this.isPasswordResetSent = false,
+    this.needsEmailVerification = false,
   });
 
   AuthState copyWith({
@@ -28,6 +30,7 @@ class AuthState extends Equatable {
     String? errorMessage,
     bool? isOtpSent,
     bool? isPasswordResetSent,
+    bool? needsEmailVerification,
   }) {
     return AuthState(
       user: user ?? this.user,
@@ -37,6 +40,7 @@ class AuthState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       isOtpSent: isOtpSent ?? this.isOtpSent,
       isPasswordResetSent: isPasswordResetSent ?? this.isPasswordResetSent,
+      needsEmailVerification: needsEmailVerification ?? this.needsEmailVerification,
     );
   }
 
@@ -73,7 +77,15 @@ class AuthState extends Equatable {
       isPasswordResetSent: true,
     );
   }
+  
+  factory AuthState.emailVerificationNeeded(User user) {
+    return AuthState(
+      user: user,
+      needsEmailVerification: true,
+      isLoading: false,
+    );
+  }
 
   @override
-  List<Object?> get props => [user, isLoading, isAuthenticated, hasError, errorMessage, isOtpSent, isPasswordResetSent];
+  List<Object?> get props => [user, isLoading, isAuthenticated, hasError, errorMessage, isOtpSent, isPasswordResetSent, needsEmailVerification];
 }

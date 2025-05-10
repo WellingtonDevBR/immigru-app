@@ -72,15 +72,41 @@ class SupabaseAuthService implements AuthService {
   Future<AuthResponse> signUpWithEmail({
     required String email, 
     required String password,
+    Map<String, dynamic>? metadata,
+    String? redirectTo,
   }) async {
     try {
+      logger.logSignInAttempt('email_signup', email: email);
+      
       final response = await _supabaseService.client.auth.signUp(
         email: email,
         password: password,
+        data: metadata,
+        emailRedirectTo: redirectTo,
       );
+      
+      if (response.user != null) {
+        logger.logSignInSuccess(
+          'email_signup', 
+          response.user?.id ?? 'unknown',
+          email: response.user?.email,
+        );
+        
+        // Check if email confirmation is required
+        final bool emailConfirmationRequired = response.session == null && 
+                                              response.user != null && 
+                                              response.user!.emailConfirmedAt == null;
+        
+        if (emailConfirmationRequired) {
+          logger.debug('SupabaseAuthService', 'Email confirmation required for user: ${response.user?.email}');
+        }
+      } else {
+        logger.logSignInFailure('email_signup', 'No user returned from signup');
+      }
+      
       return response;
     } catch (e) {
-      debugPrint('Error signing up with email: $e');
+      logger.logSignInFailure('email_signup', e, email: email);
       rethrow;
     }
   }

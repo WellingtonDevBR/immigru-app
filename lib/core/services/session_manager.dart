@@ -62,10 +62,14 @@ class SessionManager extends ChangeNotifier {
   Future<AuthResponse> signUpWithEmail({
     required String email, 
     required String password,
+    Map<String, dynamic>? metadata,
+    String? redirectTo,
   }) async {
     final response = await _authService.signUpWithEmail(
       email: email, 
       password: password,
+      metadata: metadata,
+      redirectTo: redirectTo,
     );
     return response;
   }

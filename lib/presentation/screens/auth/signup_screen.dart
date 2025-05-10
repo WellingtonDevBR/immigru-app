@@ -52,6 +52,10 @@ class _SignupScreenState extends State<SignupScreen>
 
   // Helper method to submit the form
   void _submitForm(BuildContext context) {
+    // Reset the form validation state to ensure it can be submitted again
+    _formKey.currentState?.reset();
+    _formKey.currentState?.validate();
+    
     if (_formKey.currentState?.validate() ?? false) {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -80,6 +84,7 @@ class _SignupScreenState extends State<SignupScreen>
       context.read<AuthBloc>().add(AuthSignupEvent(
             email: email,
             password: password,
+            agreeToTerms: _agreeToTerms,
           ));
     }
   }
@@ -149,10 +154,36 @@ class _SignupScreenState extends State<SignupScreen>
               });
               _logger.info(
                   'Signup', 'Authentication error: ${state.errorMessage}');
+              
+              // Reset the form state to allow resubmission
+              _formKey.currentState?.validate();
             } else if (!state.isLoading) {
               // Clear error message if no error and not loading
               setState(() {
                 _errorMessage = null;
+              });
+            }
+            
+            // Handle email verification needed state
+            if (state.needsEmailVerification) {
+              _logger.info('Signup', 'Email verification required');
+              setState(() {
+                _errorMessage = null;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Please check your email to verify your account before logging in.'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 8),
+                ),
+              );
+              // Navigate back to login screen after showing message
+              Future.delayed(Duration(seconds: 3), () {
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                }
               });
             }
 

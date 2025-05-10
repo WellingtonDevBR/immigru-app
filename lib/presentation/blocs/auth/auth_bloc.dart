@@ -63,6 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final response = await _sessionManager.signUpWithEmail(
         email: event.email,
         password: event.password,
+        metadata: event.agreeToTerms ? {'agreed_to_terms': true} : null,
       );
       
       if (response.user != null) {
@@ -72,11 +73,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name ?? 'User',
         );
         
-        emit(AuthState.authenticated(user));
+        // Check if email confirmation is required
+        // Supabase returns session as null when email verification is needed
+        final bool emailConfirmationRequired = response.session == null && 
+                                             response.user != null && 
+                                             response.user!.emailConfirmedAt == null;
+        
+        if (emailConfirmationRequired) {
+          _logger.debug('AuthBloc', 'Email verification required for user: ${user.email}');
+          emit(AuthState.emailVerificationNeeded(user));
+        } else {
+          emit(AuthState.authenticated(user));
+        }
       } else {
         emit(AuthState.error('Signup failed'));
       }
     } catch (e) {
+      _logger.error('AuthBloc', 'Error during signup', error: e);
       emit(AuthState.error(e.toString()));
     }
   }

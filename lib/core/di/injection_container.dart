@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/core/services/session_manager.dart';
 import 'package:immigru/core/services/supabase_service.dart';
@@ -7,15 +8,19 @@ import 'package:immigru/data/datasources/supabase_data_source.dart';
 import 'package:immigru/data/models/supabase_auth_context.dart';
 import 'package:immigru/data/repositories/auth_repository_impl.dart';
 import 'package:immigru/data/repositories/data_repository_impl.dart';
+import 'package:immigru/data/repositories/onboarding_repository_impl.dart';
 import 'package:immigru/data/repositories/supabase_auth_service.dart';
 import 'package:immigru/domain/entities/auth_context.dart';
 import 'package:immigru/domain/repositories/auth_repository.dart';
 import 'package:immigru/domain/repositories/auth_service.dart';
 import 'package:immigru/domain/repositories/data_repository.dart';
+import 'package:immigru/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/domain/usecases/auth_usecases.dart';
 import 'package:immigru/domain/usecases/data_usecases.dart';
+import 'package:immigru/domain/usecases/onboarding_usecases.dart';
 import 'package:immigru/domain/usecases/post_usecases.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
 // Theme imports are handled directly in app.dart
 
 // Service locator instance
@@ -28,6 +33,14 @@ Future<void> init() async {
     sendOtpToPhoneUseCase: sl<SendOtpToPhoneUseCase>(),
     verifyPhoneOtpUseCase: sl<VerifyPhoneOtpUseCase>(),
   ));
+  
+  sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(
+    getOnboardingDataUseCase: sl<GetOnboardingDataUseCase>(),
+    saveOnboardingDataUseCase: sl<SaveOnboardingDataUseCase>(),
+    completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
+    checkOnboardingStatusUseCase: sl<CheckOnboardingStatusUseCase>(),
+    logger: sl<LoggerService>(),
+  ));
 
   // Register repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -36,6 +49,9 @@ Future<void> init() async {
   sl.registerLazySingleton<DataRepository>(
     () => DataRepositoryImpl(sl<SupabaseDataSource>()),
   );
+  sl.registerLazySingleton<OnboardingRepository>(
+    () => OnboardingRepositoryImpl(sl<SupabaseService>(), sl<LoggerService>(), sl<OnboardingService>()),
+  );
   
   // Register data sources
   sl.registerLazySingleton<SupabaseDataSource>(
@@ -43,6 +59,7 @@ Future<void> init() async {
   );
   
   // Register services
+  sl.registerLazySingleton<LoggerService>(() => LoggerService());
   sl.registerLazySingleton<OnboardingService>(() => OnboardingService());
   sl.registerLazySingleton<ThemeService>(() => ThemeService());
   
@@ -85,6 +102,12 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreatePostUseCase(sl<DataRepository>()));
   sl.registerLazySingleton(() => GetEventsUseCase(sl<DataRepository>()));
   sl.registerLazySingleton(() => CreateEventUseCase(sl<DataRepository>()));
+  
+  // Onboarding use cases
+  sl.registerLazySingleton(() => GetOnboardingDataUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton(() => SaveOnboardingDataUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton(() => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton(() => CompleteOnboardingUseCase(sl<OnboardingRepository>()));
   
   // Theme management is handled directly in app.dart with AppThemeProvider
   

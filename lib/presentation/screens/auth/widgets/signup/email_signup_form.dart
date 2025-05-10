@@ -175,9 +175,18 @@ class _EmailSignupFormState extends State<EmailSignupForm> {
     bool obscureText = false,
     Widget? suffixIcon,
   }) {
+    // Set keyboard type based on the icon/field type
+    TextInputType keyboardType = TextInputType.text;
+    if (icon == Icons.email_outlined) {
+      keyboardType = TextInputType.emailAddress;
+    } else if (icon == Icons.phone_outlined) {
+      keyboardType = TextInputType.phone;
+    }
+    
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType,
       style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
       decoration: InputDecoration(
         hintText: hint,

@@ -13,6 +13,7 @@ import 'package:immigru/presentation/screens/home/widgets/all_posts_tab.dart';
 import 'package:immigru/presentation/screens/home/widgets/events_tab.dart';
 import 'package:immigru/presentation/screens/home/widgets/for_you_tab.dart';
 import 'package:immigru/presentation/screens/home/widgets/immi_groves_tab.dart';
+import 'package:immigru/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 import 'package:immigru/presentation/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GetPostsUseCase _getPostsUseCase = sl<GetPostsUseCase>();
   final CreatePostUseCase _createPostUseCase = sl<CreatePostUseCase>();
   final GetEventsUseCase _getEventsUseCase = sl<GetEventsUseCase>();
-  final CreateEventUseCase _createEventUseCase = sl<CreateEventUseCase>();
   
   late TabController _tabController;
   late PageController _pageController;
@@ -289,35 +289,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // TODO: Implement document upload functionality
   }
   
-  // Create a new event
-  Future<void> _createEvent({required String title, required DateTime eventDate, required String location, required String createdBy}) async {
-    _logger.debug('HomeScreen', 'Creating event: $title');
-    try {
-      await _createEventUseCase.call(
-        title: title,
-        eventDate: eventDate,
-        location: location,
-        createdBy: createdBy,
-      );
-      
-      // Refresh events after creating a new one
-      _fetchEvents();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Event created successfully!'))
-        );
-      }
-    } catch (e) {
-      _logger.error('HomeScreen', 'Error creating event', error: e);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create event. Please try again.'))
-        );
-      }
-    }
-  }
   
   // Build the menu drawer
   Widget _buildMenuDrawer(BuildContext context, bool isDarkMode) {
@@ -423,6 +394,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       _logger.debug('Menu', 'About selected');
                       Navigator.pop(context);
                       // TODO: Navigate to about screen
+                    },
+                    isDarkMode: isDarkMode,
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.flight_takeoff_outlined,
+                    title: 'Immigration Journey',
+                    onTap: () {
+                      _logger.debug('Menu', 'Immigration Journey selected');
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OnboardingScreen(user: widget.user),
+                        ),
+                      );
                     },
                     isDarkMode: isDarkMode,
                   ),
@@ -596,19 +583,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
   }
-  
-  // Show event creation dialog
-  void _showCreateEventDialog() {
-    _logger.debug('HomeScreen', 'Showing create event dialog');
-    // Example of calling the _createEvent method
-    _createEvent(
-      title: 'Community Meetup',
-      eventDate: DateTime.now(),
-      location: 'Community Center',
-      createdBy: widget.user?.id ?? 'anonymous',
-    );
-  }
-  
+
   // Helper methods for tab actions
   void _selectCategory(String category) {
     setState(() {

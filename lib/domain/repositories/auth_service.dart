@@ -16,6 +16,8 @@ abstract class AuthService {
   Future<AuthResponse> signUpWithEmail({
     required String email, 
     required String password,
+    Map<String, dynamic>? metadata,
+    String? redirectTo,
   });
   
   /// Sign in with phone number using OTP

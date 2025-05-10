@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:immigru/domain/entities/user.dart';
-import 'package:immigru/presentation/screens/home/widgets/create_post_dialog.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 class CreatePostCard extends StatelessWidget {
