@@ -8,11 +8,11 @@ class GoogleSignInButton extends StatelessWidget {
   final bool isDarkMode;
 
   const GoogleSignInButton({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.onPressed,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

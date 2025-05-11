@@ -9,12 +9,12 @@ class GoogleAuthButton extends StatelessWidget {
   final String text;
 
   const GoogleAuthButton({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.onPressed,
     required this.isDarkMode,
     this.text = 'Sign in with Google',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

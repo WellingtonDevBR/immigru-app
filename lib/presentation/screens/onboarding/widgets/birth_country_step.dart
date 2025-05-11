@@ -7,10 +7,10 @@ class BirthCountryStep extends StatefulWidget {
   final Function(String) onCountrySelected;
 
   const BirthCountryStep({
-    Key? key,
+    super.key,
     this.selectedCountry,
     required this.onCountrySelected,
-  }) : super(key: key);
+  });
 
   @override
   State<BirthCountryStep> createState() => _BirthCountryStepState();
@@ -181,7 +181,7 @@ class _BirthCountryStepState extends State<BirthCountryStep> {
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? theme.colorScheme.primary.withOpacity(0.1)
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(

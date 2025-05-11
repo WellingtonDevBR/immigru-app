@@ -7,10 +7,10 @@ class ProfessionStep extends StatefulWidget {
   final Function(String) onProfessionSelected;
 
   const ProfessionStep({
-    Key? key,
+    super.key,
     this.selectedProfession,
     required this.onProfessionSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfessionStep> createState() => _ProfessionStepState();
@@ -192,7 +192,7 @@ class _ProfessionStepState extends State<ProfessionStep> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.3),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

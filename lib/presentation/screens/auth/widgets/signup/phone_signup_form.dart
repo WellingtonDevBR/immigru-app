@@ -8,10 +8,10 @@ class PhoneSignupForm extends StatelessWidget {
   final TabController tabController;
 
   const PhoneSignupForm({
-    Key? key,
+    super.key,
     required this.authState,
     required this.tabController,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

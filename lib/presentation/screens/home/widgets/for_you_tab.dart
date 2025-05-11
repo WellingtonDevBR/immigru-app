@@ -11,13 +11,13 @@ class ForYouTab extends StatelessWidget {
   final bool isDesktop;
 
   const ForYouTab({
-    Key? key,
+    super.key,
     required this.user,
     required this.posts,
     required this.onCreatePost,
     this.isTablet = false,
     this.isDesktop = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,7 @@ class ForYouTab extends StatelessWidget {
                 commentCount: item['commentCount'],
                 imageUrl: item['imageUrl'],
               ),
-            )).toList(),
+            )),
           ],
         );
       },

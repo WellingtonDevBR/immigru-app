@@ -18,7 +18,7 @@ import 'package:immigru/presentation/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -55,7 +55,7 @@ class _SignupScreenState extends State<SignupScreen>
     // Reset the form validation state to ensure it can be submitted again
     _formKey.currentState?.reset();
     _formKey.currentState?.validate();
-    
+
     if (_formKey.currentState?.validate() ?? false) {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -113,7 +113,7 @@ class _SignupScreenState extends State<SignupScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _agreeToTerms = false;
+  final bool _agreeToTerms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +154,7 @@ class _SignupScreenState extends State<SignupScreen>
               });
               _logger.info(
                   'Signup', 'Authentication error: ${state.errorMessage}');
-              
+
               // Reset the form state to allow resubmission
               _formKey.currentState?.validate();
             } else if (!state.isLoading) {
@@ -163,7 +163,7 @@ class _SignupScreenState extends State<SignupScreen>
                 _errorMessage = null;
               });
             }
-            
+
             // Handle email verification needed state
             if (state.needsEmailVerification) {
               _logger.info('Signup', 'Email verification required');
@@ -172,19 +172,22 @@ class _SignupScreenState extends State<SignupScreen>
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Please check your email to verify your account before logging in.'),
+                  content: Text(
+                      'Please check your email to verify your account before logging in.'),
                   backgroundColor: Colors.green,
                   duration: Duration(seconds: 8),
                 ),
               );
               // Navigate back to login screen after showing message
-              Future.delayed(Duration(seconds: 3), () {
-                if (mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  );
-                }
-              });
+              void delayedNavigateToLogin(BuildContext ctx) async {
+                await Future.delayed(const Duration(seconds: 3));
+                if (!mounted) return;
+                Navigator.of(ctx).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
+
+              delayedNavigateToLogin(context);
             }
 
             // Navigate to home screen when authentication is successful
@@ -235,12 +238,12 @@ class _SignupScreenState extends State<SignupScreen>
                                 // App bar with logo and theme toggle
                                 const SizedBox(height: 16),
                                 AuthHeader(
-                                isDarkMode: isDarkMode,
-                                primaryColor: primaryColor,
-                                onThemeToggle: () => _toggleTheme(context),
-                                title: 'Immigru',
-                                icon: Icons.eco_rounded,
-                              ),
+                                  isDarkMode: isDarkMode,
+                                  primaryColor: primaryColor,
+                                  onThemeToggle: () => _toggleTheme(context),
+                                  title: 'Immigru',
+                                  icon: Icons.eco_rounded,
+                                ),
                                 const SizedBox(height: 30),
                                 Center(
                                   child: Container(

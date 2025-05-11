@@ -273,11 +273,11 @@ class SupabaseAuthService implements AuthService {
       
       // Log token information (safely)
       debugPrint(
-        'SupabaseAuthService: Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}' +
+        'SupabaseAuthService: Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}'
         ' ID Token: ${idToken != null ? "[present]" : "[missing]"}'
       );
       logger.i(
-        'Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}' +
+        'Received tokens - Access Token: ${accessToken != null ? "[present]" : "[missing]"}'
         ' ID Token: ${idToken != null ? "[present]" : "[missing]"}',
         category: LogCategory.auth
       );

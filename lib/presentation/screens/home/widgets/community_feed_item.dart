@@ -11,7 +11,7 @@ class CommunityFeedItem extends StatelessWidget {
   final String? imageUrl;
 
   const CommunityFeedItem({
-    Key? key,
+    super.key,
     required this.category,
     required this.userName,
     required this.timeAgo,
@@ -19,7 +19,7 @@ class CommunityFeedItem extends StatelessWidget {
     required this.content,
     this.commentCount = 0,
     this.imageUrl,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -216,13 +216,13 @@ class CommunityFeedItem extends StatelessWidget {
   Widget _buildCategoryAvatar(BuildContext context) {
     // Generate a color based on the category name
     final int hashCode = category.hashCode;
-    final color = Color((hashCode & 0xFFFFFF) | 0xFF000000).withOpacity(0.8);
+    final color = Color((hashCode & 0xFFFFFF) | 0xFF000000).withValues(alpha: 0.8);
 
     return Hero(
       tag: 'category-$category',
       child: CircleAvatar(
         radius: 20,
-        backgroundColor: color.withOpacity(0.2),
+        backgroundColor: color.withValues(alpha: 0.2),
         child: Text(
           category.substring(0, 1).toUpperCase(),
           style: TextStyle(

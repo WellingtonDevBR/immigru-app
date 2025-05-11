@@ -11,9 +11,10 @@ class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
 
   const OtpVerificationScreen({
-    Key? key,
-    required this.phoneNumber,
-  }) : super(key: key);
+  super.key,
+  required this.phoneNumber,
+});
+
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -222,11 +223,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.1),
+                              color: primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryColor.withOpacity(0.2),
+                                  color: primaryColor.withValues(alpha: 0.2),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                 ),
@@ -313,12 +314,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                                   filled: true,
                                   fillColor: isDarkMode 
-                                      ? Colors.grey.withOpacity(0.1) 
-                                      : Colors.grey.withOpacity(0.05),
+                                      ? Colors.grey.withValues(alpha: 0.1) 
+                                      : Colors.grey.withValues(alpha: 0.05),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
-                                      color: primaryColor.withOpacity(0.3),
+                                      color: primaryColor.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
@@ -384,7 +385,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> with Sing
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 0,
-                                disabledBackgroundColor: primaryColor.withOpacity(0.6),
+                                disabledBackgroundColor: primaryColor.withValues(alpha: 0.6),
                               ),
                               child: _isVerifying || state.isLoading
                                   ? const SizedBox(

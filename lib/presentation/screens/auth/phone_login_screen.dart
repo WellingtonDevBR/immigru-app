@@ -10,7 +10,7 @@ import 'package:immigru/presentation/theme/app_colors.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
-  const PhoneLoginScreen({Key? key}) : super(key: key);
+  const PhoneLoginScreen({super.key});
 
   @override
   State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
@@ -24,26 +24,20 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   bool _isSubmitting = false;
   String _completePhoneNumber = '';
   String _initialCountryCode = 'US'; // Default country code
-  
+
   @override
   void initState() {
     super.initState();
-    _detectUserCountry();
-  }
-  
-  // Detect user's country based on device locale
-  void _detectUserCountry() {
-    try {
-      final locale = WidgetsBinding.instance.window.locale.countryCode;
+
+    // Delay execution until context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final locale = View.of(context).platformDispatcher.locale.countryCode;
       if (locale != null && locale.isNotEmpty) {
         setState(() {
           _initialCountryCode = locale;
         });
       }
-    } catch (e) {
-      // Fallback to default US if there's an error
-      print('Error detecting country: $e');
-    }
+    });
   }
 
   @override
@@ -58,12 +52,12 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       setState(() {
         _isSubmitting = true;
       });
-      
+
       // Use the complete phone number with country code
-      final phone = _completePhoneNumber.isNotEmpty 
-          ? _completePhoneNumber 
+      final phone = _completePhoneNumber.isNotEmpty
+          ? _completePhoneNumber
           : _phoneController.text.trim();
-          
+
       context.read<AuthBloc>().add(AuthSendOtpEvent(phone: phone));
     }
   }
@@ -73,20 +67,20 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       setState(() {
         _isSubmitting = true;
       });
-      
+
       // Use the complete phone number with country code
-      final phone = _completePhoneNumber.isNotEmpty 
-          ? _completePhoneNumber 
+      final phone = _completePhoneNumber.isNotEmpty
+          ? _completePhoneNumber
           : _phoneController.text.trim();
       final otpCode = _otpController.text.trim();
-      
+
       // Verify OTP with Supabase and sign in
       context.read<AuthBloc>().add(
-        AuthPhoneLoginEvent(
-          phone: phone,
-          otpCode: otpCode,
-        ),
-      );
+            AuthPhoneLoginEvent(
+              phone: phone,
+              otpCode: otpCode,
+            ),
+          );
     }
   }
 
@@ -95,7 +89,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     final brightness = Theme.of(context).brightness;
     final isDarkMode = brightness == Brightness.dark;
     final primaryColor = AppColors.primaryColor;
-    
+
     return BlocProvider(
       create: (context) => sl<AuthBloc>(),
       child: Scaffold(
@@ -123,7 +117,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
             setState(() {
               _isSubmitting = false;
             });
-            
+
             if (state.hasError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -132,12 +126,12 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                 ),
               );
             }
-            
+
             if (state.isOtpSent) {
               setState(() {
                 _otpSent = true;
               });
-              
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('OTP sent to your phone'),
@@ -145,7 +139,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                 ),
               );
             }
-            
+
             if (state.isAuthenticated) {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -159,7 +153,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                   final size = MediaQuery.of(context).size;
                   final isSmallScreen = size.width < 600;
                   final isLandscape = size.width > size.height;
-                  
+
                   return Center(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
@@ -169,19 +163,24 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                       child: Container(
                         width: isSmallScreen ? null : 450,
                         constraints: BoxConstraints(
-                          minHeight: isLandscape ? size.height * 0.8 : size.height * 0.5,
+                          minHeight: isLandscape
+                              ? size.height * 0.8
+                              : size.height * 0.5,
                           maxWidth: 450,
                         ),
                         decoration: BoxDecoration(
-                          color: isDarkMode ? AppColors.darkSurface : Colors.white,
+                          color:
+                              isDarkMode ? AppColors.darkSurface : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: isDarkMode ? null : [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          boxShadow: isDarkMode
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
                         ),
                         padding: EdgeInsets.all(isSmallScreen ? 24 : 32),
                         child: Form(
@@ -195,7 +194,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                 alignment: Alignment.center,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.1),
+                                    color: primaryColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   padding: const EdgeInsets.all(12),
@@ -207,34 +206,46 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              
+
                               // Title
                               Text(
                                 _otpSent ? 'Verify OTP' : 'Phone Login',
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : Colors.black87,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                _otpSent 
+                                _otpSent
                                     ? 'Enter the verification code sent to your phone'
                                     : 'We\'ll send a verification code to your phone',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: isDarkMode ? Colors.white70 : Colors.black54,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                    ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 32),
-                              
+
                               // Phone Field
                               if (!_otpSent || isLandscape) ...[
                                 Text(
                                   'Phone Number',
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black87,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -243,34 +254,46 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                   controller: _phoneController,
                                   enabled: !_otpSent || isLandscape,
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                   ),
                                   dropdownTextStyle: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                   ),
                                   dropdownIcon: Icon(
                                     Icons.arrow_drop_down,
-                                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black54,
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter your phone number',
                                     hintStyle: TextStyle(
-                                      color: isDarkMode ? Colors.white54 : Colors.black38,
+                                      color: isDarkMode
+                                          ? Colors.white54
+                                          : Colors.black38,
                                     ),
                                     filled: true,
-                                    fillColor: isDarkMode 
-                                        ? Colors.grey.withOpacity(0.1) 
-                                        : Colors.grey.withOpacity(0.05),
+                                    fillColor: isDarkMode
+                                        ? Colors.grey.withValues(alpha: 0.1)
+                                        : Colors.grey.withValues(alpha: 0.05),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: isDarkMode ? Colors.white30 : Colors.black12,
+                                        color: isDarkMode
+                                            ? Colors.white30
+                                            : Colors.black12,
                                       ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: isDarkMode ? Colors.white30 : Colors.black12,
+                                        color: isDarkMode
+                                            ? Colors.white30
+                                            : Colors.black12,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
@@ -283,7 +306,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                   initialCountryCode: _initialCountryCode,
                                   onChanged: (phone) {
                                     setState(() {
-                                      _completePhoneNumber = phone.completeNumber;
+                                      _completePhoneNumber =
+                                          phone.completeNumber;
                                     });
                                   },
                                   validator: (phone) {
@@ -298,25 +322,30 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                 ),
                                 const SizedBox(height: 16),
                               ],
-                              
+
                               // OTP Field
                               if (_otpSent || isLandscape) ...[
                                 Text(
                                   'Verification Code',
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black87,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 8),
                                   child: TextFormField(
                                     controller: _otpController,
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: isDarkMode ? Colors.white : Colors.black,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
                                       letterSpacing: 12,
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
@@ -324,25 +353,27 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                     decoration: InputDecoration(
                                       hintText: '• • • • • •',
                                       hintStyle: TextStyle(
-                                        color: isDarkMode ? Colors.white54 : Colors.black38,
+                                        color: isDarkMode
+                                            ? Colors.white54
+                                            : Colors.black38,
                                         letterSpacing: 12,
                                         fontSize: 22,
                                       ),
                                       filled: true,
-                                      fillColor: isDarkMode 
-                                          ? Colors.grey.withOpacity(0.1) 
-                                          : Colors.grey.withOpacity(0.05),
+                                      fillColor: isDarkMode
+                                          ? Colors.grey.withValues(alpha: 0.1)
+                                          : Colors.grey.withValues(alpha: 0.05),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(16),
                                         borderSide: BorderSide(
-                                          color: primaryColor.withOpacity(0.3),
+                                          color: primaryColor.withValues(alpha: 0.3),
                                           width: 1.5,
                                         ),
                                       ),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(16),
                                         borderSide: BorderSide(
-                                          color: primaryColor.withOpacity(0.3),
+                                          color: primaryColor.withValues(alpha: 0.3),
                                           width: 1.5,
                                         ),
                                       ),
@@ -353,10 +384,14 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                           width: 2,
                                         ),
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              vertical: 20, horizontal: 24),
                                       prefixIcon: Icon(
                                         Icons.lock_outline,
-                                        color: isDarkMode ? Colors.white54 : Colors.black38,
+                                        color: isDarkMode
+                                            ? Colors.white54
+                                            : Colors.black38,
                                         size: 22,
                                       ),
                                     ),
@@ -364,25 +399,31 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                       FilteringTextInputFormatter.digitsOnly,
                                       LengthLimitingTextInputFormatter(6),
                                     ],
-                                    validator: _otpSent ? (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter the verification code';
-                                      }
-                                      if (value.length < 6) {
-                                        return 'Please enter a valid verification code';
-                                      }
-                                      return null;
-                                    } : null,
+                                    validator: _otpSent
+                                        ? (value) {
+                                            if (value == null ||
+                                                value.isEmpty) {
+                                              return 'Please enter the verification code';
+                                            }
+                                            if (value.length < 6) {
+                                              return 'Please enter a valid verification code';
+                                            }
+                                            return null;
+                                          }
+                                        : null,
                                   ),
                                 ),
-                                
+
                                 // OTP instructions
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                   child: Text(
                                     'Enter the 6-digit code sent to your phone number',
                                     style: TextStyle(
-                                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black54,
                                       fontSize: 14,
                                     ),
                                     textAlign: TextAlign.center,
@@ -390,18 +431,21 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                 ),
                                 const SizedBox(height: 16),
                               ],
-                              
+
                               // Resend OTP
                               if (_otpSent)
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: _isSubmitting ? null : () => _sendOtp(context),
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : () => _sendOtp(context),
                                     style: TextButton.styleFrom(
                                       foregroundColor: primaryColor,
                                       padding: EdgeInsets.zero,
                                       minimumSize: const Size(0, 0),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
                                     ),
                                     child: const Text(
                                       'Resend Code',
@@ -411,28 +455,30 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                     ),
                                   ),
                                 ),
-                              
+
                               const SizedBox(height: 24),
-                              
+
                               // Action Button
                               SizedBox(
                                 width: double.infinity,
                                 height: 52,
                                 child: ElevatedButton(
-                                  onPressed: _isSubmitting 
-                                      ? null 
-                                      : () => _otpSent 
-                                          ? _verifyOtp(context) 
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => _otpSent
+                                          ? _verifyOtp(context)
                                           : _sendOtp(context),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     elevation: 0,
-                                    disabledBackgroundColor: primaryColor.withOpacity(0.6),
+                                    disabledBackgroundColor:
+                                        primaryColor.withValues(alpha: 0.6),
                                   ),
                                   child: _isSubmitting
                                       ? const SizedBox(
@@ -440,11 +486,15 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                           width: 24,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
                                           ),
                                         )
                                       : Text(
-                                          _otpSent ? 'Verify & Login' : 'Send Verification Code',
+                                          _otpSent
+                                              ? 'Verify & Login'
+                                              : 'Send Verification Code',
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,

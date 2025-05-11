@@ -15,7 +15,7 @@ class EmailLoginForm extends StatelessWidget {
   final VoidCallback? onGoogleSignInPressed;
 
   const EmailLoginForm({
-    Key? key,
+    super.key,
     required this.emailController,
     required this.passwordController,
     required this.obscurePassword,
@@ -25,7 +25,7 @@ class EmailLoginForm extends StatelessWidget {
     required this.togglePasswordVisibility,
     required this.onSubmit,
     this.onGoogleSignInPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +47,8 @@ class EmailLoginForm extends StatelessWidget {
               ),
               filled: true,
               fillColor: isDarkMode 
-                  ? Colors.grey.withOpacity(0.1) 
-                  : Colors.grey.withOpacity(0.05),
+                  ? Colors.grey.withValues(alpha: 0.1) 
+                  : Colors.grey.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -83,8 +83,8 @@ class EmailLoginForm extends StatelessWidget {
               ),
               filled: true,
               fillColor: isDarkMode 
-                  ? Colors.grey.withOpacity(0.1) 
-                  : Colors.grey.withOpacity(0.05),
+                  ? Colors.grey.withValues(alpha: 0.1) 
+                  : Colors.grey.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -150,7 +150,7 @@ class EmailLoginForm extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
-              disabledBackgroundColor: primaryColor.withOpacity(0.6),
+              disabledBackgroundColor: primaryColor.withValues(alpha: 0.6),
             ),
             child: state.isLoading
                 ? const SizedBox(

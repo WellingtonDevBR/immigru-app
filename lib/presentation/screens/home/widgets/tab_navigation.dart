@@ -21,11 +21,11 @@ class TabNavigation extends StatelessWidget {
   final List<TabItemData> tabs;
 
   const TabNavigation({
-    Key? key,
+    super.key,
     required this.tabController,
     required this.currentIndex,
     required this.tabs,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +87,8 @@ class TabNavigation extends StatelessWidget {
           child: Theme(
             // Override tab theme for better interactivity
             data: Theme.of(context).copyWith(
-              splashColor: primaryColor.withOpacity(0.1),
-              highlightColor: primaryColor.withOpacity(0.05),
+              splashColor: primaryColor.withValues(alpha: 0.1),
+              highlightColor: primaryColor.withValues(alpha: 0.05),
             ),
             child: TabBar(
               controller: tabController,
@@ -114,13 +114,13 @@ class TabNavigation extends StatelessWidget {
               ),
               // More interactive indicator
               indicator: BoxDecoration(
-                color: primaryColor.withOpacity(0.15),
+                color: primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(isIOS ? 18 : 16),
                 // Platform-specific indicator styling
                 boxShadow: [
                   if (!isIOS) // Android uses shadow for indicator, iOS doesn't
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                       blurRadius: 4,
                       spreadRadius: 0,
                       offset: const Offset(0, 1),
@@ -131,8 +131,8 @@ class TabNavigation extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    primaryColor.withOpacity(0.2),
-                    primaryColor.withOpacity(0.1),
+                    primaryColor.withValues(alpha: 0.2),
+                    primaryColor.withValues(alpha: 0.1),
                   ],
                 ) : null,
               ),
@@ -214,8 +214,8 @@ class TabNavigation extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  primaryColor.withOpacity(0.05),
-                  primaryColor.withOpacity(0.01),
+                  primaryColor.withValues(alpha: 0.05),
+                  primaryColor.withValues(alpha: 0.01),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -273,10 +273,10 @@ class HomeTabNavigation extends StatelessWidget {
   final int currentIndex;
 
   const HomeTabNavigation({
-    Key? key,
+    super.key,
     required this.tabController,
     required this.currentIndex,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

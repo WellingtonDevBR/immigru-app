@@ -10,13 +10,13 @@ class FeatureGrid extends StatelessWidget {
   final Function(int)? onItemTap;
 
   const FeatureGrid({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onFeatureSelected,
     this.isTablet = false,
     this.isDesktop = false,
     this.onItemTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

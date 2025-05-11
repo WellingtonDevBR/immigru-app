@@ -7,11 +7,11 @@ class LoginTabBar extends StatelessWidget {
   final Color primaryColor;
 
   const LoginTabBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.isDarkMode,
     required this.primaryColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

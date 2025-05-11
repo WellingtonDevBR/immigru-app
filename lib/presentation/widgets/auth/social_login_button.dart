@@ -32,7 +32,7 @@ class SocialLoginButton extends StatelessWidget {
   final SocialPlatform socialPlatform;
 
   const SocialLoginButton({
-    Key? key,
+    super.key,
     required this.platform,
     this.logoPath,
     this.isNetworkImage = false,
@@ -42,7 +42,7 @@ class SocialLoginButton extends StatelessWidget {
     this.buttonText,
     this.buttonStyle,
     this.socialPlatform = SocialPlatform.custom,
-  }) : super(key: key);
+  });
 
   /// Factory constructor for Google login button
   factory SocialLoginButton.google({

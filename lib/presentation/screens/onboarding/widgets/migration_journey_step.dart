@@ -11,13 +11,13 @@ class MigrationJourneyStep extends StatefulWidget {
   final Function(int) onRemoveStep;
 
   const MigrationJourneyStep({
-    Key? key,
+    super.key,
     required this.birthCountry,
     required this.migrationSteps,
     required this.onAddStep,
     required this.onUpdateStep,
     required this.onRemoveStep,
-  }) : super(key: key);
+  });
 
   @override
   State<MigrationJourneyStep> createState() => _MigrationJourneyStepState();
@@ -423,7 +423,7 @@ class _MigrationJourneyStepState extends State<MigrationJourneyStep> {
                             vertical: 4.0,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(

@@ -6,9 +6,9 @@ class OnboardingProgressIndicator extends StatelessWidget {
   final double progress;
 
   const OnboardingProgressIndicator({
-    Key? key,
+    super.key,
     required this.progress,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

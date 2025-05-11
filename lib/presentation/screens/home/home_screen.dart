@@ -22,9 +22,9 @@ class HomeScreen extends StatefulWidget {
   final User? user;
   
   const HomeScreen({
-    Key? key,
+    super.key,
     this.user,
-  }) : super(key: key);
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -306,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+                    color: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                     width: 1,
                   ),
                 ),
@@ -325,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   // Theme toggle button
                   Container(
                     decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+                      color: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(

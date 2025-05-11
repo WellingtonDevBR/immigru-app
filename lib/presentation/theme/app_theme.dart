@@ -62,10 +62,10 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: AppColors.primaryLight,
       onPrimary: Colors.white,
-      secondary: AppColors.primaryLight.withOpacity(0.8),
+      secondary: AppColors.primaryLight.withValues(alpha: 0.8),
       onSecondary: Colors.white,
       surface: AppColors.surfaceLight,
-      background: AppColors.backgroundLight,
+      surfaceContainerHighest: AppColors.surfaceLight,
       error: AppColors.errorLight,
     ),
     appBarTheme: AppBarTheme(
@@ -119,10 +119,10 @@ class AppTheme {
     colorScheme: ColorScheme.dark(
       primary: AppColors.primaryDark,
       onPrimary: Colors.white,
-      secondary: AppColors.primaryDark.withOpacity(0.8),
+      secondary: AppColors.primaryDark.withValues(alpha: 0.8),
       onSecondary: Colors.white,
       surface: AppColors.surfaceDark,
-      background: AppColors.backgroundDark,
+      surfaceContainerHighest: AppColors.backgroundDark,
       error: AppColors.errorDark,
     ),
     appBarTheme: AppBarTheme(

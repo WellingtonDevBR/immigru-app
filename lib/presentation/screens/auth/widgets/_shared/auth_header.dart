@@ -8,13 +8,13 @@ class AuthHeader extends StatelessWidget {
   final IconData icon;
 
   const AuthHeader({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.primaryColor,
     required this.onThemeToggle,
     this.title = 'Immigru',
     this.icon = Icons.flight_takeoff_rounded,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class AuthHeader extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+            color: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
             width: 1,
           ),
         ),
@@ -36,7 +36,7 @@ class AuthHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -59,7 +59,7 @@ class AuthHeader extends StatelessWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+              color: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: IconButton(

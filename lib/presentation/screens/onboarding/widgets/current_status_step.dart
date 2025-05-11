@@ -7,10 +7,10 @@ class CurrentStatusStep extends StatelessWidget {
   final Function(String) onStatusSelected;
 
   const CurrentStatusStep({
-    Key? key,
+    super.key,
     this.selectedStatus,
     required this.onStatusSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +109,7 @@ class CurrentStatusStep extends StatelessWidget {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -130,7 +130,7 @@ class CurrentStatusStep extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.primary.withOpacity(0.1),
+                                  : theme.colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(

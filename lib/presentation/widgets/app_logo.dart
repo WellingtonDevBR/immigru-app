@@ -6,10 +6,10 @@ class AppLogo extends StatelessWidget {
   final bool showText;
   
   const AppLogo({
-    Key? key,
+    super.key,
     this.height = 32,
     this.showText = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

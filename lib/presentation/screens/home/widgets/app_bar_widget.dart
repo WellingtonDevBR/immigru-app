@@ -13,13 +13,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onChatPressed;
 
   const HomeAppBar({
-    Key? key,
+    super.key,
     required this.user,
     required this.onSignOut,
     required this.logger,
     this.onSearchPressed,
     this.onChatPressed,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -28,18 +28,19 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     // Get the platform and adjust accordingly
     final platform = Theme.of(context).platform;
     final isIOS = platform == TargetPlatform.iOS;
-    
+
     // Platform-specific measurements following industry standards
     // iOS: Uses SF Pro Display font, larger horizontal padding, more rounded corners
     // Android: Uses Roboto font, tighter padding, more square corners
     final horizontalPadding = isIOS ? 16.0 : 12.0;
-    final elevation = isIOS ? 0.0 : 1.0; // iOS prefers flat, Android uses elevation
+    final elevation =
+        isIOS ? 0.0 : 1.0; // iOS prefers flat, Android uses elevation
     final iconSize = isIOS ? 24.0 : 22.0; // iOS icons slightly larger
-    
+
     return AppBar(
       title: const AppLogo(),
       centerTitle: isIOS, // iOS centers title, Android aligns left
@@ -47,9 +48,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: elevation,
       titleSpacing: horizontalPadding, // Proper safe area margin
       // Platform-specific shape
-      shape: isIOS ? null : const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
-      ),
+      shape: isIOS
+          ? null
+          : const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
+            ),
       // Add padding to ensure content doesn't hit screen edges
       leadingWidth: 0, // Remove default leading space
       actions: [
@@ -63,8 +66,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Search',
           // Platform-specific styling
           style: ButtonStyle(
-            tapTargetSize: isIOS ? MaterialTapTargetSize.padded : MaterialTapTargetSize.shrinkWrap,
-            minimumSize: MaterialStateProperty.all(Size(isIOS ? 44 : 48, isIOS ? 44 : 48)),
+            tapTargetSize: isIOS
+                ? MaterialTapTargetSize.padded
+                : MaterialTapTargetSize.shrinkWrap,
+            minimumSize: WidgetStateProperty.all(
+                Size(isIOS ? 44 : 48, isIOS ? 44 : 48)),
           ),
         ),
         // Chat button
@@ -77,8 +83,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Chat',
           // Platform-specific styling
           style: ButtonStyle(
-            tapTargetSize: isIOS ? MaterialTapTargetSize.padded : MaterialTapTargetSize.shrinkWrap,
-            minimumSize: MaterialStateProperty.all(Size(isIOS ? 44 : 48, isIOS ? 44 : 48)),
+            tapTargetSize: isIOS
+                ? MaterialTapTargetSize.padded
+                : MaterialTapTargetSize.shrinkWrap,
+            minimumSize: WidgetStateProperty.all(
+                Size(isIOS ? 44 : 48, isIOS ? 44 : 48)),
           ),
         ),
         // Add proper padding at the end for iOS

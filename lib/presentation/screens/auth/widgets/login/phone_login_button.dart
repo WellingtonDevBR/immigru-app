@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
@@ -17,13 +16,13 @@ class PhoneLoginButton extends StatefulWidget {
   final Function(BuildContext) onGoogleSignIn;
 
   const PhoneLoginButton({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.primaryColor,
     required this.state,
     required this.onPhoneLogin,
     required this.onGoogleSignIn,
-  }) : super(key: key);
+  });
 
   @override
   State<PhoneLoginButton> createState() => _PhoneLoginButtonState();
@@ -52,7 +51,7 @@ class _PhoneLoginButtonState extends State<PhoneLoginButton> {
   // Detect user's country based on device locale
   void _detectUserCountry() {
     try {
-      final locale = WidgetsBinding.instance.window.locale.countryCode;
+      final locale = View.of(context).platformDispatcher.locale.countryCode;
       if (locale != null && locale.isNotEmpty) {
         setState(() {
           _initialCountryCode = locale;
@@ -77,7 +76,7 @@ class _PhoneLoginButtonState extends State<PhoneLoginButton> {
             Icon(
               Icons.phone_android,
               size: 64,
-              color: widget.primaryColor.withOpacity(0.8),
+              color: widget.primaryColor.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 24),
             Text(
@@ -131,8 +130,8 @@ class _PhoneLoginButtonState extends State<PhoneLoginButton> {
                   ),
                   filled: true,
                   fillColor: widget.isDarkMode 
-                      ? Colors.grey.withOpacity(0.1) 
-                      : Colors.grey.withOpacity(0.05),
+                      ? Colors.grey.withValues(alpha: 0.1) 
+                      : Colors.grey.withValues(alpha: 0.05),
                 ),
                 initialCountryCode: _initialCountryCode,
                 onChanged: (phone) {
@@ -208,7 +207,7 @@ class _PhoneLoginButtonState extends State<PhoneLoginButton> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
-                disabledBackgroundColor: widget.primaryColor.withOpacity(0.6),
+                disabledBackgroundColor: widget.primaryColor.withValues(alpha: 0.6),
               ),
               child: widget.state.isLoading || _isVerifying
                   ? const SizedBox(

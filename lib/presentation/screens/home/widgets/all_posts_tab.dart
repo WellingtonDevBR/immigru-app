@@ -9,13 +9,13 @@ class AllPostsTab extends StatelessWidget {
   final bool isDesktop;
 
   const AllPostsTab({
-    Key? key,
+    super.key,
     required this.posts,
     required this.selectedCategory,
     required this.onCategorySelected,
     this.isTablet = false,
     this.isDesktop = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class AllPostsTab extends StatelessWidget {
                         commentCount: item['commentCount'],
                         imageUrl: item['imageUrl'],
                       ),
-                    )).toList(),
+                    ))
                   ],
                 ),
               ),
@@ -111,7 +111,7 @@ class AllPostsTab extends StatelessWidget {
                 commentCount: item['commentCount'],
                 imageUrl: item['imageUrl'],
               ),
-            )).toList(),
+            )),
           ],
         );
       },
@@ -144,7 +144,7 @@ class AllPostsTab extends StatelessWidget {
         selected: isSelected,
         onSelected: (selected) => onCategorySelected(name),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
         checkmarkColor: Theme.of(context).colorScheme.primary,
         labelStyle: TextStyle(
           color: isSelected ? Theme.of(context).colorScheme.primary : null,

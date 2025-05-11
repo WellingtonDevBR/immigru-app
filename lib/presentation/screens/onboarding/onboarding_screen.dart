@@ -19,9 +19,9 @@ class OnboardingScreen extends StatelessWidget {
   final User? user;
 
   const OnboardingScreen({
-    Key? key,
+    super.key,
     this.user,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class OnboardingScreen extends StatelessWidget {
 
 /// Main view for the onboarding screen
 class OnboardingView extends StatefulWidget {
-  const OnboardingView({Key? key}) : super(key: key);
+  const OnboardingView({super.key});
 
   @override
   State<OnboardingView> createState() => _OnboardingViewState();

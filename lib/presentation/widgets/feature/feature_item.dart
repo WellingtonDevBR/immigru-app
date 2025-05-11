@@ -10,21 +10,21 @@ class FeatureItem extends StatelessWidget {
   final bool isSelected;
 
   const FeatureItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.color,
     required this.description,
     this.onTap,
     this.isSelected = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode 
-        ? color.withOpacity(0.15)
-        : color.withOpacity(0.1);
+        ? color.withValues(alpha: 0.15)
+        : color.withValues(alpha: 0.1);
     final borderColor = isSelected 
         ? color 
         : Colors.transparent;
@@ -42,7 +42,7 @@ class FeatureItem extends StatelessWidget {
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

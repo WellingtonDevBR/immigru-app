@@ -8,12 +8,12 @@ class AuthTabBar extends StatelessWidget {
   final List<String> tabs;
 
   const AuthTabBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.isDarkMode,
     required this.primaryColor,
     this.tabs = const ['Email', 'Phone'],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

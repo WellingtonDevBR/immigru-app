@@ -15,7 +15,7 @@ import 'package:immigru/presentation/screens/welcome/welcome_screen.dart';
 import 'package:immigru/presentation/theme/app_theme.dart';
 
 class ImmigruApp extends StatelessWidget {
-  const ImmigruApp({Key? key}) : super(key: key);
+  const ImmigruApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class ImmigruApp extends StatelessWidget {
 }
 
 class _ImmigruAppContent extends StatefulWidget {
-  const _ImmigruAppContent({Key? key}) : super(key: key);
+  const _ImmigruAppContent();
 
   @override
   State<_ImmigruAppContent> createState() => _ImmigruAppContentState();

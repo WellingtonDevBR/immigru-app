@@ -11,12 +11,12 @@ class HomeBottomNavigation extends StatelessWidget {
   final VoidCallback onMenuPressed;
 
   const HomeBottomNavigation({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTabSelected,
     required this.logger,
     required this.onMenuPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +34,11 @@ class HomeBottomNavigation extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDarkMode 
             ? AppColors.darkSurface 
-            : isIOS ? Colors.white.withOpacity(0.95) : Colors.white,
+            : isIOS ? Colors.white.withValues(alpha: 0.95) : Colors.white,
         boxShadow: [
           if (!isIOS) // Android uses elevation, iOS doesn't
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),

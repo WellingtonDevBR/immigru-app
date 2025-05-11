@@ -7,7 +7,7 @@ import 'dart:ui';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({Key? key}) : super(key: key);
+  const WelcomeScreen({super.key});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -166,7 +166,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                                 opacity: _fadeInAnimation,
                                 child: CustomPaint(
                                   painter: _ConnectionsPainter(
-                                    color: AppColors.primaryColor.withOpacity(0.3),
+                                    color: AppColors.primaryColor.withValues(alpha: 0.3),
                                   ),
                                 ),
                               ),

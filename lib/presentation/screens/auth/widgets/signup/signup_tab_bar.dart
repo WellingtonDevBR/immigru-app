@@ -6,9 +6,9 @@ class SignupTabBar extends StatelessWidget {
   final TabController tabController;
 
   const SignupTabBar({
-    Key? key,
+    super.key,
     required this.tabController,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -7,10 +7,10 @@ class CreatePostCard extends StatelessWidget {
   final Function(String, String?)? onCreatePost;
   
   const CreatePostCard({
-    Key? key,
+    super.key,
     required this.user,
     this.onCreatePost,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +79,7 @@ class CreatePostCard extends StatelessWidget {
   Widget _buildUserAvatar(BuildContext context, String? avatarUrl) {
     return CircleAvatar(
       radius: 20,
-      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
       backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
       child: avatarUrl == null
           ? Icon(
@@ -110,7 +110,7 @@ class CreatePostCard extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   spreadRadius: 0,
                 ),

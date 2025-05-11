@@ -9,11 +9,11 @@ class EmailSignupForm extends StatefulWidget {
   final VoidCallback? onGoogleSignUpPressed;
 
   const EmailSignupForm({
-    Key? key,
+    super.key,
     required this.submitForm,
     required this.authState,
     this.onGoogleSignUpPressed,
-  }) : super(key: key);
+  });
 
   @override
   State<EmailSignupForm> createState() => _EmailSignupFormState();
@@ -114,7 +114,7 @@ class _EmailSignupFormState extends State<EmailSignupForm> {
               borderRadius: BorderRadius.circular(12),
             ),
             elevation: 0,
-            disabledBackgroundColor: primaryColor.withOpacity(0.6),
+            disabledBackgroundColor: primaryColor.withValues(alpha: 0.6),
           ),
           child: widget.authState.isLoading
               ? const SizedBox(
@@ -195,8 +195,8 @@ class _EmailSignupFormState extends State<EmailSignupForm> {
         ),
         filled: true,
         fillColor: isDarkMode
-            ? Colors.grey.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.05),
+            ? Colors.grey.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

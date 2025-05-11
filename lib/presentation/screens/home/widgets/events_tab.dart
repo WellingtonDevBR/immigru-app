@@ -8,12 +8,12 @@ class EventsTab extends StatelessWidget {
   final bool isDesktop;
 
   const EventsTab({
-    Key? key,
+    super.key,
     required this.events,
     required this.logger,
     this.isTablet = false,
     this.isDesktop = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +119,7 @@ class EventsTab extends StatelessWidget {
             ...events.map((event) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _buildEventListItem(context, event),
-            )).toList(),
+            ))
           ],
         );
       },
@@ -138,7 +138,7 @@ class EventsTab extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -194,7 +194,7 @@ class EventsTab extends StatelessWidget {
       elevation: 1,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           child: Icon(
             event['icon'] as IconData? ?? Icons.event,
             color: Theme.of(context).colorScheme.primary,

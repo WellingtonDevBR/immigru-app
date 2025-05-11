@@ -7,11 +7,11 @@ class HomeFloatingActionButton extends StatelessWidget {
   final LoggerService logger;
 
   const HomeFloatingActionButton({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onCreatePost,
     required this.logger,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class HomeFloatingActionButton extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: backgroundColor.withOpacity(0.4),
+            color: backgroundColor.withValues(alpha: 0.4),
             blurRadius: 8,
             spreadRadius: 2,
             offset: const Offset(0, 2),

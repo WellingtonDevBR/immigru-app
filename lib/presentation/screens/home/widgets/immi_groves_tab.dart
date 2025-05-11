@@ -7,11 +7,11 @@ class ImmiGrovesTab extends StatelessWidget {
   final VoidCallback onAddDocument;
 
   const ImmiGrovesTab({
-    Key? key,
+    super.key,
     this.isTablet = false,
     this.isDesktop = false,
     required this.onAddDocument,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
