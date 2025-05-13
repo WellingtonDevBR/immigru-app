@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _logger.debug('Login', 'Login screen initialized');
+    
   }
 
   @override
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen>
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      _logger.debug('Login', 'Submitting login form with email: $email');
+      
 
       // Add event to the bloc
       context.read<AuthBloc>().add(
@@ -90,19 +90,19 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() {
       _errorMessage = null;
     });
-    _logger.debug('Login', 'Starting Google sign-in');
+    
     context.read<AuthBloc>().add(AuthGoogleLoginEvent());
   }
 
   void _handlePhoneLogin(BuildContext context) {
-    _logger.debug('Login', 'Handling phone login navigation');
+    
     // This method is now just a callback for the PhoneLoginButton
     // The actual navigation to OTP screen happens in the PhoneLoginButton
     // The AuthBloc state is handled by the OtpVerificationScreen
   }
 
   void _navigateToSignup(BuildContext context) {
-    _logger.debug('Login', 'Navigating to signup screen');
+    
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const SignupScreen()),

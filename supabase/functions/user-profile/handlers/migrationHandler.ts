@@ -20,10 +20,10 @@ export async function handleMigrationSteps(
   userId: string,
   migrationSteps: any[]
 ): Promise<{ success: boolean; data?: any; error?: any }> {
-  console.log(`=== MIGRATION HANDLER - START ===`);
-  console.log(`Processing ${migrationSteps.length} migration steps for user ${userId}`);
-  console.log(`Raw migration steps:`, JSON.stringify(migrationSteps, null, 2));
-  console.log(`Migration steps data:`, JSON.stringify(migrationSteps, null, 2));
+  
+  
+  
+  
   
   const results: any[] = [];
   
@@ -33,20 +33,20 @@ export async function handleMigrationSteps(
     // Order will be determined later based on existing steps
     
     try {
-      console.log(`=== PROCESSING STEP ${i + 1} ===`);
-      console.log(`Step data:`, JSON.stringify(step, null, 2));
+      
+      
       
       // Validate the step data
-      console.log(`Validating step ${i + 1}...`);
+      
       
       // Ensure countryId is a number
       if (step.countryId && typeof step.countryId !== 'number') {
         step.countryId = Number(step.countryId);
-        console.log(`Converted countryId to number: ${step.countryId}`);
+        
       }
       
       validateMigrationStep(step);
-      console.log(`Step ${i + 1} validation successful`);
+      
       
       // First get all existing steps for this user to determine proper ordering
       const { data: allExistingSteps } = await supabaseClient
@@ -55,7 +55,7 @@ export async function handleMigrationSteps(
         .eq('UserId', userId)
         .order('Order', { ascending: true });
       
-      console.log(`Found ${allExistingSteps?.length || 0} existing migration steps for user`);
+      
       
       // Check if this step already exists by matching country and visa
       let existingStep: { Id: number, Order: number } | null = null;
@@ -70,7 +70,7 @@ export async function handleMigrationSteps(
           
         if (stepById) {
           existingStep = stepById as { Id: number, Order: number };
-          console.log(`Found existing step by ID: ${existingStep.Id}`);
+          
         }
       }
       
@@ -88,12 +88,12 @@ export async function handleMigrationSteps(
             const exactMatch = matchingSteps.find(s => s.VisaId === Number(step.visaId));
             if (exactMatch) {
               existingStep = exactMatch as { Id: number, Order: number };
-              console.log(`Found existing step with matching country and visa: ${existingStep.Id}`);
+              
             }
           } else {
             // If no visa specified, just use the first matching country
             existingStep = matchingSteps[0] as { Id: number, Order: number };
-            console.log(`Found existing step with matching country: ${existingStep.Id}`);
+            
           }
         }
       }
@@ -104,14 +104,14 @@ export async function handleMigrationSteps(
       if (existingStep && existingStep.Order) {
         // If updating an existing step, keep its order
         stepOrder = existingStep.Order;
-        console.log(`Using existing order ${stepOrder} for step with ID: ${existingStep.Id}`);
+        
       } else {
         // For a new step, assign the next available order
         const maxOrder = allExistingSteps && allExistingSteps.length > 0
           ? Math.max(...allExistingSteps.map(s => s.Order || 0))
           : 0;
         stepOrder = maxOrder + 1;
-        console.log(`Assigning new order ${stepOrder} for step`);
+        
       }
       
       // Process visa ID
@@ -119,7 +119,7 @@ export async function handleMigrationSteps(
       if (step.visaId) {
         try {
           visaIdValue = Number(step.visaId);
-          console.log(`Converted visaId to number: ${visaIdValue}`);
+          
         } catch (e) {
           console.error(`Failed to convert visaId to number: ${step.visaId}`, e);
         }
@@ -156,7 +156,7 @@ export async function handleMigrationSteps(
             
           if (!visaByNameError && visaByNameData) {
             visaIdValue = visaByNameData.Id;
-            console.log(`Found visa ID ${visaIdValue} for visa name '${step.visaName}'`);
+            
           }
         } catch (e) {
           console.error(`Error searching for visa by name:`, e);
@@ -181,7 +181,7 @@ export async function handleMigrationSteps(
         try {
           const date = new Date(step.arrivedDate);
           arrivedAt = date.toISOString();
-          console.log(`Formatted arrived date: ${arrivedAt}`);
+          
         } catch (e) {
           console.error(`Error formatting arrived date: ${step.arrivedDate}`, e);
         }
@@ -192,7 +192,7 @@ export async function handleMigrationSteps(
         try {
           const date = new Date(step.leftDate);
           leftAt = date.toISOString();
-          console.log(`Formatted left date: ${leftAt}`);
+          
         } catch (e) {
           console.error(`Error formatting left date: ${step.leftDate}`, e);
         }
@@ -213,13 +213,13 @@ export async function handleMigrationSteps(
         UpdatedAt: new Date().toISOString()
       };
       
-      console.log(`Final step data to save:`, JSON.stringify(stepData, null, 2));
+      
       
       let result;
       
       if (existingStep) {
         // Update existing step
-        console.log(`Updating existing migration step with ID: ${existingStep.Id}`);
+        
         const { data, error } = await supabaseClient
           .from('MigrationStep')
           .update(stepData)
@@ -233,10 +233,10 @@ export async function handleMigrationSteps(
         }
         
         result = data;
-        console.log(`Updated migration step with ID: ${existingStep.Id}, order: ${stepData.Order}`);
+        
       } else {
         // Insert new step
-        console.log(`Inserting new migration step with order: ${stepData.Order}`);
+        
         const { data, error } = await supabaseClient
           .from('MigrationStep')
           .insert(stepData)
@@ -249,7 +249,7 @@ export async function handleMigrationSteps(
         }
         
         result = data;
-        console.log(`Inserted new migration step with ID: ${result.Id}, order: ${result.Order}`);
+        
       }
       
       results.push(result as any);
@@ -273,7 +273,7 @@ export async function getMigrationSteps(
   supabaseClient: SupabaseClient, 
   userId: string
 ): Promise<MigrationStep[]> {
-  console.log(`Getting migration steps for user: ${userId}`);
+  
   
   const { data, error } = await supabaseClient
     .from('MigrationStep')

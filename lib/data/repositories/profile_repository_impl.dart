@@ -29,7 +29,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     try {
       final user = _supabaseService.client.auth.currentUser;
       if (user == null) {
-        _logger.debug('ProfileRepository', 'No authenticated user found');
+        
         return null;
       }
 
@@ -67,7 +67,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
             onConflict: 'user_id',
           );
 
-      _logger.debug('ProfileRepository', 'Profile saved successfully');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving profile: $e');
       throw Exception('Failed to save profile: $e');
@@ -96,7 +96,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           .from('profile_photos')
           .getPublicUrl(filePath);
 
-      _logger.debug('ProfileRepository', 'Profile photo uploaded: $photoUrl');
+      
       return photoUrl;
     } catch (e) {
       _logger.error('ProfileRepository', 'Error uploading profile photo: $e');
@@ -124,7 +124,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         },
       );
 
-      _logger.debug('ProfileRepository', 'Privacy settings updated: visibility=$visibility');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error updating privacy settings: $e');
       throw Exception('Failed to update privacy settings: $e');
@@ -138,7 +138,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'birthCountry',
         data: {'birthCountry': birthCountry},
       );
-      _logger.debug('ProfileRepository', 'Birth country saved: $birthCountry');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving birth country: $e');
       throw Exception('Failed to save birth country: $e');
@@ -152,7 +152,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'currentStatus',
         data: {'currentStatus': currentStatus},
       );
-      _logger.debug('ProfileRepository', 'Current status saved: $currentStatus');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving current status: $e');
       throw Exception('Failed to save current status: $e');
@@ -181,7 +181,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'migrationJourney',
         data: {'migrationSteps': stepsJson},
       );
-      _logger.debug('ProfileRepository', 'Migration journey saved with ${migrationSteps.length} steps');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving migration journey: $e');
       throw Exception('Failed to save migration journey: $e');
@@ -198,7 +198,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           'industry': industry,
         },
       );
-      _logger.debug('ProfileRepository', 'Profession saved: $profession, Industry: $industry');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving profession: $e');
       throw Exception('Failed to save profession: $e');
@@ -212,7 +212,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'languages',
         data: {'languages': languages},
       );
-      _logger.debug('ProfileRepository', 'Languages saved: $languages');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving languages: $e');
       throw Exception('Failed to save languages: $e');
@@ -226,7 +226,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'interests',
         data: {'interests': interests},
       );
-      _logger.debug('ProfileRepository', 'Interests saved: $interests');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving interests: $e');
       throw Exception('Failed to save interests: $e');
@@ -248,7 +248,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           'profilePhotoUrl': profilePhotoUrl,
         },
       );
-      _logger.debug('ProfileRepository', 'Basic info saved: $firstName $lastName');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving basic info: $e');
       throw Exception('Failed to save basic info: $e');
@@ -262,7 +262,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'profileDisplayName',
         data: {'displayName': displayName},
       );
-      _logger.debug('ProfileRepository', 'Display name saved: $displayName');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving display name: $e');
       throw Exception('Failed to save display name: $e');
@@ -276,7 +276,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         step: 'profileBio',
         data: {'bio': bio},
       );
-      _logger.debug('ProfileRepository', 'Bio saved');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving bio: $e');
       throw Exception('Failed to save bio: $e');
@@ -296,7 +296,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           'destinationCity': destinationCity,
         },
       );
-      _logger.debug('ProfileRepository', 'Location saved: $currentLocation, Destination: $destinationCity');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error saving location: $e');
       throw Exception('Failed to save location: $e');
@@ -315,7 +315,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       // Also save to local storage for faster access
       await _onboardingService.markOnboardingCompleted();
       
-      _logger.debug('ProfileRepository', 'Onboarding marked as completed');
+      
     } catch (e) {
       _logger.error('ProfileRepository', 'Error completing onboarding: $e');
       throw Exception('Failed to complete onboarding: $e');

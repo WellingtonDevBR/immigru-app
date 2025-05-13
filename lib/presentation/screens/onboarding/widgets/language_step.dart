@@ -44,17 +44,17 @@ class _LanguageStepState extends State<LanguageStep> {
   @override
   void initState() {
     super.initState();
-    _logger.debug('LanguageStep', '========== INITIALIZING LANGUAGE STEP ==========');
-    _logger.debug('LanguageStep', 'Initial selectedLanguages from widget: ${widget.selectedLanguages}');
+    
+    
     
     // Initialize with any languages passed from the parent widget
     _selectedLanguages = List.from(widget.selectedLanguages);
-    _logger.debug('LanguageStep', 'Initialized _selectedLanguages: $_selectedLanguages');
+    
     
     // Fetch all available languages first
-    _logger.debug('LanguageStep', 'Starting language fetch sequence');
+    
     _fetchLanguages().then((_) {
-      _logger.debug('LanguageStep', 'Languages fetched, now fetching user languages');
+      
       // Then fetch user's previously selected languages after we have the language list
       _fetchUserLanguages();
     });
@@ -68,108 +68,108 @@ class _LanguageStepState extends State<LanguageStep> {
 
   /// Fetch all available languages from the repository
   Future<void> _fetchLanguages() async {
-    _logger.debug('LanguageStep', '========== FETCHING ALL LANGUAGES ==========');
+    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    _logger.debug('LanguageStep', 'Set loading state to true');
+    
 
     try {
-      _logger.debug('LanguageStep', 'Calling _languagesUseCase()');
+      
       final languages = await _languagesUseCase();
-      _logger.debug('LanguageStep', 'Received ${languages.length} languages from use case');
+      
 
       // Build a map of ISO codes to language IDs for easier lookup
       final Map<String, int> idMap = {};
       
-      _logger.debug('LanguageStep', 'Building language ID map');
+      
       
       for (var language in languages) {
         // Store lowercase ISO code for consistent comparison
         final lowerIsoCode = language.isoCode.toLowerCase();
         idMap[lowerIsoCode] = language.id;
-        _logger.debug('LanguageStep', 'Mapped language: id=${language.id}, isoCode=${language.isoCode}, lowerIsoCode=$lowerIsoCode, name=${language.name}');
+        
       }
 
-      _logger.debug('LanguageStep', 'Updating state with fetched languages');
+      
       setState(() {
         _languages = languages;
         _languageIdMap = idMap;
         _isLoading = false;
       });
-      _logger.debug('LanguageStep', 'Language fetch complete, _languages.length: ${_languages.length}, _languageIdMap.length: ${_languageIdMap.length}');
+      
     } catch (e) {
       _logger.error('LanguageStep', 'Error fetching languages: $e');
       setState(() {
         _errorMessage = 'Failed to load languages. Please try again.';
         _isLoading = false;
       });
-      _logger.debug('LanguageStep', 'Set error state: $_errorMessage');
+      
     }
   }
 
   /// Fetch user's previously selected languages
   Future<void> _fetchUserLanguages() async {
-    _logger.debug('LanguageStep', '========== FETCHING USER LANGUAGES ==========');
-    _logger.debug('LanguageStep', 'Current _languages.length: ${_languages.length}');
-    _logger.debug('LanguageStep', 'Current _languageIdMap: $_languageIdMap');
+    
+    
+    
     
     setState(() {
       _isLoadingUserLanguages = true;
     });
-    _logger.debug('LanguageStep', 'Set _isLoadingUserLanguages to true');
+    
 
     try {
-      _logger.debug('LanguageStep', 'Calling _getUserLanguagesUseCase()');
+      
       // Get user's selected languages
       final userLanguages = await _getUserLanguagesUseCase();
       
-      _logger.debug('LanguageStep', 'Received ${userLanguages.length} user languages from database');
+      
       
       // Log each language for debugging
       for (var lang in userLanguages) {
-        _logger.debug('LanguageStep', 'User language from DB: id=${lang.id}, isoCode=${lang.isoCode}, name=${lang.name}');
+        
       }
       
       if (userLanguages.isNotEmpty) {
         // Extract language IDs from the fetched user languages
         final selectedLanguageIds = userLanguages.map((lang) => lang.id).toList();
         
-        _logger.debug('LanguageStep', 'Extracted language IDs from user languages: $selectedLanguageIds');
+        
         
         // Find the corresponding ISO codes from our available languages
         final List<String> selectedIsoCodes = [];
         
-        _logger.debug('LanguageStep', 'Matching language IDs with available languages...');
+        
         // Match language IDs with the available languages to get ISO codes
         for (var language in _languages) {
-          _logger.debug('LanguageStep', 'Checking language: id=${language.id}, isoCode=${language.isoCode}, name=${language.name}');
-          _logger.debug('LanguageStep', 'Is this ID in selectedLanguageIds? ${selectedLanguageIds.contains(language.id)}');
+          
+          
           
           if (selectedLanguageIds.contains(language.id)) {
             final lowerIsoCode = language.isoCode.toLowerCase();
             selectedIsoCodes.add(lowerIsoCode);
-            _logger.debug('LanguageStep', '✅ MATCHED: Adding $lowerIsoCode to selectedIsoCodes');
+            
           }
         }
         
-        _logger.debug('LanguageStep', 'Final matched ISO codes: $selectedIsoCodes');
+        
         
         if (selectedIsoCodes.isNotEmpty) {
-          _logger.debug('LanguageStep', 'Updating state with selected ISO codes');
+          
           setState(() {
             // Update selected languages with the matched ISO codes
             _selectedLanguages = selectedIsoCodes;
-            _logger.debug('LanguageStep', 'Set _selectedLanguages to: $_selectedLanguages');
+            
             
             // Notify parent widget about pre-selected languages
             widget.onLanguagesSelected(_selectedLanguages);
-            _logger.debug('LanguageStep', 'Notified parent widget with onLanguagesSelected');
+            
             
             // Update the bloc with pre-selected languages
             if (context.mounted) {
-              _logger.debug('LanguageStep', 'Updating OnboardingBloc with LanguagesUpdated event');
+              
               BlocProvider.of<OnboardingBloc>(context).add(
                 LanguagesUpdated(_selectedLanguages),
               );
@@ -177,12 +177,12 @@ class _LanguageStepState extends State<LanguageStep> {
           });
           
           // Log the selected languages after state update
-          _logger.debug('LanguageStep', 'State updated, _selectedLanguages is now: $_selectedLanguages');
+          
         } else {
-          _logger.debug('LanguageStep', '❌ No matching ISO codes found for the user\'s language IDs');
+          
         }
       } else {
-        _logger.debug('LanguageStep', 'User has no selected languages in the database');
+        
       }
     } catch (e) {
       _logger.error('LanguageStep', '❌ Error fetching user languages: $e');
@@ -191,7 +191,7 @@ class _LanguageStepState extends State<LanguageStep> {
       setState(() {
         _isLoadingUserLanguages = false;
       });
-      _logger.debug('LanguageStep', 'Set _isLoadingUserLanguages to false');
+      
     }
   }
 
@@ -262,12 +262,12 @@ class _LanguageStepState extends State<LanguageStep> {
   @override
   Widget build(BuildContext context) {
     // Log the selected languages for debugging
-    _logger.debug('LanguageStep', '========== BUILDING LANGUAGE STEP WIDGET ==========');
-    _logger.debug('LanguageStep', 'Current _selectedLanguages: $_selectedLanguages');
-    _logger.debug('LanguageStep', 'Current _languages.length: ${_languages.length}');
-    _logger.debug('LanguageStep', 'Current _isLoading: $_isLoading');
-    _logger.debug('LanguageStep', 'Current _isLoadingUserLanguages: $_isLoadingUserLanguages');
-    _logger.debug('LanguageStep', 'Current _searchQuery: $_searchQuery');
+    
+    
+    
+    
+    
+    
     
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
@@ -413,15 +413,15 @@ class _LanguageStepState extends State<LanguageStep> {
                                 final isSelected = _selectedLanguages.contains(lowerIsoCode);
                                 
                                 // Debug log for each language item
-                                _logger.debug('LanguageStep', '-------- LANGUAGE ITEM --------');
-                                _logger.debug('LanguageStep', 'Rendering language: id=${language.id}, isoCode=${language.isoCode}, lowerIsoCode=$lowerIsoCode, name=${language.name}');
-                                _logger.debug('LanguageStep', 'Checking if _selectedLanguages contains $lowerIsoCode: $isSelected');
-                                _logger.debug('LanguageStep', 'Current _selectedLanguages: $_selectedLanguages');
+                                
+                                
+                                
+                                
                                 
                                 if (isSelected) {
-                                  _logger.debug('LanguageStep', '✅ CHECKBOX SHOULD BE SELECTED for ${language.name}');
+                                  
                                 } else {
-                                  _logger.debug('LanguageStep', '❌ CHECKBOX SHOULD NOT BE SELECTED for ${language.name}');
+                                  
                                 }
                                 
                                 return AnimatedContainer(

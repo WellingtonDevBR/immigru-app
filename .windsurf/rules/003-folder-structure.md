@@ -148,7 +148,6 @@ lib/
     │   │       │   └── migration_timeline.dart
     │   │       ├── onboarding_progress_indicator.dart
     │   │       ├── profession_step.dart
-    │   │       ├── profession_step.dart.new
     │   │       └── profile
     │   │           ├── basic_info_step.dart
     │   │           ├── bio_step.dart
@@ -156,15 +155,6 @@ lib/
     │   │           ├── location_step.dart
     │   │           ├── photo_step.dart
     │   │           └── privacy_step.dart
-    │   ├── profile
-    │   │   ├── profile_setup_screen.dart
-    │   │   └── widgets
-    │   │       ├── basic_info_step.dart
-    │   │       ├── bio_step.dart
-    │   │       ├── display_name_step.dart
-    │   │       ├── location_step.dart
-    │   │       ├── photo_step.dart
-    │   │       └── privacy_step.dart
     │   └── welcome
     │       └── welcome_screen.dart
     ├── theme
@@ -181,3 +171,5 @@ lib/
         ├── country_selector.dart
         ├── error_message_widget.dart
         ├── feature
+        │   └── feature_item.dart
+        └── loading_indicator.dart

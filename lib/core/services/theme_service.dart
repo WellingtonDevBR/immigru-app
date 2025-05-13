@@ -21,7 +21,7 @@ class ThemeService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final theme = prefs.getString(_themeKey) ?? system;
-      _logger.debug('Theme', 'Retrieved theme from storage: $theme');
+      
       return theme;
     } catch (e, stackTrace) {
       _logger.error('Theme', 'Failed to get theme from storage', error: e, stackTrace: stackTrace);
@@ -34,7 +34,7 @@ class ThemeService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themeKey, mode);
-      _logger.debug('Theme', 'Saved theme to storage: $mode');
+      
       return true;
     } catch (e, stackTrace) {
       _logger.error('Theme', 'Failed to save theme to storage', error: e, stackTrace: stackTrace);

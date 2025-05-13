@@ -217,7 +217,7 @@ class EmailLoginForm extends StatelessWidget {
         if (onGoogleSignInPressed != null) {
           onGoogleSignInPressed!();
         } else {
-          debugPrint('Google Sign-In button pressed, but no callback was provided');
+          ;
         }
       },
       isDarkMode: isDarkMode,

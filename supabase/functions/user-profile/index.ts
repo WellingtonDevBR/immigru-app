@@ -1,41 +1,41 @@
 // Supabase Edge Function for User Profile Management
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from './cors.ts';
-import { RequestPayload, ResponseData } from './models/types.ts';
-import { getUserProfile, createProfileIfNotExists, updateUserProfile } from './handlers/profileHandler.ts';
-import { processStepData, checkOnboardingStatus, getOnboardingStepData } from './handlers/onboardingHandler.ts';
-import { getMigrationSteps } from './handlers/migrationHandler.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "./cors.ts";
+import { RequestPayload, ResponseData } from "./models/types.ts";
+import {
+  createProfileIfNotExists,
+  getUserProfile,
+  updateUserProfile,
+} from "./handlers/profileHandler.ts";
+import {
+  checkOnboardingStatus,
+  getOnboardingStepData,
+  processStepData,
+} from "./handlers/onboardingHandler.ts";
+import { getMigrationSteps } from "./handlers/migrationHandler.ts";
 
 // Create a Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-
-console.log('User Profile Edge Function Initialized');
-console.log(`Supabase URL: ${supabaseUrl.substring(0, 20)}...`);
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
-  
+
   try {
     // Get the request body
     const requestData = await req.json();
     const { action, step, data } = requestData as RequestPayload;
-    
-    console.log(`=== INCOMING REQUEST ===`);
-    console.log(`Action: ${action}, Step: ${step || 'none'}`);
-    console.log(`Request data:`, JSON.stringify(data, null, 2));
-    console.log(`Request headers:`, JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
-    
+
     // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('Missing Authorization header');
+      throw new Error("Missing Authorization header");
     }
-    
+
     // Create a Supabase client with the user's JWT
     const supabaseClient = createClient(supabaseUrl, supabaseKey, {
       global: {
@@ -44,164 +44,188 @@ serve(async (req) => {
         },
       },
     });
-    
+
     // Get the user from the JWT
     const {
       data: { user },
       error: userError,
     } = await supabaseClient.auth.getUser();
-    
+
     if (userError || !user) {
-      throw new Error('Invalid user token');
+      throw new Error("Invalid user token");
     }
-    
-    console.log(`Authenticated user: ${user.id}`);
-    
+
     // Get or create the user profile
-    const existingProfile = await createProfileIfNotExists(supabaseClient, user.id);
-    
-    console.log(`=== PROCESSING REQUEST - ACTION: ${action} ===`);
-    console.log(`Request data:`, JSON.stringify(requestData, null, 2));
-    
+    const existingProfile = await createProfileIfNotExists(
+      supabaseClient,
+      user.id,
+    );
+
     // Process the request based on the action
     let responseData: ResponseData;
-    
+
     switch (action) {
-      case 'save':
-        console.log(`Processing 'save' action for step: ${step}`);
-        console.log(`Step data:`, JSON.stringify(data, null, 2));
-        
+      case "save":
         if (!step) {
-          throw new Error('Missing step parameter');
+          throw new Error("Missing step parameter");
         }
-        
+
         const isCompleted = existingProfile?.IsOnboardingCompleted === true;
-        const result = await processStepData(supabaseClient, step, data, user.id, existingProfile, isCompleted);
-        
+        const result = await processStepData(
+          supabaseClient,
+          step,
+          data,
+          user.id,
+          existingProfile,
+          isCompleted,
+        );
+
         responseData = {
           success: result.success,
-          message: result.success ? 'Data saved successfully' : 'Failed to save data',
+          message: result.success
+            ? "Data saved successfully"
+            : "Failed to save data",
           data: result.data,
-          error: result.error
+          error: result.error,
         };
         break;
-      
-      case 'update':
+
+      case "update":
         // Update user profile data
         if (!data) {
-          throw new Error('Missing profile data');
+          throw new Error("Missing profile data");
         }
-        
-        const updateResult = await updateUserProfile(supabaseClient, user.id, data);
-        
+
+        const updateResult = await updateUserProfile(
+          supabaseClient,
+          user.id,
+          data,
+        );
+
         responseData = {
           success: updateResult.success,
-          message: updateResult.success ? 'Profile updated successfully' : 'Failed to update profile',
+          message: updateResult.success
+            ? "Profile updated successfully"
+            : "Failed to update profile",
           data: updateResult.data,
-          error: updateResult.error
+          error: updateResult.error,
         };
         break;
-        
-      case 'getOnboardingData':
+
+      case "getOnboardingData":
         // Get data for a specific onboarding step
         if (!step) {
-          throw new Error('Missing step parameter');
+          throw new Error("Missing step parameter");
         }
-        
-        const onboardingData = await getOnboardingStepData(supabaseClient, step, user.id);
-        
+
+        const onboardingData = await getOnboardingStepData(
+          supabaseClient,
+          step,
+          user.id,
+        );
+
         responseData = {
           success: onboardingData.success,
-          message: onboardingData.success ? 'Onboarding data retrieved successfully' : 'Failed to retrieve onboarding data',
+          message: onboardingData.success
+            ? "Onboarding data retrieved successfully"
+            : "Failed to retrieve onboarding data",
           data: onboardingData.data,
-          error: onboardingData.error
+          error: onboardingData.error,
         };
         break;
-        
-      case 'get':
+
+      case "get":
         // Get the user's profile data
         const profile = await getUserProfile(supabaseClient, user.id);
         const migrationSteps = await getMigrationSteps(supabaseClient, user.id);
-        
+
         // Get languages
         const { data: languages } = await supabaseClient
-          .from('UserLanguage')
-          .select('LanguageId, Language(Id, Name, NativeName, Code)')
-          .eq('UserId', user.id);
-          
+          .from("UserLanguage")
+          .select("LanguageId, Language(Id, Name, NativeName, Code)")
+          .eq("UserId", user.id);
+
         // Get interests
         const { data: interests } = await supabaseClient
-          .from('UserInterest')
-          .select('InterestId, Interest(Id, Name, CategoryId, Category(Id, Name))')
-          .eq('UserId', user.id);
-          
+          .from("UserInterest")
+          .select(
+            "InterestId, Interest(Id, Name, CategoryId, Category(Id, Name))",
+          )
+          .eq("UserId", user.id);
+
         responseData = {
           success: true,
-          message: 'Profile data retrieved successfully',
+          message: "Profile data retrieved successfully",
           data: {
             profile,
             migrationSteps,
             languages: languages || [],
-            interests: interests || []
-          }
+            interests: interests || [],
+          },
         };
         break;
-        
-      case 'checkStatus':
+
+      case "checkStatus":
         // Check if the user has completed onboarding
         const status = await checkOnboardingStatus(supabaseClient, user.id);
-        
+
         responseData = {
           success: true,
-          message: 'Onboarding status retrieved successfully',
-          data: status
+          message: "Onboarding status retrieved successfully",
+          data: status,
         };
         break;
-        
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
-    
+
     // Log the response
-    console.log(`=== OUTGOING RESPONSE ===`);
-    console.log(`Success: ${responseData.success}, Message: ${responseData.message}`);
-    console.log(`Response data:`, JSON.stringify(responseData.data, null, 2));
-    
+
     // Return the response
     return new Response(JSON.stringify(responseData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-    
   } catch (error) {
-    console.error('=== ERROR PROCESSING REQUEST ===');
+    console.error("=== ERROR PROCESSING REQUEST ===");
     console.error(`Error message: ${error.message}`);
     console.error(`Error stack: ${error.stack}`);
-    
+
     // Log more details about the request that caused the error
     try {
       // We can't directly access requestData here as it might not be defined in case of parsing errors
       // Instead, try to parse the request body again
       const rawBody = await req.text();
       const parsedData = JSON.parse(rawBody);
-      console.error(`Failed request details - Action: ${parsedData.action}, Step: ${parsedData.step || 'none'}`);
-      console.error(`Request data that caused error:`, JSON.stringify(parsedData.data, null, 2));
+      console.error(
+        `Failed request details - Action: ${parsedData.action}, Step: ${
+          parsedData.step || "none"
+        }`,
+      );
+      console.error(
+        `Request data that caused error:`,
+        JSON.stringify(parsedData.data, null, 2),
+      );
     } catch (e) {
-      console.error('Could not log request details:', e.message);
+      console.error("Could not log request details:", e.message);
     }
-    
+
     // Return the error
     const errorResponse = {
       success: false,
-      message: 'Error processing request',
+      message: "Error processing request",
       error: error.message,
-      errorType: error.constructor.name
+      errorType: error.constructor.name,
     };
-    
-    console.error(`Returning error response:`, JSON.stringify(errorResponse, null, 2));
-    
+
+    console.error(
+      `Returning error response:`,
+      JSON.stringify(errorResponse, null, 2),
+    );
+
     return new Response(JSON.stringify(errorResponse), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });
   }

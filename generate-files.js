@@ -85,7 +85,7 @@ if (fs.existsSync(startDir)) {
       ? `${outputBasePath}.md`
       : `${outputBasePath}-${idx + 1}.md`;
     fs.writeFileSync(filename, chunk.join('\n'), 'utf-8');
-    console.log(`✅ Folder structure written to ${filename}`);
+    
   });
 } else {
   console.error('❌ "lib" directory not found. Run this from the root of a Flutter project.');

@@ -48,7 +48,7 @@ serve(async (req) => {
       throw new Error(error.message);
     }
     
-    console.log(`Retrieved ${data?.length ?? 0} languages`);
+    
     
     // Return the language data
     return new Response(

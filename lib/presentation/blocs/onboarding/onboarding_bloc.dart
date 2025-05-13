@@ -61,7 +61,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       // Check if onboarding is already completed
       final isCompleted = await _checkOnboardingStatusUseCase();
       if (isCompleted) {
-        _logger.debug('OnboardingBloc', 'Onboarding already completed, skipping to completed state');
+        
         emit(state.copyWith(
           currentStep: OnboardingStep.completed,
           isLoading: false,
@@ -77,7 +77,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         isLoading: false,
       ));
       
-      _logger.debug('OnboardingBloc', 'Initialized with existing data');
+      
     } catch (e) {
       _logger.error('OnboardingBloc', 'Error initializing', error: e);
       emit(state.copyWith(
@@ -98,7 +98,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     final updatedData = state.data.copyWith(birthCountry: event.country);
     emit(state.copyWith(data: updatedData));
     
-    _logger.debug('OnboardingBloc', 'Birth country updated: ${event.country}');
+    
 
 
   }
@@ -116,12 +116,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       return;
     }
     
-    _logger.debug('OnboardingBloc', 'Updating current status to: ${event.status}');
+    
     
     final updatedData = state.data.copyWith(currentStatus: event.status);
     emit(state.copyWith(data: updatedData));
     
-    _logger.debug('OnboardingBloc', 'Current status updated successfully: ${event.status}');
+    
   }
 
   /// Handle migration step add event
@@ -133,7 +133,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       ..add(event.step);
     final updatedData = state.data.copyWith(migrationSteps: updatedSteps);
     emit(state.copyWith(data: updatedData));
-    _logger.debug('OnboardingBloc', 'Migration step added');
+    
   }
 
   /// Handle migration step update event
@@ -146,7 +146,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       updatedSteps[event.index] = event.step;
       final updatedData = state.data.copyWith(migrationSteps: updatedSteps);
       emit(state.copyWith(data: updatedData));
-      _logger.debug('OnboardingBloc', 'Migration step updated at index: ${event.index}');
+      
     }
   }
 
@@ -160,7 +160,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       updatedSteps.removeAt(event.index);
       final updatedData = state.data.copyWith(migrationSteps: updatedSteps);
       emit(state.copyWith(data: updatedData));
-      _logger.debug('OnboardingBloc', 'Migration step removed at index: ${event.index}');
+      
     }
   }
 
@@ -175,7 +175,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     final updatedData = state.data.copyWith(profession: event.profession);
     emit(state.copyWith(data: updatedData));
     
-    _logger.debug('OnboardingBloc', 'Profession updated: ${event.profession}');
+    
 
 
   }
@@ -185,7 +185,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     LanguagesUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Languages updated: ${event.languages}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(languages: event.languages),
     ));
@@ -196,7 +196,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     InterestsUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Interests updated: ${event.interests}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(interests: event.interests),
     ));
@@ -207,11 +207,10 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfileBasicInfoUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile basic info updated: ${event.firstName} ${event.lastName}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(
-        firstName: event.firstName,
-        lastName: event.lastName,
+        fullName: event.fullName,
       ),
     ));
   }
@@ -221,12 +220,17 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfileDisplayNameUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile display name updated: ${event.displayName}');
-    emit(state.copyWith(
-      data: state.data.copyWith(
-        displayName: event.displayName,
-      ),
-    ));
+    // Only update state if the display name has actually changed
+    if (state.data.displayName != event.displayName) {
+      // Minimal logging for performance
+      
+      
+      emit(state.copyWith(
+        data: state.data.copyWith(
+          displayName: event.displayName,
+        ),
+      ));
+    }
   }
 
   /// Handle profile bio updated event
@@ -234,12 +238,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfileBioUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile bio updated: ${event.bio}');
+    
+    
+    
+    
+    // Check if the bio has actually changed
+    final hasChanged = state.data.bio != event.bio;
+    
+    
+    // For privacy reasons, don't log the full bio content, just the first few words
+    final bioPreview = event.bio.isNotEmpty 
+        ? '${event.bio.split(' ').take(5).join(' ')}${event.bio.split(' ').length > 5 ? '...' : ''}'
+        : '(empty)';
+    
+    
     emit(state.copyWith(
       data: state.data.copyWith(
         bio: event.bio,
       ),
     ));
+    
+    
+    
   }
 
   /// Handle profile location updated event
@@ -247,7 +267,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfileLocationUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile location updated: ${event.currentLocation} ${event.destinationCity}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(
         currentLocation: event.currentLocation,
@@ -261,7 +281,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfilePhotoUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile photo updated: ${event.photoUrl}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(
         profilePhotoUrl: event.photoUrl,
@@ -274,7 +294,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfilePrivacyUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    _logger.debug('OnboardingBloc', 'Profile privacy updated: ${event.isPrivate}');
+    
     emit(state.copyWith(
       data: state.data.copyWith(
         isPrivate: event.isPrivate,
@@ -282,6 +302,9 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ));
   }
 
+  // Track the last saved step to prevent redundant saves during navigation
+  static OnboardingStep? _lastSavedStep;
+  
   /// Handle next step request event
   void _onNextStepRequested(
     NextStepRequested event,
@@ -294,8 +317,42 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       return;
     }
 
-    final currentStepIndex = OnboardingStep.values.indexOf(state.currentStep);
+    final currentStep = state.currentStep;
+    final currentStepIndex = OnboardingStep.values.indexOf(currentStep);
     final nextStepIndex = currentStepIndex + 1;
+    
+    // Determine if we need to save the current step data
+    bool shouldSaveCurrentStep = _lastSavedStep != currentStep;
+    
+    // These steps always need to save data when completed
+    final criticalSteps = [
+      OnboardingStep.birthCountry,
+      OnboardingStep.currentStatus,
+      OnboardingStep.profileBasicInfo,
+      OnboardingStep.profileDisplayName,
+      OnboardingStep.profileBio,
+      OnboardingStep.interests,
+      OnboardingStep.languages,
+    ];
+    
+    if (criticalSteps.contains(currentStep)) {
+      
+      shouldSaveCurrentStep = true;
+    }
+    
+    // Save current step data if needed
+    if (shouldSaveCurrentStep) {
+      
+      _saveOnboardingDataUseCase(state.data).then((_) {
+        
+        // Update the last saved step
+        _lastSavedStep = currentStep;
+      }).catchError((error) {
+        _logger.error('OnboardingBloc', 'Error saving step data', error: error);
+      });
+    } else {
+      
+    }
     
     if (nextStepIndex < OnboardingStep.values.length) {
       final nextStep = OnboardingStep.values[nextStepIndex];
@@ -303,10 +360,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         currentStep: nextStep,
         errorMessage: null,
       ));
-      _logger.debug('OnboardingBloc', 'Moved to next step: $nextStep');
       
-      // Auto-save progress when moving to next step
-      add(const OnboardingSaved());
       
       // If we've reached the completed step, mark onboarding as complete
       if (nextStep == OnboardingStep.completed) {
@@ -323,13 +377,16 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     final currentStepIndex = OnboardingStep.values.indexOf(state.currentStep);
     final previousStepIndex = currentStepIndex - 1;
     
+    // No need to save data when going back to previous step
+    
+    
     if (previousStepIndex >= 0) {
       final previousStep = OnboardingStep.values[previousStepIndex];
       emit(state.copyWith(
         currentStep: previousStep,
         errorMessage: null,
       ));
-      _logger.debug('OnboardingBloc', 'Moved to previous step: $previousStep');
+      
     }
   }
 
@@ -341,8 +398,25 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     // Only allow skipping certain steps
     if (state.currentStep == OnboardingStep.migrationJourney ||
         state.currentStep == OnboardingStep.profession) {
-      final currentStepIndex = OnboardingStep.values.indexOf(state.currentStep);
+      final currentStep = state.currentStep;
+      final currentStepIndex = OnboardingStep.values.indexOf(currentStep);
       final nextStepIndex = currentStepIndex + 1;
+      
+      // Check if we need to save data for the current step before skipping
+      bool shouldSaveCurrentStep = _lastSavedStep != currentStep;
+      
+      if (shouldSaveCurrentStep) {
+        
+        _saveOnboardingDataUseCase(state.data).then((_) {
+          
+          // Update the last saved step
+          _lastSavedStep = currentStep;
+        }).catchError((error) {
+          _logger.error('OnboardingBloc', 'Error saving step data before skip', error: error);
+        });
+      } else {
+        
+      }
       
       if (nextStepIndex < OnboardingStep.values.length) {
         final nextStep = OnboardingStep.values[nextStepIndex];
@@ -350,10 +424,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           currentStep: nextStep,
           errorMessage: null,
         ));
-        _logger.debug('OnboardingBloc', 'Skipped step: ${state.currentStep}');
         
-        // Auto-save progress when skipping a step
-        add(const OnboardingSaved());
         
         // If we've reached the completed step, mark onboarding as complete
         if (nextStep == OnboardingStep.completed) {
@@ -386,7 +457,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         isLoading: false,
       ));
       
-      _logger.debug('OnboardingBloc', 'Onboarding completed');
+      
     } catch (e) {
       _logger.error('OnboardingBloc', 'Error completing onboarding', error: e);
       emit(state.copyWith(
@@ -396,36 +467,46 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
+  // Track the last saved state to prevent redundant API calls
+  static OnboardingData? _lastSavedData;
+  static DateTime _lastSaveTime = DateTime(2000); // Initialize with old date
+  
   /// Handle save onboarding data event
   Future<void> _onOnboardingSaved(
     OnboardingSaved event,
     Emitter<OnboardingState> emit,
   ) async {
     try {
+      // Prevent rapid consecutive saves (throttle to once per second)
+      final now = DateTime.now();
+      if (now.difference(_lastSaveTime).inMilliseconds < 1000) {
+        
+        return;
+      }
+      
+      // Check if data has actually changed from last save
+      if (_lastSavedData != null && _lastSavedData == state.data) {
+        
+        return;
+      }
+      
+      // Update last save time before starting the save operation
+      _lastSaveTime = now;
+      
+      // Only log the start of the save operation, not all the details
+      
       emit(state.copyWith(isLoading: true));
       
-      // Log what we're about to save
-      _logger.debug('OnboardingBloc', 'Saving onboarding data...');
-      
-      // Log specific fields to help with debugging
-      if (state.data.birthCountry != null && state.data.birthCountry!.isNotEmpty) {
-        _logger.debug('OnboardingBloc', 'Birth country: ${state.data.birthCountry}');
-      }
-      
-      if (state.data.currentStatus != null && state.data.currentStatus!.isNotEmpty) {
-        _logger.debug('OnboardingBloc', 'Current status: ${state.data.currentStatus}');
-      }
-      
-      if (state.data.migrationSteps.isNotEmpty) {
-        _logger.debug('OnboardingBloc', 'Migration steps count: ${state.data.migrationSteps.length}');
-      }
-      
-      // Save the data
+      // Save the data without excessive logging
       await _saveOnboardingDataUseCase(state.data);
+      
+      // Update the last saved data after successful save
+      _lastSavedData = state.data;
       
       emit(state.copyWith(isLoading: false));
       
-      _logger.debug('OnboardingBloc', 'Onboarding progress saved successfully');
+      // Log success with minimal information
+      
     } catch (e, stackTrace) {
       _logger.error(
         'OnboardingBloc', 

@@ -98,7 +98,7 @@ class _SignupScreenState extends State<SignupScreen>
 
   // Helper method to sign up with Google
   void _signUpWithGoogle(BuildContext context) {
-    _logger.debug('Signup', 'Attempting to sign up with Google');
+    
 
     // Clear any existing error message
     setState(() {

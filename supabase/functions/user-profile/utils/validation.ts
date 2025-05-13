@@ -7,8 +7,8 @@
  * @param step The migration step to validate
  */
 export function validateMigrationStep(step: any): void {
-  console.log(`=== VALIDATING MIGRATION STEP ===`);
-  console.log(`Step data:`, JSON.stringify(step, null, 2));
+  
+  
   
   // Check if we have a step object
   if (!step) {
@@ -21,14 +21,14 @@ export function validateMigrationStep(step: any): void {
     console.error('Country ID is required for migration steps');
     throw new Error('Country ID is required for migration steps');
   } else {
-    console.log(`Country ID validation passed: ${step.countryId}`);
+    
   }
   
   // Validate arrived date (make it optional)
   if (step.arrivedDate) {
-    console.log(`Arrived date provided: ${step.arrivedDate}`);
+    
   } else {
-    console.log('Arrived date not provided, but will continue as it may be optional');
+    
     // We'll make this optional to be more flexible
     // Instead of throwing an error, we'll just log a warning
     console.warn('Arrived date is recommended for migration steps but not strictly required');
@@ -40,7 +40,7 @@ export function validateMigrationStep(step: any): void {
       const arrivedAtDate = new Date(step.arrivedDate);
       const currentDate = new Date();
       
-      console.log(`Arrived date: ${arrivedAtDate.toISOString()}, Current date: ${currentDate.toISOString()}`);
+      
       
       // Add a small buffer (1 day) to account for timezone differences
       const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
@@ -61,7 +61,7 @@ export function validateMigrationStep(step: any): void {
       const leftAtDate = new Date(step.leftDate);
       const arrivedAtDate = new Date(step.arrivedDate);
       
-      console.log(`Left date: ${leftAtDate.toISOString()}, Arrived date: ${arrivedAtDate.toISOString()}`);
+      
       
       if (arrivedAtDate.getTime() > leftAtDate.getTime()) {
         console.warn('Left date is before arrived date, but will allow it for flexibility');
@@ -73,10 +73,10 @@ export function validateMigrationStep(step: any): void {
       // Just log the error but don't throw to be more flexible
     }
   } else if (step.leftDate) {
-    console.log(`Left date provided without arrived date: ${step.leftDate}`);
+    
   }
   
-  console.log('Migration step validation passed');
+  
 }
 
 /**

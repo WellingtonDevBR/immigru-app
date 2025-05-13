@@ -40,11 +40,11 @@ serve(async (req) => {
     const method = req.method;
 
     if (method === 'GET') {
-      console.log('Processing GET request for user interests');
+      
       
       try {
         // For GET requests, we don't need to parse the request body
-        console.log('Querying UserInterest table for user:', user.id);
+        
         
         const { data: interests, error } = await supabase
           .from('UserInterest')
@@ -56,18 +56,18 @@ serve(async (req) => {
           throw new Error(error.message);
         }
 
-        console.log('Retrieved user interests:', interests ? interests.length : 0);
+        
         
         // Ensure interests is always an array, even if null
         const safeInterests = interests || [];
         
         // Log each interest for debugging
         safeInterests.forEach((interest, index) => {
-          console.log(`Interest ${index + 1}:`, interest);
+          
         });
         
         const response = JSON.stringify({ data: safeInterests });
-        console.log('Response size:', response.length);
+        
         
         return new Response(response, {
           headers: {
@@ -83,13 +83,13 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      console.log('Processing POST request for user interests');
+      
       
       try {
         const body = await req.json();
         const interestIds: number[] = body.interestIds;
         
-        console.log('Received interestIds:', interestIds);
+        
 
         if (!Array.isArray(interestIds)) {
           console.error('Invalid interestIds array:', interestIds);
@@ -99,10 +99,10 @@ serve(async (req) => {
           });
         }
         
-        console.log(`Updating interests for user ${user.id}: ${interestIds.length} interests`);
+        
 
         // Delete existing interests
-        console.log('Deleting existing user interests');
+        
         const { error: deleteError } = await supabase
           .from('UserInterest')
           .delete()
@@ -113,12 +113,12 @@ serve(async (req) => {
           throw new Error(`Failed to delete existing interests: ${deleteError.message}`);
         }
         
-        console.log('Successfully deleted existing interests');
+        
 
         // Only insert new interests if there are any to insert
         if (interestIds.length > 0) {
           // Insert new interests
-          console.log('Inserting new user interests:', interestIds);
+          
           const inserts = interestIds.map((id) => ({
             UserId: user.id,
             InterestId: id,
@@ -133,9 +133,9 @@ serve(async (req) => {
             throw new Error(`Failed to insert new interests: ${insertError.message}`);
           }
           
-          console.log('Successfully inserted new interests');
+          
         } else {
-          console.log('No new interests to insert');
+          
         }
 
         return new Response(JSON.stringify({ success: true }), {

@@ -14,7 +14,7 @@ type SupabaseClient = any;
  * @returns The user profile data
  */
 export async function getUserProfile(supabaseClient: SupabaseClient, userId: string): Promise<UserProfile | null> {
-  console.log(`Getting profile for user: ${userId}`);
+  
   
   const { data, error } = await supabaseClient
     .from('UserProfile')
@@ -42,8 +42,8 @@ export async function updateUserProfile(
   userId: string, 
   profileData: Partial<UserProfile>
 ): Promise<{ success: boolean; data?: UserProfile; error?: any }> {
-  console.log(`Updating profile for user: ${userId}`);
-  console.log(`Profile data:`, profileData);
+  
+  
   
   // Sanitize text fields to prevent XSS
   if (profileData.Bio) {
@@ -81,15 +81,14 @@ export async function createProfileIfNotExists(
   supabaseClient: SupabaseClient, 
   userId: string
 ): Promise<UserProfile | null> {
+  
   // Check if profile exists
   const existingProfile = await getUserProfile(supabaseClient, userId);
   
   if (existingProfile) {
     return existingProfile;
   }
-  
-  // Create new profile
-  console.log(`Creating new profile for user: ${userId}`);
+
   
   const newProfile = {
     UserId: userId,
@@ -98,16 +97,20 @@ export async function createProfileIfNotExists(
     UpdatedAt: new Date().toISOString()
   };
   
-  const { data, error } = await supabaseClient
-    .from('UserProfile')
-    .insert(newProfile)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabaseClient
+      .from('UserProfile')
+      .insert(newProfile)
+      .select()
+      .single();
+      
+    if (error) {
+
+      return null;
+    }
     
-  if (error) {
-    console.error(`Error creating user profile:`, error);
+    return data;
+  } catch (e) {
     return null;
   }
-  
-  return data;
 }

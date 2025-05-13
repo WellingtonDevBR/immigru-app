@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   // Sign out the user
   Future<void> _signOut() async {
-    _logger.debug('HomeScreen', 'User signing out');
+    
     try {
       await _signOutUseCase.call();
       // TODO: Navigate to login screen after sign out
@@ -169,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
     
     try {
-      _logger.debug('HomeScreen', 'Fetching posts with category: $_selectedCategory');
+      
       
       // Try to get posts from the repository
       List<Map<String, dynamic>> posts = [];
@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ).timeout(const Duration(seconds: 5));
       } catch (e) {
         // If error or timeout, use sample data
-        _logger.debug('HomeScreen', 'Using sample posts data as fallback');
+        
         posts = _samplePosts;
       }
       
@@ -213,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
     
     try {
-      _logger.debug('HomeScreen', 'Fetching upcoming events');
+      
       
       // Try to get events from the repository
       List<Map<String, dynamic>> events = [];
@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ).timeout(const Duration(seconds: 5));
       } catch (e) {
         // If error or timeout, use sample data
-        _logger.debug('HomeScreen', 'Using sample events data as fallback');
+        
         events = _sampleEvents;
       }
       
@@ -250,13 +250,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   // Show create post dialog
   void _showCreatePostDialog() {
-    _logger.debug('HomeScreen', 'Showing create post dialog');
+    
     CreatePostDialog.show(context, widget.user, _createPost);
   }
   
   // Create a new post
   Future<void> _createPost(String content, String? category) async {
-    _logger.debug('HomeScreen', 'Creating post: $content, category: $category');
+    
     try {
       await _createPostUseCase.call(
         content: content,
@@ -285,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   // Add a new document to ImmiGroves
   Future<void> _addDocument() async {
-    _logger.debug('HomeScreen', 'Adding document to ImmiGroves');
+    
     // TODO: Implement document upload functionality
   }
   
@@ -358,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.person_outline,
                     title: 'Profile',
                     onTap: () {
-                      _logger.debug('Menu', 'Profile selected');
+                      
                       Navigator.pop(context);
                       // TODO: Navigate to profile screen
                     },
@@ -369,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.settings_outlined,
                     title: 'Settings',
                     onTap: () {
-                      _logger.debug('Menu', 'Settings selected');
+                      
                       Navigator.pop(context);
                       // TODO: Navigate to settings screen
                     },
@@ -380,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.help_outline,
                     title: 'Help & Support',
                     onTap: () {
-                      _logger.debug('Menu', 'Help selected');
+                      
                       Navigator.pop(context);
                       // TODO: Navigate to help screen
                     },
@@ -391,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.info_outline,
                     title: 'About',
                     onTap: () {
-                      _logger.debug('Menu', 'About selected');
+                      
                       Navigator.pop(context);
                       // TODO: Navigate to about screen
                     },
@@ -402,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.flight_takeoff_outlined,
                     title: 'Immigration Journey',
                     onTap: () {
-                      _logger.debug('Menu', 'Immigration Journey selected');
+                      
                       Navigator.pop(context);
                       Navigator.push(
                         context,
@@ -419,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     icon: Icons.logout,
                     title: 'Sign Out',
                     onTap: () {
-                      _logger.debug('Menu', 'Sign out selected');
+                      
                       Navigator.pop(context);
                       _signOut();
                     },
@@ -487,11 +487,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         logger: _logger,
         onSearchPressed: () {
           // Handle search action
-          _logger.debug('HomeScreen', 'Search button pressed');
+          
         },
         onChatPressed: () {
           // Handle chat action
-          _logger.debug('HomeScreen', 'Chat button pressed');
+          
         },
       ),
       // Add drawer for menu

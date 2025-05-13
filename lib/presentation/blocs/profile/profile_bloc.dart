@@ -44,7 +44,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileLoaded event,
     Emitter<ProfileState> emit,
   ) async {
-    _logger.debug('ProfileBloc', 'Loading profile');
+    
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
@@ -54,10 +54,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           profile: profile,
           isLoading: false,
         ));
-        _logger.debug('ProfileBloc', 'Profile loaded successfully');
+        
       } else {
         emit(state.copyWith(isLoading: false));
-        _logger.debug('ProfileBloc', 'No existing profile found');
+        
       }
     } catch (e) {
       emit(state.copyWith(
@@ -73,12 +73,11 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     BasicInfoUpdated event,
     Emitter<ProfileState> emit,
   ) {
-    _logger.debug('ProfileBloc',
-        'Basic info updated: ${event.firstName} ${event.lastName}');
+    
     emit(state.copyWith(
       profile: state.profile.copyWith(
-        firstName: event.firstName,
-        lastName: event.lastName,
+        fullName: event.fullName,
+        profilePhotoUrl: event.photoUrl ?? state.profile.profilePhotoUrl,
       ),
       errorMessage: null,
     ));
@@ -89,7 +88,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     DisplayNameUpdated event,
     Emitter<ProfileState> emit,
   ) {
-    _logger.debug('ProfileBloc', 'Display name updated: ${event.displayName}');
+    
     emit(state.copyWith(
       profile: state.profile.copyWith(
         displayName: event.displayName,
@@ -103,7 +102,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     BioUpdated event,
     Emitter<ProfileState> emit,
   ) {
-    _logger.debug('ProfileBloc', 'Bio updated: ${event.bio}');
+    
     emit(state.copyWith(
       profile: state.profile.copyWith(
         bio: event.bio,
@@ -133,7 +132,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfilePhotoUploaded event,
     Emitter<ProfileState> emit,
   ) async {
-    _logger.debug('ProfileBloc', 'Uploading profile photo: ${event.localPath}');
+    
     emit(state.copyWith(isPhotoUploading: true, errorMessage: null));
 
     try {
@@ -145,7 +144,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           ),
           isPhotoUploading: false,
         ));
-        _logger.debug('ProfileBloc', 'Profile photo uploaded: $photoUrl');
+        
       } else {
         emit(state.copyWith(
           isPhotoUploading: false,
@@ -167,7 +166,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     PrivacySettingsUpdated event,
     Emitter<ProfileState> emit,
   ) {
-    _logger.debug('ProfileBloc', 'Privacy settings updated: ${event.isPrivate}');
+    
     emit(state.copyWith(
       profile: state.profile.copyWith(
         showEmail: event.isPrivate ? VisibilityType.private : VisibilityType.public,
@@ -202,7 +201,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         currentStep: nextStep,
         errorMessage: null,
       ));
-      _logger.debug('ProfileBloc', 'Moved to next step: $nextStep');
+      
       
       // Auto-save progress when moving to next step
       add(const ProfileSaved());
@@ -228,7 +227,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         currentStep: previousStep,
         errorMessage: null,
       ));
-      _logger.debug('ProfileBloc', 'Moved to previous step: $previousStep');
+      
     }
   }
 
@@ -246,7 +245,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         currentStep: nextStep,
         errorMessage: null,
       ));
-      _logger.debug('ProfileBloc', 'Skipped to next step: $nextStep');
+      
     }
   }
 
@@ -255,13 +254,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileSaved event,
     Emitter<ProfileState> emit,
   ) async {
-    _logger.debug('ProfileBloc', 'Saving profile');
+    
     emit(state.copyWith(isSubmitting: true, errorMessage: null));
 
     try {
       await _saveProfileUseCase(state.profile);
       emit(state.copyWith(isSubmitting: false));
-      _logger.debug('ProfileBloc', 'Profile saved successfully');
+      
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
@@ -276,7 +275,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileSetupCompleted event,
     Emitter<ProfileState> emit,
   ) async {
-    _logger.debug('ProfileBloc', 'Completing profile setup');
+    
     emit(state.copyWith(isSubmitting: true, errorMessage: null));
 
     try {
@@ -291,7 +290,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isSubmitting: false,
         currentStep: ProfileSetupStep.completed,
       ));
-      _logger.debug('ProfileBloc', 'Profile setup completed successfully');
+      
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,

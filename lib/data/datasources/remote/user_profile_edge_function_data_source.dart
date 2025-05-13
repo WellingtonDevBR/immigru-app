@@ -1,6 +1,7 @@
 import 'package:immigru/core/services/edge_function_logger.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Data source for interacting with the user profile edge function
 class UserProfileEdgeFunctionDataSource {
@@ -18,13 +19,13 @@ class UserProfileEdgeFunctionDataSource {
     bool isCompleted = false,
   }) async {
     try {
-
-
-
-
       
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Saving data for step: $step');
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Data content: ${data.toString()}');
+      
+      
+      
+      
+      
+      
       
       final requestBody = {
         'action': 'save', // Explicitly set the action
@@ -33,7 +34,7 @@ class UserProfileEdgeFunctionDataSource {
         'isCompleted': isCompleted,
       };
       
-
+      
       
       // Log the request to the edge function
       _edgeFunctionLogger.logRequest(
@@ -42,16 +43,55 @@ class UserProfileEdgeFunctionDataSource {
         step: step,
       );
       
-
+      
       
       try {
+        
         final response = await _supabaseService.client
           .functions
-          .invoke('user-profile', body: requestBody);
+          .invoke('user-profile', body: requestBody, method: HttpMethod.post);
+        
+        
+        
+        
           
-
-
-
+        
+        
+        
+        
+        // Check if the response is empty or null
+        if (response.data == null) {
+          
+          _logger.error('UserProfileEdgeFunctionDataSource', 'Edge function returned null data');
+          
+          // Log the response from the edge function
+          _edgeFunctionLogger.logResponse(
+            functionName: 'user-profile',
+            responseData: {'error': 'Null response'},
+            step: step,
+            isSuccess: false,
+          );
+          
+          throw Exception('Edge function returned null data');
+        } 
+        
+        // Handle case where response data is an empty map
+        if (response.data is Map && (response.data as Map).isEmpty) {
+          
+          _logger.error('UserProfileEdgeFunctionDataSource', 'Edge function returned empty data map');
+          
+          // Log the response from the edge function
+          _edgeFunctionLogger.logResponse(
+            functionName: 'user-profile',
+            responseData: {'warning': 'Empty response map'},
+            step: step,
+            isSuccess: true, // Consider this a success to avoid repeated retries
+          );
+          
+          // Don't throw an exception for empty responses
+          
+          return;
+        }
         
         final responseData = response.data as Map<String, dynamic>?;
         
@@ -64,28 +104,28 @@ class UserProfileEdgeFunctionDataSource {
         );
         
         if (responseData == null) {
-
+          
           throw Exception('Edge function returned null data');
         }
         
         if (responseData.containsKey('error') && responseData['error'] != null) {
-
-
+          
+          
           throw Exception('Edge function response error: ${responseData['error']}');
         }
         
-
+        
         if (responseData.containsKey('message')) {
-
+          
         }
         
-
+        
       } catch (e) {
-
+        
         rethrow;
       }
       
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Successfully saved data for step: $step');
+      
     } catch (e) {
       _logger.error('UserProfileEdgeFunctionDataSource', 'Error saving data for step: $step', error: e);
       rethrow;
@@ -95,7 +135,7 @@ class UserProfileEdgeFunctionDataSource {
   /// Get the user profile data
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Getting user profile data');
+      
       
       final requestBody = {
         'action': 'get',
@@ -110,7 +150,7 @@ class UserProfileEdgeFunctionDataSource {
       
       final response = await _supabaseService.client
         .functions
-        .invoke('user-profile', body: requestBody);
+        .invoke('user-profile', body: requestBody, method: HttpMethod.post);
         
       final responseData = response.data as Map<String, dynamic>?;
       
@@ -126,7 +166,7 @@ class UserProfileEdgeFunctionDataSource {
         throw Exception('Failed to get profile data: ${responseData?['error'] ?? 'Unknown error'}');
       }
       
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Successfully got user profile data');
+      
       
       return responseData['data'] as Map<String, dynamic>;
     } catch (e) {
@@ -138,7 +178,7 @@ class UserProfileEdgeFunctionDataSource {
   /// Check if the user has completed the onboarding process
   Future<bool> checkOnboardingStatus() async {
     try {
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Checking onboarding status');
+      
       
       final requestBody = {
         'action': 'checkStatus',
@@ -153,7 +193,7 @@ class UserProfileEdgeFunctionDataSource {
       
       final response = await _supabaseService.client
         .functions
-        .invoke('user-profile', body: requestBody);
+        .invoke('user-profile', body: requestBody, method: HttpMethod.post);
         
       final responseData = response.data as Map<String, dynamic>?;
       
@@ -169,7 +209,7 @@ class UserProfileEdgeFunctionDataSource {
         throw Exception('Failed to check onboarding status: ${responseData?['error'] ?? 'Unknown error'}');
       }
       
-      _logger.debug('UserProfileEdgeFunctionDataSource', 'Successfully checked onboarding status');
+      
       
       final data = responseData['data'] as Map<String, dynamic>;
       return data['completed'] as bool;

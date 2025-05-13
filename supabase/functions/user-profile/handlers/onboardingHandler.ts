@@ -27,7 +27,7 @@ export async function processStepData(
   existingProfile: UserProfile | null,
   isCompleted: boolean
 ): Promise<{ success: boolean; data?: any; error?: any }> {
-  console.log(`Processing data for step: ${step}`);
+  
   
   try {
     switch(step) {
@@ -42,7 +42,7 @@ export async function processStepData(
         
         // If it looks like an ISO code, try to find by ISO code first
         if (data.birthCountry.length <= 3) {
-          console.log(`Input looks like an ISO code: ${data.birthCountry}, trying ISO match...`);
+          
           
           // Try to find country by ISO code (exact match)
           const { data: isoCountryData, error: isoCountryError } = await supabaseClient
@@ -54,9 +54,9 @@ export async function processStepData(
           if (!isoCountryError && isoCountryData) {
             countryName = isoCountryData.Name;
             countryId = isoCountryData.Id;
-            console.log(`Found country by ISO code: ${countryName} (ID: ${countryId})`);
+            
           } else {
-            console.log(`No country found for ISO code: ${data.birthCountry}, trying name search...`);
+            
             
             // Try name search as fallback
             const { data: nameCountryData, error: nameCountryError } = await supabaseClient
@@ -68,7 +68,7 @@ export async function processStepData(
             if (!nameCountryError && nameCountryData && nameCountryData.length > 0) {
               countryName = nameCountryData[0].Name;
               countryId = nameCountryData[0].Id;
-              console.log(`Found country by name: ${countryName} (ID: ${countryId})`);
+              
             } else {
               console.warn(`Could not find country for: ${data.birthCountry}`);
             }
@@ -84,22 +84,22 @@ export async function processStepData(
           if (!countryError && countryData && countryData.length > 0) {
             countryName = countryData[0].Name;
             countryId = countryData[0].Id;
-            console.log(`Found country by name: ${countryName} (ID: ${countryId})`);
+            
           } else {
             console.warn(`Could not find country for: ${data.birthCountry}`);
           }
         }
         
-        console.log(`Saving origin country: ${countryName}`);
+        
         
         // First ensure the UserProfile record exists
         await createProfileIfNotExists(supabaseClient, userId);
         
         // Update the user profile with origin country
-        console.log(`Updating UserProfile.OriginCountry to ${countryName} for user ${userId}`);
+        
         
         // Update UserProfile.OriginCountry using standard client update
-        console.log('Updating UserProfile.OriginCountry using standard client update');
+        
         const { data: updateResult, error: updateError } = await supabaseClient
           .from('UserProfile')
           .update({ 
@@ -112,12 +112,12 @@ export async function processStepData(
         if (updateError) {
           console.error('Error updating UserProfile.OriginCountry:', updateError);
         } else {
-          console.log('UserProfile.OriginCountry update result:', updateResult);
+          
         }
         
         // Also add the birth country as the first migration step (Order=1) if we have a country ID
         if (countryId) {
-          console.log(`Adding/updating birth country as migration step with country ID: ${countryId}`);
+          
           
           // Check for existing birth country step
           const { data: existingSteps, error: stepsError } = await supabaseClient
@@ -130,7 +130,7 @@ export async function processStepData(
           if (stepsError) {
             console.error('Error checking for existing birth country step:', stepsError);
           } else if (existingSteps && existingSteps.length > 0) {
-            console.log(`Updating existing birth country step (ID: ${existingSteps[0].Id})`);
+            
             // Update existing birth country step
             const { error: updateStepError } = await supabaseClient
               .from('MigrationStep')
@@ -144,7 +144,7 @@ export async function processStepData(
               console.error('Error updating birth country step:', updateStepError);
             }
           } else {
-            console.log(`Creating new birth country step for country ID: ${countryId}`);
+            
             // Create new birth country step
             const { error: insertStepError } = await supabaseClient
               .from('MigrationStep')
@@ -184,7 +184,7 @@ export async function processStepData(
         await createProfileIfNotExists(supabaseClient, userId);
         
         // Update the user profile with current status
-        console.log(`Updating UserProfile.MigrationStage to ${data.currentStatus} for user ${userId}`);
+        
         
         // Update the user profile with current status
         try {
@@ -202,7 +202,7 @@ export async function processStepData(
             console.error('Status update error:', statusError);
             throw statusError;
           } else {
-            console.log('UserProfile.MigrationStage update successful:', updateResult);
+            
             
             // Log the updated profile for debugging
             const { data: updatedProfile } = await supabaseClient
@@ -211,7 +211,7 @@ export async function processStepData(
               .eq('UserId', userId)
               .single();
               
-            console.log('Updated profile after status change:', updatedProfile);
+            
             
             return { success: true, data: { currentStatus: data.currentStatus } };
           }
@@ -219,9 +219,7 @@ export async function processStepData(
           console.error('Error updating migration stage:', error);
           throw error;
         }
-        
-        return { success: true, data: { currentStatus: data.currentStatus } };
-        
+                
       case 'migrationJourney':
         // Handle migration steps
         if (!data.migrationSteps || !Array.isArray(data.migrationSteps)) {
@@ -234,7 +232,7 @@ export async function processStepData(
           return { success: true, data: { message: 'No migration steps to process' } };
         }
         
-        console.log(`Processing ${data.migrationSteps.length} migration steps`);
+        
         
         // Log the steps for debugging
         data.migrationSteps.forEach((step: any, index: number) => {
@@ -250,7 +248,7 @@ export async function processStepData(
         
         try {
           const result = await handleMigrationSteps(supabaseClient, userId, data.migrationSteps);
-          console.log('Migration steps processed successfully');
+          
           return result;
         } catch (error) {
           console.error('Error processing migration steps:', error);
@@ -341,13 +339,11 @@ export async function processStepData(
         
       case 'profileBasicInfo':
         // Update the user profile with basic info
-        const { firstName, lastName, profilePhotoUrl } = data;
+        const { fullName, profilePhotoUrl } = data;
         
-        if (!firstName || !lastName) {
-          throw new Error('First name and last name are required');
+        if (!fullName) {
+          throw new Error('Full name is required');
         }
-        
-        const fullName = `${firstName} ${lastName}`.trim();
         
         const { success: basicInfoSuccess, error: basicInfoError } = await supabaseClient
           .from('UserProfile')
@@ -362,25 +358,44 @@ export async function processStepData(
           throw basicInfoError;
         }
         
+        
         return { success: true, data: { fullName, avatarUrl: profilePhotoUrl } };
         
       case 'profileDisplayName':
         // Update the user profile with display name
+        
+        
+        
+        
         if (!data.displayName) {
+          
           throw new Error('Display name is required');
         }
         
-        const { success: displayNameSuccess, error: displayNameError } = await supabaseClient
-          .from('UserProfile')
-          .update({ 
-            DisplayName: data.displayName,
-            UpdatedAt: new Date().toISOString()
-          })
-          .eq('UserId', userId);
+        
+        
+        try {
+          const { data: displayNameData, error: displayNameError } = await supabaseClient
+            .from('UserProfile')
+            .update({ 
+              DisplayName: data.displayName,
+              UpdatedAt: new Date().toISOString()
+            })
+            .eq('UserId', userId);
           
-        if (displayNameError) {
-          throw displayNameError;
+          if (displayNameError) {
+            
+            throw displayNameError;
+          }
+          
+          
+          
+        } catch (error) {
+          
+          throw error;
         }
+        
+        
         
         return { success: true, data: { displayName: data.displayName } };
         
@@ -474,7 +489,7 @@ export async function checkOnboardingStatus(
   supabaseClient: SupabaseClient,
   userId: string
 ): Promise<{ completed: boolean; profile?: UserProfile }> {
-  console.log(`Checking onboarding status for user: ${userId}`);
+  
   
   const { data, error } = await supabaseClient
     .from('UserProfile')
@@ -505,7 +520,7 @@ export async function getOnboardingStepData(
   step: string,
   userId: string
 ): Promise<{ success: boolean; data?: any; error?: any }> {
-  console.log(`Getting data for onboarding step: ${step}`);
+  
   
   try {
     switch(step) {
@@ -544,7 +559,7 @@ export async function getOnboardingStepData(
         };
         
       case 'migrationJourney':
-        console.log(`Retrieving migration journey steps for user: ${userId}`);
+        
         
         // Get the user's migration steps with detailed country and visa information
         const { data: migrationData, error: migrationError } = await supabaseClient
@@ -570,7 +585,7 @@ export async function getOnboardingStepData(
           .eq('UserId', userId)
           .order('Order', { ascending: true });
         
-        console.log(`Migration steps query completed. Error: ${migrationError ? 'Yes' : 'No'}, Steps found: ${migrationData ? migrationData.length : 0}`);
+        
         
         if (migrationError) {
           console.error('Error retrieving migration steps:', migrationError);
@@ -586,7 +601,7 @@ export async function getOnboardingStepData(
           visaType: step.Visa?.VisaType || null
         }));
         
-        console.log(`Returning ${formattedSteps.length} formatted migration steps`);
+        
         
         return { 
           success: true, 

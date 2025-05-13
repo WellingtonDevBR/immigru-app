@@ -11,8 +11,7 @@ class OnboardingData extends Equatable {
   final List<String> interests;
   
   // Profile data
-  final String? firstName;
-  final String? lastName;
+  final String? fullName;
   final String? displayName;
   final String? bio;
   final String? currentLocation;
@@ -29,8 +28,7 @@ class OnboardingData extends Equatable {
     this.profession,
     this.languages = const [],
     this.interests = const [],
-    this.firstName,
-    this.lastName,
+    this.fullName,
     this.displayName,
     this.bio,
     this.currentLocation,
@@ -48,8 +46,7 @@ class OnboardingData extends Equatable {
     String? profession,
     List<String>? languages,
     List<String>? interests,
-    String? firstName,
-    String? lastName,
+    String? fullName,
     String? displayName,
     String? bio,
     String? currentLocation,
@@ -65,8 +62,7 @@ class OnboardingData extends Equatable {
       profession: profession ?? this.profession,
       languages: languages ?? this.languages,
       interests: interests ?? this.interests,
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
+      fullName: fullName ?? this.fullName,
       displayName: displayName ?? this.displayName,
       bio: bio ?? this.bio,
       currentLocation: currentLocation ?? this.currentLocation,
@@ -79,8 +75,7 @@ class OnboardingData extends Equatable {
 
   /// Create an empty onboarding data object
   factory OnboardingData.empty() => const OnboardingData(
-        firstName: '',
-        lastName: '',
+        fullName: '',
         displayName: '',
         bio: '',
         currentLocation: '',
@@ -97,8 +92,7 @@ class OnboardingData extends Equatable {
         profession,
         languages,
         interests,
-        firstName,
-        lastName,
+        fullName,
         displayName,
         bio,
         currentLocation,

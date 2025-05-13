@@ -10,7 +10,7 @@
 export function sanitizeNotes(input: string): string | null {
   if (!input) return null;
   
-  console.log(`Sanitizing notes: ${input}`);
+  
   
   // Remove potentially dangerous HTML/script tags
   let sanitized = input
@@ -26,7 +26,7 @@ export function sanitizeNotes(input: string): string | null {
     sanitized = sanitized.substring(0, 500);
   }
   
-  console.log(`Sanitized notes: ${sanitized}`);
+  
   return sanitized;
 }
 

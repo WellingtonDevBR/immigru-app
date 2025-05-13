@@ -13,18 +13,18 @@ class ProfileLoaded extends ProfileEvent {
   const ProfileLoaded();
 }
 
-/// Event to update the user's basic information (first and last name)
+/// Event to update the user's basic information
 class BasicInfoUpdated extends ProfileEvent {
-  final String firstName;
-  final String lastName;
+  final String fullName;
+  final String? photoUrl;
 
   const BasicInfoUpdated({
-    required this.firstName,
-    required this.lastName,
+    required this.fullName,
+    this.photoUrl,
   });
 
   @override
-  List<Object?> get props => [firstName, lastName];
+  List<Object?> get props => [fullName, photoUrl];
 }
 
 /// Event to update the user's display name

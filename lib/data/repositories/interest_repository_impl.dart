@@ -39,7 +39,7 @@ class InterestRepositoryImpl implements InterestRepository {
   @override
   Future<bool> saveUserInterests(List<int> interestIds) async {
     try {
-      _logger.debug('InterestRepositoryImpl', 'Saving user interests: $interestIds');
+      
       
       // Call the user-interest edge function to save interests
       final response = await _supabaseService.client.functions.invoke(
@@ -47,7 +47,7 @@ class InterestRepositoryImpl implements InterestRepository {
         body: {'interestIds': interestIds},
       );
       
-      _logger.debug('InterestRepositoryImpl', 'Save user interests response: ${response.data}');
+      
       
       // Check if the response indicates success
       final data = response.data as Map<String, dynamic>;
@@ -61,7 +61,7 @@ class InterestRepositoryImpl implements InterestRepository {
   @override
   Future<List<Interest>> getUserInterests() async {
     try {
-      _logger.debug('InterestRepositoryImpl', 'Getting user interests');
+      
       
       // Call the user-interest edge function to get user interests
       // Explicitly specify method and headers for the GET request
@@ -71,29 +71,29 @@ class InterestRepositoryImpl implements InterestRepository {
         headers: {'Content-Type': 'application/json'},
       );
       
-      _logger.debug('InterestRepositoryImpl', 'User interests response received: ${response.status}');
+      
       
       // Parse the response data
       final data = response.data as Map<String, dynamic>;
-      _logger.debug('InterestRepositoryImpl', 'Response data: $data');
+      
       
       if (data['data'] == null) {
-        _logger.debug('InterestRepositoryImpl', 'No interests data found in response');
+        
         return [];
       }
       
       // Parse the response and convert to Interest entities
       final List<dynamic> interestsJson = data['data'] as List<dynamic>;
-      _logger.debug('InterestRepositoryImpl', 'Found ${interestsJson.length} interests in response');
+      
       
       final interests = interestsJson.map((json) {
         // The response includes the Interest object nested under the 'Interest' key
         final interestData = json['Interest'] as Map<String, dynamic>;
-        _logger.debug('InterestRepositoryImpl', 'Processing interest: ${interestData['Name']}');
+        
         return InterestModel.fromJson(interestData);
       }).toList();
       
-      _logger.debug('InterestRepositoryImpl', 'Returning ${interests.length} interests');
+      
       return interests;
     } catch (e) {
       _logger.error('InterestRepositoryImpl', 'Error getting user interests: $e');

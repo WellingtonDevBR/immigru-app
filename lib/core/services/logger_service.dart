@@ -64,14 +64,14 @@ class LoggerService {
     final levelStr = '${_getLevelEmoji(level)} ${level.toString().split('.').last.toUpperCase()}';
     final categoryStr = '[${category.toString().split('.').last.toUpperCase()}]';
     
-    debugPrint('$timestamp | $levelStr $categoryStr: $message');
+    ;
     
     if (error != null) {
-      debugPrint('$timestamp | $levelStr $categoryStr ERROR: $error');
+      ;
     }
     
     if (stackTrace != null && level.index >= LogLevel.error.index) {
-      debugPrint('$timestamp | $levelStr $categoryStr STACK: $stackTrace');
+      ;
     }
   }
   

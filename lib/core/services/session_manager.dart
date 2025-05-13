@@ -127,7 +127,7 @@ class SessionManager extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting current user: $e');
+      ;
       return null;
     }
   }

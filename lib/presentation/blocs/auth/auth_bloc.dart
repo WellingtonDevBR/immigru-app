@@ -80,7 +80,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
                                              response.user!.emailConfirmedAt == null;
         
         if (emailConfirmationRequired) {
-          _logger.debug('AuthBloc', 'Email verification required for user: ${user.email}');
+          
           emit(AuthState.emailVerificationNeeded(user));
         } else {
           emit(AuthState.authenticated(user));
@@ -186,16 +186,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthState.loading());
       
-      _logger.debug('Auth', 'Checking authentication status');
+      
       
       // Check if the user is already logged in using SessionManager
       final currentUser = await _sessionManager.getCurrentUser();
       
       if (currentUser != null) {
-        _logger.debug('Auth', 'User is already authenticated: ${currentUser.email}');
+        
         emit(AuthState.authenticated(currentUser));
       } else {
-        _logger.debug('Auth', 'User is not authenticated');
+        
         emit(AuthState.initial());
       }
     } catch (e) {

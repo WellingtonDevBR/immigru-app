@@ -145,7 +145,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
         
         // Navigate to home screen when onboarding is completed
         if (state.currentStep == OnboardingStep.completed) {
-          _logger.debug('OnboardingScreen', 'Onboarding completed, navigating to home');
+          
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const HomeScreen(),
@@ -405,8 +405,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           );
                         },
                         child: BasicInfoStep(
-                          firstName: state.data.firstName ?? '',
-                          lastName: state.data.lastName ?? '',
+                          fullName: state.data.fullName ?? '',
                           photoUrl: state.data.profilePhotoUrl ?? '',
                         ),
                       ),
@@ -547,9 +546,22 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                         ElevatedButton(
                           onPressed: state.isCurrentStepValid
                               ? () {
-                                  context.read<OnboardingBloc>().add(
-                                        const NextStepRequested(),
-                                      );
+                                  // If we're on the display name step, save the data first
+                                  if (state.currentStep == OnboardingStep.profileDisplayName) {
+                                    // Save the display name data without logging
+                                    
+                                    // First explicitly save the data
+                                    context.read<OnboardingBloc>().add(const OnboardingSaved());
+                                    
+                                    // Add a small delay to ensure the save completes before moving to next step
+                                    Future.delayed(const Duration(milliseconds: 300), () {
+                                      if (mounted) {
+                                        context.read<OnboardingBloc>().add(const NextStepRequested());
+                                      }
+                                    });
+                                  } else {
+                                    context.read<OnboardingBloc>().add(const NextStepRequested());
+                                  }
                                 }
                               : null,
                           style: ElevatedButton.styleFrom(

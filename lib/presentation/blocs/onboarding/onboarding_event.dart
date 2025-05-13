@@ -122,16 +122,14 @@ class InterestsUpdated extends OnboardingEvent {
 
 /// Event to update the user's profile basic info
 class ProfileBasicInfoUpdated extends OnboardingEvent {
-  final String firstName;
-  final String lastName;
+  final String fullName;
 
   const ProfileBasicInfoUpdated({
-    required this.firstName,
-    required this.lastName,
+    required this.fullName,
   });
 
   @override
-  List<Object?> get props => [firstName, lastName];
+  List<Object?> get props => [fullName];
 }
 
 /// Event to update the user's display name

@@ -25,7 +25,7 @@ class AppThemeProvider extends ChangeNotifier {
     try {
       final themeString = await _themeService.getThemeMode();
       _themeMode = ThemeService.getThemeModeEnum(themeString);
-      _logger.debug('Theme', 'Loaded theme: $_themeMode');
+      
       notifyListeners();
     } catch (e, stackTrace) {
       _logger.error('Theme', 'Failed to load theme', error: e, stackTrace: stackTrace);
@@ -50,7 +50,7 @@ class AppThemeProvider extends ChangeNotifier {
   Future<void> toggleTheme() async {
     final newMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     await setThemeMode(newMode);
-    _logger.debug('Theme', 'Toggled theme to: $newMode');
+    
   }
 }
 

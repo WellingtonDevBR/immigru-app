@@ -38,7 +38,6 @@ class _InterestStepState extends State<InterestStep>
   bool _isLoading = true;
   String? _errorMessage;
   bool _isSaving = false;
-  bool _isLoadingUserInterests = false;
 
   // Keep this widget alive to prevent rebuilds
   @override
@@ -55,21 +54,20 @@ class _InterestStepState extends State<InterestStep>
   Future<void> _fetchInterests() async {
     setState(() {
       _isLoading = true;
-      _isLoadingUserInterests = true;
       _errorMessage = null;
     });
 
     try {
-      _logger.debug('InterestStep', 'Fetching all available interests');
+      
       // First fetch all available interests
       final interests = await _interestsUseCase();
-      _logger.debug('InterestStep', 'Fetched ${interests.length} interests');
+      
 
       // Build a map of interest names to IDs for easier lookup
       final Map<String, int> idMap = {};
       for (var interest in interests) {
         idMap[interest.name] = interest.id;
-        _logger.debug('InterestStep', 'Interest: ${interest.name} (ID: ${interest.id})');
+        
       }
 
       setState(() {
@@ -85,7 +83,6 @@ class _InterestStepState extends State<InterestStep>
       setState(() {
         _errorMessage = 'Failed to load interests. Please try again.';
         _isLoading = false;
-        _isLoadingUserInterests = false;
       });
     }
   }
@@ -93,9 +90,9 @@ class _InterestStepState extends State<InterestStep>
   /// Fetch user's previously selected interests
   Future<void> _fetchUserInterests() async {
     try {
-      _logger.debug('InterestStep', 'Fetching user interests');
+      
       final userInterests = await _getUserInterestsUseCase();
-      _logger.debug('InterestStep', 'Fetched ${userInterests.length} user interests');
+      
 
       if (userInterests.isNotEmpty) {
         // Extract names of user interests
@@ -125,12 +122,11 @@ class _InterestStepState extends State<InterestStep>
         }
       }
     } catch (e) {
-      print('Error fetching user interests: $e');
+      
     } finally {
+      // Ensure the widget is still mounted
       if (mounted) {
-        setState(() {
-          _isLoadingUserInterests = false;
-        });
+        setState(() {});
       }
     }
   }
@@ -332,59 +328,7 @@ class _InterestStepState extends State<InterestStep>
                         ),
             ),
 
-            // Next button
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _selectedInterests.length >= 2 &&
-                        _selectedInterests.length <= 4
-                    ? () {
-                        // Convert selected names to interest IDs
-                        final List<int> selectedIds = _selectedInterests
-                            .where((name) => _interestIdMap.containsKey(name))
-                            .map((name) => _interestIdMap[name]!)
-                            .toList();
-
-                        // Save interests to the database
-                        if (selectedIds.isNotEmpty && !_isSaving) {
-                          _saveInterests(selectedIds);
-                        }
-
-                        // Move to the next step
-                        if (context.mounted) {
-                          BlocProvider.of<OnboardingBloc>(context).add(
-                            const NextStepRequested(),
-                          );
-                        }
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        'Next',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
-            ),
+            // We've removed the large Next button as requested
             const SizedBox(height: 24),
           ],
         ),

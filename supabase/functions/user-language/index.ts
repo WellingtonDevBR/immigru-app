@@ -28,7 +28,7 @@ serve(async (req) => {
   });
 
   try {
-    console.log('Processing user-language request');
+    
     
     const {
       data: { user },
@@ -40,15 +40,15 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    console.log('User authenticated:', user.id);
+    
     const method = req.method;
 
     if (method === 'GET') {
-      console.log('Processing GET request for user languages');
+      
       
       try {
         // For GET requests, we don't need to parse the request body
-        console.log('Querying UserLanguage table for user:', user.id);
+        
         
         const { data: languages, error } = await supabaseClient
           .from('UserLanguage')
@@ -60,18 +60,18 @@ serve(async (req) => {
           throw new Error(error.message);
         }
 
-        console.log('Retrieved user languages:', languages ? languages.length : 0);
+        
         
         // Ensure languages is always an array, even if null
         const safeLanguages = languages || [];
         
         // Log each language for debugging
         safeLanguages.forEach((lang, index) => {
-          console.log(`Language ${index + 1}:`, lang);
+          
         });
         
         const response = JSON.stringify({ data: safeLanguages });
-        console.log('Response size:', response.length);
+        
         
         return new Response(response, {
           headers: {
@@ -87,13 +87,13 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      console.log('Processing POST request for user languages');
+      
       
       let body;
       try {
         // Safely parse the request body
         const bodyText = await req.text();
-        console.log('Request body text:', bodyText);
+        
         
         if (!bodyText || bodyText.trim() === '') {
           console.error('Empty request body');
@@ -104,7 +104,7 @@ serve(async (req) => {
         }
         
         body = JSON.parse(bodyText);
-        console.log('Parsed request body:', body);
+        
       } catch (parseError) {
         console.error('Error parsing request body:', parseError);
         return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
@@ -114,7 +114,7 @@ serve(async (req) => {
       }
       
       const languageIds = body.languageIds;
-      console.log('Language IDs from request:', languageIds);
+      
 
       if (!Array.isArray(languageIds)) {
         console.error('languageIds is not an array:', languageIds);
@@ -162,7 +162,7 @@ serve(async (req) => {
       errorMessage = JSON.stringify(err);
     }
     
-    console.log('Returning error response:', errorMessage);
+    
     
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: {

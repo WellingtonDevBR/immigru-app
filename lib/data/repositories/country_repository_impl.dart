@@ -18,10 +18,10 @@ class CountryRepositoryImpl implements CountryRepository {
   @override
   Future<List<Country>> getCountries() async {
     try {
-      _logger.debug('CountryRepository', 'Fetching countries from Supabase');
+      
       final countriesData = await _dataSource.getCountries();
       
-      _logger.debug('CountryRepository', 'Received ${countriesData.length} countries');
+      
       
       return countriesData.map((data) => CountryModel.fromJson(data)).toList();
     } catch (e) {
