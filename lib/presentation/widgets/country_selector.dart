@@ -216,11 +216,11 @@ class _CountrySelectorState extends State<CountrySelector> {
             fillColor: isDarkMode ? AppColors.darkSurface : Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primaryColor.withOpacity(0.3)),
+              borderSide: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.3)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primaryColor.withOpacity(0.3)),
+              borderSide: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -294,7 +294,7 @@ class _CountrySelectorState extends State<CountrySelector> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primaryColor.withOpacity(0.15)
+                  ? AppColors.primaryColor.withValues(alpha: 0.15)
                   : isDarkMode
                       ? AppColors.cardDark
                       : Colors.white,
@@ -302,14 +302,14 @@ class _CountrySelectorState extends State<CountrySelector> {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.primaryColor.withOpacity(0.2),
+                        color: AppColors.primaryColor.withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       )
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       )
@@ -332,7 +332,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       )
@@ -419,7 +419,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                           country.nationality,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: isSelected
-                                ? AppColors.primaryColor.withOpacity(0.8)
+                                ? AppColors.primaryColor.withValues(alpha: 0.8)
                                 : isDarkMode
                                     ? AppColors.textSecondaryDark
                                     : AppColors.textSecondaryLight,

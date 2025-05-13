@@ -28,7 +28,7 @@ class SupabaseService {
       // Get the already initialized Supabase instance
       _client = Supabase.instance.client;
     } catch (e) {
-      print('Error initializing Supabase client: $e');
+
       // If Supabase is not initialized yet, initialize it
       await Supabase.initialize(
         url: SupabaseConfig.supabaseUrl,

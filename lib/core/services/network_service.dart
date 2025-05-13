@@ -26,9 +26,9 @@ class NetworkService {
     // Add error handling interceptor
     _dio.interceptors.add(InterceptorsWrapper(
       onError: (DioException error, ErrorInterceptorHandler handler) {
-        print('❌ DIO ERROR: ${error.message}');
-        print('❌ ERROR TYPE: ${error.type}');
-        print('❌ ERROR RESPONSE: ${error.response}');
+
+
+
         return handler.next(error);
       },
     ));

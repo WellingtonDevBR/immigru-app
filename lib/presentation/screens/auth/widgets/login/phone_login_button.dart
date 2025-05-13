@@ -59,7 +59,7 @@ class _PhoneLoginButtonState extends State<PhoneLoginButton> {
       }
     } catch (e) {
       // Fallback to default US if there's an error
-      print('Error detecting country: $e');
+
     }
   }
 

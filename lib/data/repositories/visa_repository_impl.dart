@@ -64,7 +64,7 @@ class VisaRepositoryImpl implements VisaRepository {
       return visasJson.map((json) => VisaModel.fromJson(json)).toList();
     } catch (e) {
       // Log the error
-      print('Error fetching visas for country $countryId: $e');
+
       // Filter default visas by country
       return _getDefaultVisas().where((visa) => visa.countryId == countryId).toList();
     }

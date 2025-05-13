@@ -17,7 +17,7 @@ class AuthDebugHelper {
         // This is normal if not signed in yet
         return true;
       } else {
-        print('❌ Google Play Services check failed: $e');
+
         return false;
       }
     }
@@ -34,44 +34,40 @@ class AuthDebugHelper {
       );
       
       // Check if signed in already
-      print('🔍 Checking Google Sign-In status...');
+
       final isSignedIn = await googleSignIn.isSignedIn();
       if (!isSignedIn) {
-        print('⚠️ Not signed in with any Google account');
+
       } else {
-        print('✅ Already signed in with Google');
+
         final account = await googleSignIn.signInSilently();
         if (account != null) {
-          print('   - ${account.displayName} (${account.email})');
+
         }
       }
       
-      // Check if already signed in
-      final alreadySignedIn = await googleSignIn.isSignedIn();
-      print('🔐 Is already signed in with Google: $alreadySignedIn');
-      
       // Check Google Play Services
-      print('🔍 Checking Google Play Services availability...');
+
       try {
         // Simple check to see if Google Sign-In is available
         await googleSignIn.signInSilently();
-        print('✅ Google Play Services appears to be available');
+
       } catch (e) {
         if (e.toString().contains('sign_in_required')) {
           // This is normal if not signed in yet
-          print('✅ Google Play Services appears to be available (not signed in)');
+
         } else {
-          print('❌ Google Play Services check failed: $e');
+
         }
       }
     } catch (e) {
-      print('❌ Google Sign-In debug failed: $e');
+
     }
   }
   
   /// Debug API exception
   static void debugApiException(dynamic exception) {
-    print('❌ API EXCEPTION: $exception');
+
     
     if (exception.toString().contains('ApiException: 10')) {
       print('''
@@ -94,9 +90,9 @@ RECOMMENDED ACTIONS:
   /// Log network request
   static void logRequest(String method, String url, {dynamic data}) {
     if (kDebugMode) {
-      print('📤 $method REQUEST: $url');
+
       if (data != null) {
-        print('📦 REQUEST DATA: $data');
+
       }
     }
   }
@@ -104,17 +100,17 @@ RECOMMENDED ACTIONS:
   /// Log network response
   static void logResponse(String method, String url, dynamic response, {int? statusCode}) {
     if (kDebugMode) {
-      print('📥 $method RESPONSE: $url');
-      print('🔢 STATUS CODE: $statusCode');
-      print('📦 RESPONSE DATA: $response');
+
+
+
     }
   }
   
   /// Log network error
   static void logError(String method, String url, dynamic error) {
     if (kDebugMode) {
-      print('❌ $method ERROR: $url');
-      print('❌ ERROR DETAILS: $error');
+
+
     }
   }
 }

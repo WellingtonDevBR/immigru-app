@@ -182,7 +182,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: iconColor,
@@ -190,7 +190,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: iconColor.withOpacity(0.2),
+                      color: iconColor.withValues(alpha: 0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -211,15 +211,15 @@ class _MigrationTimelineState extends State<MigrationTimeline>
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: theme.cardColor.withOpacity(0.7),
+                    color: theme.cardColor.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       width: 0.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -254,7 +254,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8.0, vertical: 4.0),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -352,7 +352,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
+              color: iconColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
               border: Border.all(
                 color: iconColor,
@@ -360,7 +360,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: iconColor.withOpacity(0.2),
+                  color: iconColor.withValues(alpha: 0.2),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -381,15 +381,15 @@ class _MigrationTimelineState extends State<MigrationTimeline>
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: theme.cardColor.withOpacity(0.7),
+                color: theme.cardColor.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   width: 0.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -428,13 +428,13 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8.0, vertical: 4.0),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface.withOpacity(0.5),
+                                  color: theme.colorScheme.surface.withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   dateText,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -514,14 +514,14 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                     Icon(
                                       reasonIcon,
                                       size: 14,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                     ),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
                                         reasonText,
                                         style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -539,7 +539,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                               children: [
                                 // Edit button
                                 Material(
-                                  color: theme.colorScheme.primary.withOpacity(0.1),
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   child: InkWell(
                                     onTap: () => widget.onEditStep(index),
@@ -559,7 +559,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                 
                                 // Delete button
                                 Material(
-                                  color: theme.colorScheme.error.withOpacity(0.1),
+                                  color: theme.colorScheme.error.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   child: InkWell(
                                     onTap: () => widget.onRemoveStep(index),
@@ -595,11 +595,11 @@ class _MigrationTimelineState extends State<MigrationTimeline>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),

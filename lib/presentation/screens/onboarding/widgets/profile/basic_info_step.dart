@@ -64,10 +64,10 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8.0),
                     border: Border.all(
-                      color: AppColors.primaryColor.withOpacity(0.3),
+                      color: AppColors.primaryColor.withValues(alpha:0.3),
                     ),
                   ),
                   child: Row(
@@ -283,7 +283,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha:0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(

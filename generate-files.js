@@ -7,8 +7,10 @@ const EXCLUDED = [
   'README.md', 'analysis_options.yaml'
 ];
 
-function generateTree(dir, prefix = '') {
-  const lines = [];
+const MAX_CHARACTERS = 6000;
+
+function generateTree(dir, prefix = '', alwaysIncludeDirs = true) {
+  const entries = [];
   const files = fs.readdirSync(dir).filter(f => !EXCLUDED.includes(f));
   files.sort((a, b) => a.localeCompare(b, 'en'));
 
@@ -16,35 +18,75 @@ function generateTree(dir, prefix = '') {
     const fullPath = path.join(dir, file);
     const isLast = index === files.length - 1;
     const isDir = fs.statSync(fullPath).isDirectory();
-
     const connector = isLast ? '└── ' : '├── ';
-    lines.push(prefix + connector + file);
+    const line = prefix + connector + file;
+
+    entries.push({ line, isDir });
 
     if (isDir) {
       const nextPrefix = prefix + (isLast ? '    ' : '│   ');
-      lines.push(...generateTree(fullPath, nextPrefix));
+      const childEntries = generateTree(fullPath, nextPrefix, alwaysIncludeDirs);
+      entries.push(...childEntries);
     }
   });
 
-  return lines;
+  return entries;
+}
+
+function splitIntoChunks(entries, maxChars) {
+  const chunks = [];
+  let currentChunk = ['lib/'];
+  let currentLength = 'lib/\n'.length;
+
+  for (const entry of entries) {
+    if (entry.isDir || (currentLength + entry.line.length + 1 <= maxChars)) {
+      currentChunk.push(entry.line);
+      currentLength += entry.line.length + 1;
+    } else {
+      // Start new chunk, always include directory lines
+      chunks.push(currentChunk);
+      currentChunk = ['lib/'];
+
+      // Re-add all previous directory lines from current chunk
+      for (const e of entries) {
+        if (e.isDir && !currentChunk.includes(e.line)) {
+          currentChunk.push(e.line);
+        }
+      }
+
+      currentChunk.push(entry.line);
+      currentLength = currentChunk.join('\n').length + 1;
+    }
+  }
+
+  if (currentChunk.length > 1) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
 }
 
 // Main logic
 const startDir = path.join(__dirname, 'lib');
-const outputFilePath = path.join(__dirname, '.windsurf', 'rules', '003-folder-structure.md');
+const outputBasePath = path.join(__dirname, '.windsurf', 'rules', '003-folder-structure');
 
 if (fs.existsSync(startDir)) {
-  const structure = ['lib/', ...generateTree(startDir)].join('\n');
+  const allEntries = generateTree(startDir);
+  const chunks = splitIntoChunks(allEntries, MAX_CHARACTERS);
 
-  // Ensure the .windsurf directory exists
-  const outputDir = path.dirname(outputFilePath);
+  // Ensure the output directory exists
+  const outputDir = path.dirname(outputBasePath);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // Write to file
-  fs.writeFileSync(outputFilePath, structure, 'utf-8');
-  console.log(`✅ Folder structure written to ${outputFilePath}`);
+  chunks.forEach((chunk, idx) => {
+    const filename = idx === 0
+      ? `${outputBasePath}.md`
+      : `${outputBasePath}-${idx + 1}.md`;
+    fs.writeFileSync(filename, chunk.join('\n'), 'utf-8');
+    console.log(`✅ Folder structure written to ${filename}`);
+  });
 } else {
   console.error('❌ "lib" directory not found. Run this from the root of a Flutter project.');
 }

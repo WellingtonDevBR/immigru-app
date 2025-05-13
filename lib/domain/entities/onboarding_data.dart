@@ -192,10 +192,10 @@ class MigrationStep extends Equatable {
   /// Convert the migration step to a JSON map
   Map<String, dynamic> toJson() {
     // Log the migration step data before serialization
-    print('Serializing migration step with visaId: $visaId');
-    print('isCurrentLocation: $isCurrentLocation');
-    print('isTargetDestination: $isTargetDestination');
-    print('wasSuccessful: $wasSuccessful');
+
+
+
+
     
     return {
       'id': id,

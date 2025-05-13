@@ -46,7 +46,7 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 12.0),
-              
+
               // Subtitle
               Text(
                 'Help others recognize you with a profile photo.',
@@ -56,13 +56,13 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 32.0),
-              
+
               // Profile photo
               Center(
                 child: _buildProfilePhoto(isDarkMode),
               ),
               const SizedBox(height: 24.0),
-              
+
               // Photo upload buttons
               Center(
                 child: Row(
@@ -70,7 +70,9 @@ class _PhotoStepState extends State<PhotoStep> {
                   children: [
                     // Camera button
                     ElevatedButton.icon(
-                      onPressed: _isUploading ? null : () => _pickImage(ImageSource.camera),
+                      onPressed: _isUploading
+                          ? null
+                          : () => _pickImage(ImageSource.camera),
                       icon: const Icon(Icons.camera_alt),
                       label: const Text('Camera'),
                       style: ElevatedButton.styleFrom(
@@ -83,10 +85,12 @@ class _PhotoStepState extends State<PhotoStep> {
                       ),
                     ),
                     const SizedBox(width: 16.0),
-                    
+
                     // Gallery button
                     OutlinedButton.icon(
-                      onPressed: _isUploading ? null : () => _pickImage(ImageSource.gallery),
+                      onPressed: _isUploading
+                          ? null
+                          : () => _pickImage(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library),
                       label: const Text('Gallery'),
                       style: OutlinedButton.styleFrom(
@@ -116,15 +120,15 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ],
               const SizedBox(height: 32.0),
-              
+
               // Tips
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.1),
+                  color: Colors.amber.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.0),
                   border: Border.all(
-                    color: Colors.amber.withOpacity(0.3),
+                    color: Colors.amber.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -147,9 +151,11 @@ class _PhotoStepState extends State<PhotoStep> {
                             ),
                           ),
                           const SizedBox(height: 8.0),
-                          _buildTipItem('Choose a well-lit photo where your face is clearly visible'),
+                          _buildTipItem(
+                              'Choose a well-lit photo where your face is clearly visible'),
                           _buildTipItem('A neutral background works best'),
-                          _buildTipItem('Smile! A friendly expression makes you more approachable'),
+                          _buildTipItem(
+                              'Smile! A friendly expression makes you more approachable'),
                         ],
                       ),
                     ),
@@ -157,15 +163,15 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 16.0),
-              
+
               // Privacy notice
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.0),
                   border: Border.all(
-                    color: AppColors.primaryColor.withOpacity(0.3),
+                    color: AppColors.primaryColor.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -191,9 +197,8 @@ class _PhotoStepState extends State<PhotoStep> {
                           Text(
                             'Your profile photo will be visible to other community members. You can always change or remove it later.',
                             style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : Colors.black87,
+                              color:
+                                  isDarkMode ? Colors.white70 : Colors.black87,
                               fontSize: 14.0,
                             ),
                           ),
@@ -243,7 +248,7 @@ class _PhotoStepState extends State<PhotoStep> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -256,7 +261,7 @@ class _PhotoStepState extends State<PhotoStep> {
         ],
       );
     }
-    
+
     // If there's a photo URL, show it
     if (widget.photoUrl.isNotEmpty) {
       return CircleAvatar(
@@ -264,7 +269,7 @@ class _PhotoStepState extends State<PhotoStep> {
         backgroundImage: NetworkImage(widget.photoUrl),
       );
     }
-    
+
     // Otherwise, show a placeholder
     return CircleAvatar(
       radius: 75,
@@ -287,12 +292,12 @@ class _PhotoStepState extends State<PhotoStep> {
         maxHeight: 800,
         imageQuality: 85,
       );
-      
+
       if (pickedImage != null) {
         setState(() {
           _selectedImage = File(pickedImage.path);
         });
-        
+
         // Upload the image and get the URL
         await _uploadImage();
       }
@@ -314,37 +319,35 @@ class _PhotoStepState extends State<PhotoStep> {
     setState(() {
       _selectedImage = null;
     });
-    
+
     // Update the profile with empty photo URL
     context.read<OnboardingBloc>().add(
-      const ProfilePhotoUpdated(''),
-    );
+          const ProfilePhotoUpdated(''),
+        );
   }
 
   /// Upload the image to storage and update the profile
   Future<void> _uploadImage() async {
     if (_selectedImage == null) return;
-    
+
     setState(() {
       _isUploading = true;
     });
-    
+
     try {
-      // In a real implementation, this would upload the image to a storage service
-      // and then get back a URL to store in the profile
-      
-      // Simulate upload delay
+      // Simula upload
       await Future.delayed(const Duration(seconds: 1));
-      
-      // For now, we'll just use a placeholder URL
+
+      // Substituir por URL real em produção
       const photoUrl = 'https://example.com/profile-photo.jpg';
-      
-      // Update the profile with the photo URL
-      context.read<OnboardingBloc>().add(
-        const ProfilePhotoUpdated(photoUrl),
-      );
+
+      // Protege o uso do context após await
+      if (mounted) {
+        context.read<OnboardingBloc>().add(
+              const ProfilePhotoUpdated(photoUrl),
+            );
+      }
     } catch (e) {
-      // Show error snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -81,9 +81,9 @@ class _ProfessionStepState extends State<ProfessionStep> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primaryColor.withValues(alpha:0.3)),
               ),
               child: Row(
                 children: [
@@ -215,7 +215,7 @@ class _ProfessionStepState extends State<ProfessionStep> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                color: theme.colorScheme.primary.withValues(alpha:0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),

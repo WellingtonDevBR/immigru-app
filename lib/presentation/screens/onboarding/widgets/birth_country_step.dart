@@ -94,10 +94,10 @@ class _BirthCountryStepState extends State<BirthCountryStep> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(16),
                 border:
-                    Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                    Border.all(color: AppColors.primaryColor.withValues(alpha:0.3)),
               ),
               child: Row(
                 children: [

@@ -213,98 +213,85 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
   }
 
   void _saveStep() {
-    print('==== SAVE STEP - DETAILED LOGGING ====');
+
     
     // Make country selection mandatory
     if (_selectedCountry == null) {
-      print('Country is null');
+
       _showValidationError('Please select a country');
       return;
     }
 
     // Make arrival date mandatory
     if (_arrivedDate == null) {
-      print('Arrival date is null');
+
       _showValidationError('Please select an arrival date');
       return;
     }
     
     // Validate arrival date is not in the future
     if (_arrivedDate!.isAfter(DateTime.now())) {
-      print('Arrival date is in the future');
+
       _showValidationError('Arrival date cannot be in the future');
       return;
     }
 
     // Make departure date optional for all cases
     // Only validate the date if it's provided
-    print('Departure date: ${_leftDate?.toString() ?? 'null'} (optional)');
+
     
     // Validate departure date is after arrival date (only if provided)
     if (_leftDate != null && _leftDate!.isBefore(_arrivedDate!)) {
-      print('Departure date is before arrival date');
+
       _showValidationError('Departure date must be after arrival date');
       return;
     }
 
     // Make visa selection mandatory
     if (!_useCustomVisa && _selectedVisa == null) {
-      print('Visa is null');
+
       _showValidationError('Please select a visa type');
       return;
     }
     
     // Validate custom visa name if using custom visa
     if (_useCustomVisa && _customVisaController.text.trim().isEmpty) {
-      print('Custom visa name is empty');
+
       _showValidationError('Please enter a visa name');
       return;
     }
     
     // Log detailed information about the form state
-    print('Selected country: ${_selectedCountry?.name} (ID: ${_selectedCountry?.id})');
-    print('Selected visa: ${_selectedVisa?.visaName} (ID: ${_selectedVisa?.id})');
-    print('Use custom visa: $_useCustomVisa');
-    print('Custom visa name: ${_customVisaController.text.trim()}');
-    print('Arrived date: $_arrivedDate');
-    print('Left date: $_leftDate');
-    print('Is current location: $_isCurrentLocation');
-    print('Is target destination: $_isTargetDestination');
-    print('Migration reason: $_selectedReason');
-    print('Was successful: $_wasSuccessful');
+
+
+
+
+
+
+
+
+
+
     
     if (_formKey.currentState!.validate()) {
       // Log visa information before creating the step
-      print('==== CREATING MIGRATION STEP ====');
-      print('Country: ${_selectedCountry!.name} (ID: ${_selectedCountry!.id})');
+
+
       
       if (_useCustomVisa) {
-        print('Using custom visa: ${_customVisaController.text.trim()}');
-        print('Visa ID will be null');
+
+
       } else if (_selectedVisa != null) {
-        print('Selected visa: ${_selectedVisa!.visaName} (ID: ${_selectedVisa!.id})');
-        print('Visa type: ${_selectedVisa!.type}');
-        print('Visa country ID: ${_selectedVisa!.countryId}');
+
+
+
       } else {
-        print('No visa selected');
+
       }
       
       // Create the migration step
       final int? visaId = _useCustomVisa ? null : _selectedVisa?.id;
       final String visaName = _useCustomVisa ? _customVisaController.text.trim() : _selectedVisa?.visaName ?? '';
-      
-      print('Final visa ID to save: $visaId');
-      print('Final visa name to save: $visaName');
-      
-      // Ensure migration reason is properly handled
-      print('Selected migration reason: ${_selectedReason.name}');
-      print('Migration reason display name: ${_getMigrationReasonText(_selectedReason)}');
-      
-      // Log all migration reasons for debugging
-      print('All migration reasons:');
-      for (var reason in MigrationReason.values) {
-        print('- ${reason.name}: ${_getMigrationReasonText(reason)}');
-      }
       
       final MigrationStep step = MigrationStep(
         id: widget.initialStep?.id,
@@ -321,30 +308,10 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
         migrationReason: _selectedReason,
         wasSuccessful: _wasSuccessful,
       );
-      
-      print('Created migration step: ${step.toJson()}');
-      print('==== END CREATING MIGRATION STEP ====');
-      
-      // First close the modal to prevent widget deactivation issues
-      print('Closing migration step modal...');
       Navigator.of(context).pop();
-      print('Modal closed successfully');
-      
-      // Then save the step after the modal is closed
-      // This prevents the "Looking up a deactivated widget's ancestor is unsafe" error
-      print('Scheduling microtask to save step...');
       Future.microtask(() {
-        print('==== EXECUTING SAVE CALLBACK ====');
-        print('Calling onSave with step: ${step.toJson()}');
-        try {
-          widget.onSave(step);
-          print('onSave callback executed successfully');
-        } catch (e) {
-          print('ERROR in onSave callback: $e');
-        }
-        print('==== SAVE CALLBACK COMPLETED ====');
       });
-      print('Microtask scheduled');
+
     }
   }
   
@@ -373,7 +340,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
   /// Sanitize notes to prevent XSS attacks and other security issues
   String _sanitizeNotes(String input) {
     // Log original input for debugging
-    print('Sanitizing notes: $input');
+
     
     // Remove potentially dangerous HTML/script tags
     String sanitized = input
@@ -389,7 +356,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       sanitized = sanitized.substring(0, 500);
     }
     
-    print('Sanitized notes: $sanitized');
+
     return sanitized;
   }
 
@@ -445,7 +412,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                   Text(
                     'Add countries that are part of your story',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha:0.9),
                       fontSize: 14,
                     ),
                   ),
@@ -503,7 +470,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                 color: theme.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha:0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -792,7 +759,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                               title: Text(visa.visaName),
                               subtitle: Text(visa.type),
                               selected: isSelected,
-                              tileColor: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+                              tileColor: isSelected ? Theme.of(context).primaryColor.withValues(alpha:0.1) : null,
                               onTap: () {
                                 setState(() {
                                   _selectedVisa = visa;

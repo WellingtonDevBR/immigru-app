@@ -122,7 +122,7 @@ class _BioStepState extends State<BioStep> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Column(

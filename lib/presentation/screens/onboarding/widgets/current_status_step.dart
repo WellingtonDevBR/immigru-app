@@ -120,45 +120,12 @@ class CurrentStatusStep extends StatelessWidget {
                           
                           // Get the selected status ID
                           final selectedStatus = status['id'] as String;
-                          
-                          // EXTENSIVE LOGGING: Log the selection with more details
-                          print('==== CURRENT STATUS SELECTION ====');
-                          print('User selected status: "${status['title']}"');
-                          print('Status ID: $selectedStatus');
-                          print('Full status object: $status');
-                          print('================================');
-                          
-                          // Update the status in the bloc
-                          print('Calling onStatusSelected with status: $selectedStatus');
                           onStatusSelected(selectedStatus);
-                          
-                          // Then explicitly trigger a save before moving to the next step
                           if (context.mounted) {
                             final bloc = context.read<OnboardingBloc>();
-                            
-                            // Get the current data from the bloc to verify it was updated
-                            final currentData = bloc.state.data;
-                            print('==== CURRENT DATA BEFORE SAVE ====');
-                            print('Current status in bloc: ${currentData.currentStatus}');
-                            print('Birth country in bloc: ${currentData.birthCountry}');
-                            print('================================');
-                            
-                            // Add the save event
-                            print('Triggering OnboardingSaved event');
                             bloc.add(const OnboardingSaved());
-                            
-                            // Wait longer for the save to complete before moving to the next step
-                            print('Waiting 2 seconds before moving to next step...');
                             Future.delayed(const Duration(milliseconds: 2000), () {
                               if (context.mounted) {
-                                // Check if the data was properly saved
-                                final updatedData = bloc.state.data;
-                                print('==== CURRENT DATA BEFORE NEXT STEP ====');
-                                print('Current status in bloc: ${updatedData.currentStatus}');
-                                print('Expected status: $selectedStatus');
-                                print('================================');
-                                
-                                print('Moving to next step now');
                                 bloc.add(const NextStepRequested());
                               }
                             });

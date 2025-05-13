@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Widget for the profession selection step in onboarding
@@ -154,9 +157,9 @@ class _ProfessionStepState extends State<ProfessionStep> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
+                  color: AppColors.primaryColor.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.primaryColor.withValues(alpha:0.3)),
                 ),
                 child: Row(
                   children: [
@@ -199,12 +202,12 @@ class _ProfessionStepState extends State<ProfessionStep> {
                   color: isDarkMode ? AppColors.surfaceDark : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.primaryColor.withOpacity(0.3),
+                    color: AppColors.primaryColor.withValues(alpha:0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryColor.withOpacity(0.1),
+                      color: AppColors.primaryColor.withValues(alpha:0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -226,7 +229,7 @@ class _ProfessionStepState extends State<ProfessionStep> {
                     ),
                     prefixIcon: Icon(
                       Icons.work_outline,
-                      color: AppColors.primaryColor.withOpacity(0.7),
+                      color: AppColors.primaryColor.withValues(alpha:0.7),
                     ),
                   ),
                   style: TextStyle(
@@ -278,10 +281,14 @@ class _ProfessionStepState extends State<ProfessionStep> {
                             final sanitized = sanitizeInput(_professionController.text);
                             widget.onProfessionSelected(sanitized);
                             
-                            // Return to main screen
-                            setState(() {
-                              _showCustomInputScreen = false;
-                            });
+                            // Trigger save to ensure the profession is saved to UserProfile
+                            if (context.mounted) {
+                              // Add OnboardingSaved event to the bloc
+                              BlocProvider.of<OnboardingBloc>(context).add(const OnboardingSaved());
+                              
+                              // Automatically proceed to next step
+                              BlocProvider.of<OnboardingBloc>(context).add(const NextStepRequested());
+                            }
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -322,9 +329,9 @@ class _ProfessionStepState extends State<ProfessionStep> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primaryColor.withValues(alpha:0.3)),
               ),
               child: Row(
                 children: [
@@ -456,7 +463,7 @@ class _ProfessionStepState extends State<ProfessionStep> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                color: theme.colorScheme.primary.withValues(alpha:0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -472,6 +479,21 @@ class _ProfessionStepState extends State<ProfessionStep> {
                           setState(() {
                             _showCustomInputScreen = true;
                             _professionController.clear();
+                          });
+                        } else {
+                          // For any other profession, automatically save and proceed to next step
+                          // This will trigger the bloc to save the profession to UserProfile
+                          widget.onProfessionSelected(profession);
+                          
+                          // Trigger save after a short delay to ensure the bloc state is updated
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            // Add OnboardingSaved event to the bloc
+                            if (context.mounted) {
+                              BlocProvider.of<OnboardingBloc>(context).add(const OnboardingSaved());
+                              
+                              // Automatically proceed to next step
+                              BlocProvider.of<OnboardingBloc>(context).add(const NextStepRequested());
+                            }
                           });
                         }
                       },

@@ -179,6 +179,5 @@ lib/
         ├── community
         │   └── community_feed_item.dart
         ├── country_selector.dart
+        ├── error_message_widget.dart
         ├── feature
-        │   └── feature_item.dart
-        └── loading_indicator.da

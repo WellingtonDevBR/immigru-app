@@ -84,7 +84,6 @@ Future<void> init() async {
       sl<SupabaseService>(), 
       sl<LoggerService>(), 
       sl<OnboardingService>(),
-      sl<CountryRepository>(),
     ),
   );
   sl.registerLazySingleton<VisaRepository>(
@@ -164,7 +163,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CompleteOnboardingUseCase(sl<OnboardingRepository>()));
   sl.registerLazySingleton(() => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()));
   sl.registerLazySingleton(() => GetLanguagesUseCase(sl<LanguageRepository>()));
+  sl.registerLazySingleton(() => SaveUserLanguagesUseCase(sl<LanguageRepository>()));
+  sl.registerLazySingleton(() => GetUserLanguagesUseCase(sl<LanguageRepository>()));
   sl.registerLazySingleton(() => GetInterestsUseCase(sl<InterestRepository>()));
+  sl.registerLazySingleton(() => SaveUserInterestsUseCase(sl<InterestRepository>()));
+  sl.registerLazySingleton(() => GetUserInterestsUseCase(sl<InterestRepository>()));
   
   // Profile use cases
   sl.registerLazySingleton(() => GetProfileUseCase(sl<ProfileRepository>()));

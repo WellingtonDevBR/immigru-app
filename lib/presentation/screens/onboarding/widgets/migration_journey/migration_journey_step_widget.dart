@@ -62,7 +62,7 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   /// Lookup the full country name from the ISO code
   Future<void> _lookupBirthCountryName() async {
     try {
-      print('Looking up birth country name for ISO code: ${widget.birthCountry}');
+
       final countries = await _countryRepository.getCountries();
       final country = countries.firstWhere(
         (c) => c.isoCode.toLowerCase() == widget.birthCountry.toLowerCase(),
@@ -90,9 +90,9 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
         _birthCountryName = country.name;
       });
       
-      print('Birth country name found: $_birthCountryName');
+
     } catch (e) {
-      print('Error looking up birth country name: $e');
+
       setState(() {
         _birthCountryName = widget.birthCountry;
       });
@@ -107,7 +107,7 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   
   Future<void> _loadCountries() async {
     try {
-      print('Loading countries...');
+
       final countries = await _countryRepository.getCountries();
       setState(() {
         // Convert Country entities to CountryModel objects
@@ -131,9 +131,9 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
         )).toList();
         _isLoadingCountries = false;
       });
-      print('Loaded ${countries.length} countries');
+
     } catch (e) {
-      print('Error loading countries: $e');
+
       setState(() {
         _isLoadingCountries = false;
       });
@@ -142,15 +142,15 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   
   Future<void> _loadVisas() async {
     try {
-      print('Loading visas...');
+
       final visas = await _visaRepository.getVisas();
       setState(() {
         _visas = visas;
         _isLoadingVisas = false;
       });
-      print('Loaded ${visas.length} visas');
+
     } catch (e) {
-      print('Error loading visas: $e');
+
       setState(() {
         _isLoadingVisas = false;
       });
@@ -158,7 +158,7 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   }
   
   void _showAddStepModal() {
-    print('Showing add step modal...');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -172,7 +172,7 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   }
   
   void _editStep(int index) {
-    print('Editing step at index $index...');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -187,36 +187,36 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   }
   
   void _addStep(MigrationStep step) {
-    print('==== ADDING NEW MIGRATION STEP ====');
-    print('- Country: ${step.countryName} (ID: ${step.countryId})');
-    print('- Visa: ${step.visaName} (ID: ${step.visaId})');
-    print('- Is Current: ${step.isCurrentLocation}');
-    print('- Is Target: ${step.isTargetDestination}');
-    print('- Was Successful: ${step.wasSuccessful}');
-    print('- Migration Reason: ${step.migrationReason?.name}');
-    print('- Notes: ${step.notes ?? 'None'}');
+
+
+
+
+
+
+
+
     
-    print('Calling widget.onAddStep with step...');
+
     try {
       widget.onAddStep(step);
-      print('widget.onAddStep executed successfully');
+
     } catch (e) {
-      print('ERROR in widget.onAddStep: $e');
+
     }
     
-    print('Scheduling delayed save operation...');
+
     // Wait a short moment before triggering save to ensure UI is updated
     Future.delayed(const Duration(milliseconds: 500), () async {
-      print('Delayed save timer triggered');
+
       // Trigger save after adding a new step
       try {
         await _triggerSaveData();
-        print('_triggerSaveData completed successfully');
+
       } catch (e) {
-        print('ERROR in delayed _triggerSaveData: $e');
+
       }
     });
-    print('Delayed save operation scheduled');
+
     
     // Show a snackbar to indicate the step was added
     ScaffoldMessenger.of(context).showSnackBar(
@@ -228,15 +228,15 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   }
   
   void _updateStep(int index, MigrationStep step) {
-    print('==== UPDATING MIGRATION STEP ====');
-    print('Updating step at index $index');
-    print('- Country: ${step.countryName} (ID: ${step.countryId})');
-    print('- Visa: ${step.visaName} (ID: ${step.visaId})');
-    print('- Is Current: ${step.isCurrentLocation}');
-    print('- Is Target: ${step.isTargetDestination}');
-    print('- Was Successful: ${step.wasSuccessful}');
-    print('- Migration Reason: ${step.migrationReason?.name}');
-    print('- Notes: ${step.notes ?? 'None'}');
+
+
+
+
+
+
+
+
+
     
     widget.onUpdateStep(index, step);
     
@@ -257,86 +257,39 @@ class _MigrationJourneyStepWidgetState extends State<MigrationJourneyStepWidget>
   
   // Helper method to trigger saving data
   Future<void> _triggerSaveData() async {
-    print('==== TRIGGER SAVE DATA - START ====');
-    // Log the current migration steps before saving
-    print('==== MIGRATION STEPS BEFORE SAVE ====');
-    print('Total migration steps: ${widget.migrationSteps.length}');
-    
-    for (int i = 0; i < widget.migrationSteps.length; i++) {
-      final step = widget.migrationSteps[i];
-      print('Step ${i+1}:');
-      print('- Country: ${step.countryName} (ID: ${step.countryId})');
-      print('- Visa: ${step.visaName} (ID: ${step.visaId})');
-      print('- Is Current: ${step.isCurrentLocation}');
-      print('- Is Target: ${step.isTargetDestination}');
-      print('- Was Successful: ${step.wasSuccessful}');
-      print('- Migration Reason: ${step.migrationReason?.name}');
-      print('- Notes: ${step.notes ?? 'None'}');
-    }
-    
-    print('Creating Future.delayed to ensure UI updates first...');
     // Use Future.delayed to ensure the UI updates first
     Future.delayed(Duration.zero, () async {
-      print('Future.delayed callback executing...');
-      
       if (!context.mounted) {
-        print('ERROR: Context is not mounted, cannot save data');
         return;
       }
-      
-      print('Context is mounted, proceeding with save...');
       try {
-        // Get the OnboardingBloc directly from the context
-        print('Getting OnboardingBloc from context...');
+        // Get the OnboardingBloc directly from the contex
         final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
-        print('Got OnboardingBloc instance successfully');
-        print('Triggering save after migration step change');
-        print('Sending ${widget.migrationSteps.length} migration steps to be saved');
-        
-        // Verify that the bloc state has the correct number of steps
-        print('Checking current steps in bloc state...');
         final currentSteps = onboardingBloc.state.data.migrationSteps;
-        print('Current steps in bloc state: ${currentSteps.length}');
-        
-        // If the bloc doesn't have all the steps, update it directly
         if (currentSteps.length != widget.migrationSteps.length) {
-          print('WARNING: Bloc has ${currentSteps.length} steps but widget has ${widget.migrationSteps.length} steps');
-          print('Ensuring all steps are in the bloc before saving...');
-          
-          // Add each step to the bloc individually to ensure they're all included
           for (final step in widget.migrationSteps) {
             if (!currentSteps.any((s) => 
                 s.countryId == step.countryId && 
                 s.visaId == step.visaId && 
                 s.arrivedDate == step.arrivedDate)) {
-              print('Adding missing step for ${step.countryName} to bloc');
+
               onboardingBloc.add(MigrationStepAdded(step));
             }
           }
-          
-          // Short delay to allow bloc to update before saving
-          print('Waiting for bloc to update...');
           await Future.delayed(const Duration(milliseconds: 100));
-          print('Bloc update delay completed');
+
         }
-        
-        // Add the save event to the bloc
-        print('Adding OnboardingSaved event to bloc...');
         onboardingBloc.add(const OnboardingSaved());
-        print('OnboardingSaved event added to bloc');
-        
-        // Show a snackbar to indicate the save process has started
-        print('Showing save in progress snackbar...');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Saving ${widget.migrationSteps.length} migration steps...'),
             duration: const Duration(seconds: 2),
           ),
         );
-        print('Snackbar shown successfully');
-        print('==== TRIGGER SAVE DATA - END ====');
+
+
       } catch (e) {
-        print('Error triggering save: $e');
+
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -18,10 +18,10 @@ class UserProfileEdgeFunctionDataSource {
     bool isCompleted = false,
   }) async {
     try {
-      print('==== EDGE FUNCTION REQUEST - START ====');
-      print('Step: $step');
-      print('Data: $data');
-      print('Is Completed: $isCompleted');
+
+
+
+
       
       _logger.debug('UserProfileEdgeFunctionDataSource', 'Saving data for step: $step');
       _logger.debug('UserProfileEdgeFunctionDataSource', 'Data content: ${data.toString()}');
@@ -33,7 +33,7 @@ class UserProfileEdgeFunctionDataSource {
         'isCompleted': isCompleted,
       };
       
-      print('Request body: $requestBody');
+
       
       // Log the request to the edge function
       _edgeFunctionLogger.logRequest(
@@ -42,16 +42,16 @@ class UserProfileEdgeFunctionDataSource {
         step: step,
       );
       
-      print('Sending request to edge function...');
+
       
       try {
         final response = await _supabaseService.client
           .functions
           .invoke('user-profile', body: requestBody);
           
-        print('==== EDGE FUNCTION RESPONSE - START ====');
-        print('Response status: ${response.status}');
-        print('Response data: ${response.data}');
+
+
+
         
         final responseData = response.data as Map<String, dynamic>?;
         
@@ -64,24 +64,24 @@ class UserProfileEdgeFunctionDataSource {
         );
         
         if (responseData == null) {
-          print('WARNING: Edge function returned null data');
+
           throw Exception('Edge function returned null data');
         }
         
         if (responseData.containsKey('error') && responseData['error'] != null) {
-          print('ERROR: Edge function response contains error:');
-          print('Error: ${responseData['error']}');
+
+
           throw Exception('Edge function response error: ${responseData['error']}');
         }
         
-        print('SUCCESS: Edge function request completed successfully');
+
         if (responseData.containsKey('message')) {
-          print('Success message: ${responseData['message']}');
+
         }
         
-        print('==== EDGE FUNCTION RESPONSE - END ====');
+
       } catch (e) {
-        print('ERROR: Exception during edge function call: $e');
+
         rethrow;
       }
       

@@ -59,7 +59,7 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 24.0),
-              
+
               // Photo explanation
               Text(
                 'Adding a profile photo helps community members recognize you and builds trust. Choose a clear photo that represents you well.',
@@ -69,13 +69,13 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 32.0),
-              
+
               // Profile photo preview
               Center(
                 child: _buildProfilePhotoPreview(isDarkMode),
               ),
               const SizedBox(height: 24.0),
-              
+
               // Photo upload buttons
               Center(
                 child: Row(
@@ -100,12 +100,12 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 32.0),
-              
+
               // Photo guidelines
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Column(
@@ -148,7 +148,7 @@ class _PhotoStepState extends State<PhotoStep> {
                 ),
               ),
               const SizedBox(height: 16.0),
-              
+
               // Optional note
               Center(
                 child: Text(
@@ -183,7 +183,7 @@ class _PhotoStepState extends State<PhotoStep> {
         ),
       );
     }
-    
+
     // If there's a selected image, show it
     if (_selectedImage != null) {
       return Container(
@@ -198,7 +198,7 @@ class _PhotoStepState extends State<PhotoStep> {
         ),
       );
     }
-    
+
     // If there's a photo URL, show it
     if (widget.photoUrl != null && widget.photoUrl!.isNotEmpty) {
       return Container(
@@ -213,7 +213,7 @@ class _PhotoStepState extends State<PhotoStep> {
         ),
       );
     }
-    
+
     // Otherwise, show placeholder
     return Container(
       width: 150,
@@ -292,16 +292,15 @@ class _PhotoStepState extends State<PhotoStep> {
         maxHeight: 800,
         imageQuality: 85,
       );
-      
-      if (pickedFile != null) {
+
+      if (pickedFile != null && mounted) {
         setState(() {
           _selectedImage = File(pickedFile.path);
         });
-        
-        // Upload the image
+
         context.read<ProfileBloc>().add(
-          ProfilePhotoUploaded(pickedFile.path),
-        );
+              ProfilePhotoUploaded(pickedFile.path),
+            );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

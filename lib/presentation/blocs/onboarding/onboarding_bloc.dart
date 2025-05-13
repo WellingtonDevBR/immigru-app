@@ -92,15 +92,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     BirthCountryUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    print('==== BIRTH COUNTRY UPDATED EVENT RECEIVED ====');
-    print('Country ISO code: ${event.country}');
+
+
     
     final updatedData = state.data.copyWith(birthCountry: event.country);
     emit(state.copyWith(data: updatedData));
     
     _logger.debug('OnboardingBloc', 'Birth country updated: ${event.country}');
-    print('Birth country updated in bloc state: ${updatedData.birthCountry}');
-    print('==== BIRTH COUNTRY UPDATE COMPLETED ====');
+
+
   }
 
   /// Handle current status update event
@@ -169,10 +169,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfessionUpdated event,
     Emitter<OnboardingState> emit,
   ) {
+
+
+    
+    final updatedData = state.data.copyWith(profession: event.profession);
+    emit(state.copyWith(data: updatedData));
+    
     _logger.debug('OnboardingBloc', 'Profession updated: ${event.profession}');
-    emit(state.copyWith(
-      data: state.data.copyWith(profession: event.profession),
-    ));
+
+
   }
 
   /// Handle languages update event

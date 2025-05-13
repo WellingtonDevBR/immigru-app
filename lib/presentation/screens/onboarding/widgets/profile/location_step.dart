@@ -105,10 +105,10 @@ class _LocationStepState extends State<LocationStep> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8.0),
                     border: Border.all(
-                      color: AppColors.primaryColor.withOpacity(0.3),
+                      color: AppColors.primaryColor.withValues(alpha:0.3),
                     ),
                   ),
                   child: Row(

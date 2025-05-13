@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/di/injection_container.dart' as di;
+import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/entities/interest.dart';
 import 'package:immigru/domain/usecases/interest_usecases.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Widget for the interest selection step in onboarding
@@ -19,14 +23,23 @@ class InterestStep extends StatefulWidget {
   State<InterestStep> createState() => _InterestStepState();
 }
 
-class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClientMixin {
+class _InterestStepState extends State<InterestStep>
+    with AutomaticKeepAliveClientMixin {
   // Interest data
   final GetInterestsUseCase _interestsUseCase = di.sl<GetInterestsUseCase>();
+  final SaveUserInterestsUseCase _saveUserInterestsUseCase =
+      di.sl<SaveUserInterestsUseCase>();
+  final GetUserInterestsUseCase _getUserInterestsUseCase =
+      di.sl<GetUserInterestsUseCase>();
+  final LoggerService _logger = LoggerService();
   List<Interest> _interests = [];
   List<String> _selectedInterests = [];
+  Map<String, int> _interestIdMap = {}; // Maps interest names to IDs
   bool _isLoading = true;
   String? _errorMessage;
-  
+  bool _isSaving = false;
+  bool _isLoadingUserInterests = false;
+
   // Keep this widget alive to prevent rebuilds
   @override
   bool get wantKeepAlive => true;
@@ -38,25 +51,87 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
     _fetchInterests();
   }
 
-  /// Fetch interests from the repository
+  /// Fetch interests from the repository and user's selected interests
   Future<void> _fetchInterests() async {
     setState(() {
       _isLoading = true;
+      _isLoadingUserInterests = true;
       _errorMessage = null;
     });
 
     try {
+      _logger.debug('InterestStep', 'Fetching all available interests');
+      // First fetch all available interests
       final interests = await _interestsUseCase();
+      _logger.debug('InterestStep', 'Fetched ${interests.length} interests');
+
+      // Build a map of interest names to IDs for easier lookup
+      final Map<String, int> idMap = {};
+      for (var interest in interests) {
+        idMap[interest.name] = interest.id;
+        _logger.debug('InterestStep', 'Interest: ${interest.name} (ID: ${interest.id})');
+      }
 
       setState(() {
         _interests = interests;
+        _interestIdMap = idMap;
         _isLoading = false;
       });
+
+      // Now fetch user's selected interests
+      await _fetchUserInterests();
     } catch (e) {
+      _logger.error('InterestStep', 'Error fetching interests: $e');
       setState(() {
         _errorMessage = 'Failed to load interests. Please try again.';
         _isLoading = false;
+        _isLoadingUserInterests = false;
       });
+    }
+  }
+
+  /// Fetch user's previously selected interests
+  Future<void> _fetchUserInterests() async {
+    try {
+      _logger.debug('InterestStep', 'Fetching user interests');
+      final userInterests = await _getUserInterestsUseCase();
+      _logger.debug('InterestStep', 'Fetched ${userInterests.length} user interests');
+
+      if (userInterests.isNotEmpty) {
+        // Extract names of user interests
+        final userInterestNames =
+            userInterests.map((interest) => interest.name).toList();
+
+        // Log for debugging
+        print(
+            'User has ${userInterests.length} previously selected interests: $userInterestNames');
+
+        // If we have user interests and no interests were passed from the parent widget,
+        // use the user interests as the selected interests
+        if (widget.selectedInterests.isEmpty) {
+          setState(() {
+            _selectedInterests = userInterestNames;
+          });
+
+          // Notify parent of the change
+          widget.onInterestsSelected(_selectedInterests);
+
+          // Update the onboarding bloc with the selected interests
+          if (context.mounted) {
+            BlocProvider.of<OnboardingBloc>(context).add(
+              InterestsUpdated(_selectedInterests),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching user interests: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingUserInterests = false;
+        });
+      }
     }
   }
 
@@ -64,23 +139,73 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
   void _toggleInterestSelection(String interestName) {
     // Check if we're removing or adding
     final bool isRemoving = _selectedInterests.contains(interestName);
-    
+
     // Only proceed if we're removing OR we haven't reached the limit
     if (isRemoving || _selectedInterests.length < 4) {
       // Create a new list to avoid direct state mutation
       final newSelectedInterests = List<String>.from(_selectedInterests);
-      
+
       if (isRemoving) {
         newSelectedInterests.remove(interestName);
       } else {
         newSelectedInterests.add(interestName);
       }
-      
-      // Update state without triggering a rebuild
-      _selectedInterests = newSelectedInterests;
-      
+
+      setState(() {
+        // Update state
+        _selectedInterests = newSelectedInterests;
+      });
+
       // Notify parent of the change
       widget.onInterestsSelected(_selectedInterests);
+
+      // Update the onboarding bloc with the selected interests
+      if (context.mounted) {
+        // Convert selected names to interest IDs
+        final List<int> selectedIds = _selectedInterests
+            .where((name) => _interestIdMap.containsKey(name))
+            .map((name) => _interestIdMap[name]!)
+            .toList();
+
+        // Dispatch the interests updated event to the bloc
+        BlocProvider.of<OnboardingBloc>(context).add(
+          InterestsUpdated(_selectedInterests),
+        );
+
+        // Save interests to the database if at least 2 are selected
+        if (selectedIds.length >= 2 && !_isSaving) {
+          _saveInterests(selectedIds);
+        }
+      }
+    }
+  }
+
+  /// Save selected interests to the database
+  Future<void> _saveInterests(List<int> interestIds) async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Save interests to the database
+      final success = await _saveUserInterestsUseCase(interestIds);
+
+      if (success) {
+        // If successful, trigger save in the onboarding bloc
+        if (context.mounted) {
+          BlocProvider.of<OnboardingBloc>(context).add(const OnboardingSaved());
+        }
+      }
+    } catch (e) {
+      // Handle error silently, user can still continue onboarding
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -102,9 +227,10 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                border: Border.all(
+                    color: AppColors.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -129,7 +255,9 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                         Text(
                           "Select 2-4 topics you're most interested in",
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : Colors.grey[700],
                           ),
                         ),
                       ],
@@ -138,9 +266,9 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Selected interests count
             Text(
               "${_selectedInterests.length}/4 topics selected",
@@ -149,9 +277,9 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                 color: isDarkMode ? Colors.white70 : Colors.black54,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Interest grid
             Expanded(
               child: _isLoading
@@ -177,9 +305,12 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                           ),
                         )
                       : GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3, // Increased to 3 items per row for smaller widgets
-                            childAspectRatio: 2.2, // Wider than tall for a more compact look
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount:
+                                3, // Increased to 3 items per row for smaller widgets
+                            childAspectRatio:
+                                2.2, // Wider than tall for a more compact look
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
                           ),
@@ -188,7 +319,8 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                             final interest = _interests[index];
                             return _InterestItem(
                               interest: interest,
-                              isSelected: _selectedInterests.contains(interest.name),
+                              isSelected:
+                                  _selectedInterests.contains(interest.name),
                               isDarkMode: isDarkMode,
                               onToggle: (interestName) {
                                 _toggleInterestSelection(interestName);
@@ -199,13 +331,66 @@ class _InterestStepState extends State<InterestStep> with AutomaticKeepAliveClie
                           },
                         ),
             ),
+
+            // Next button
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _selectedInterests.length >= 2 &&
+                        _selectedInterests.length <= 4
+                    ? () {
+                        // Convert selected names to interest IDs
+                        final List<int> selectedIds = _selectedInterests
+                            .where((name) => _interestIdMap.containsKey(name))
+                            .map((name) => _interestIdMap[name]!)
+                            .toList();
+
+                        // Save interests to the database
+                        if (selectedIds.isNotEmpty && !_isSaving) {
+                          _saveInterests(selectedIds);
+                        }
+
+                        // Move to the next step
+                        if (context.mounted) {
+                          BlocProvider.of<OnboardingBloc>(context).add(
+                            const NextStepRequested(),
+                          );
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Next',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
-
-  // No category icons needed for the simplified design
 }
 
 /// A stateful widget for individual interest items to prevent rebuilding the entire grid
@@ -230,20 +415,21 @@ class _InterestItem extends StatefulWidget {
   State<_InterestItem> createState() => _InterestItemState();
 }
 
-class _InterestItemState extends State<_InterestItem> with AutomaticKeepAliveClientMixin {
+class _InterestItemState extends State<_InterestItem>
+    with AutomaticKeepAliveClientMixin {
   // Use local state to avoid rebuilding the parent
   late bool _isSelected;
-  
+
   // Keep this widget alive to prevent rebuilds
   @override
   bool get wantKeepAlive => true;
-  
+
   @override
   void initState() {
     super.initState();
     _isSelected = widget.isSelected;
   }
-  
+
   @override
   void didUpdateWidget(_InterestItem oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -265,7 +451,7 @@ class _InterestItemState extends State<_InterestItem> with AutomaticKeepAliveCli
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onToggle(widget.interest.name);
       });
-    } 
+    }
     // If not selected, only allow selection if under the limit
     else if (widget.currentSelections < widget.maxSelections) {
       setState(() {
@@ -285,7 +471,7 @@ class _InterestItemState extends State<_InterestItem> with AutomaticKeepAliveCli
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: _isSelected
-            ? AppColors.primaryColor.withOpacity(0.1)
+            ? AppColors.primaryColor.withValues(alpha: 0.1)
             : widget.isDarkMode
                 ? AppColors.cardDark
                 : AppColors.cardLight,
@@ -301,7 +487,7 @@ class _InterestItemState extends State<_InterestItem> with AutomaticKeepAliveCli
         boxShadow: _isSelected
             ? [
                 BoxShadow(
-                  color: AppColors.primaryColor.withOpacity(0.15),
+                  color: AppColors.primaryColor.withValues(alpha: 0.15),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
