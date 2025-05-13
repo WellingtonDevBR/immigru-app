@@ -35,6 +35,14 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<MigrationStepUpdated>(_onMigrationStepUpdated);
     on<MigrationStepRemoved>(_onMigrationStepRemoved);
     on<ProfessionUpdated>(_onProfessionUpdated);
+    on<LanguagesUpdated>(_onLanguagesUpdated);
+    on<InterestsUpdated>(_onInterestsUpdated);
+    on<ProfileBasicInfoUpdated>(_onProfileBasicInfoUpdated);
+    on<ProfileDisplayNameUpdated>(_onProfileDisplayNameUpdated);
+    on<ProfileBioUpdated>(_onProfileBioUpdated);
+    on<ProfileLocationUpdated>(_onProfileLocationUpdated);
+    on<ProfilePhotoUpdated>(_onProfilePhotoUpdated);
+    on<ProfilePrivacyUpdated>(_onProfilePrivacyUpdated);
     on<NextStepRequested>(_onNextStepRequested);
     on<PreviousStepRequested>(_onPreviousStepRequested);
     on<StepSkipped>(_onStepSkipped);
@@ -84,9 +92,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     BirthCountryUpdated event,
     Emitter<OnboardingState> emit,
   ) {
+    print('==== BIRTH COUNTRY UPDATED EVENT RECEIVED ====');
+    print('Country ISO code: ${event.country}');
+    
     final updatedData = state.data.copyWith(birthCountry: event.country);
     emit(state.copyWith(data: updatedData));
+    
     _logger.debug('OnboardingBloc', 'Birth country updated: ${event.country}');
+    print('Birth country updated in bloc state: ${updatedData.birthCountry}');
+    print('==== BIRTH COUNTRY UPDATE COMPLETED ====');
   }
 
   /// Handle current status update event
@@ -94,9 +108,20 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     CurrentStatusUpdated event,
     Emitter<OnboardingState> emit,
   ) {
+    // Validate the status value
+    final validStatuses = ['planning', 'preparing', 'moved', 'exploring', 'permanent'];
+    if (!validStatuses.contains(event.status)) {
+      _logger.error('OnboardingBloc', 'Invalid status value: ${event.status}');
+      emit(state.copyWith(errorMessage: 'Invalid status value: ${event.status}'));
+      return;
+    }
+    
+    _logger.debug('OnboardingBloc', 'Updating current status to: ${event.status}');
+    
     final updatedData = state.data.copyWith(currentStatus: event.status);
     emit(state.copyWith(data: updatedData));
-    _logger.debug('OnboardingBloc', 'Current status updated: ${event.status}');
+    
+    _logger.debug('OnboardingBloc', 'Current status updated successfully: ${event.status}');
   }
 
   /// Handle migration step add event
@@ -144,9 +169,112 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfessionUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    final updatedData = state.data.copyWith(profession: event.profession);
-    emit(state.copyWith(data: updatedData));
     _logger.debug('OnboardingBloc', 'Profession updated: ${event.profession}');
+    emit(state.copyWith(
+      data: state.data.copyWith(profession: event.profession),
+    ));
+  }
+
+  /// Handle languages update event
+  void _onLanguagesUpdated(
+    LanguagesUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Languages updated: ${event.languages}');
+    emit(state.copyWith(
+      data: state.data.copyWith(languages: event.languages),
+    ));
+  }
+
+  /// Handle interests update event
+  void _onInterestsUpdated(
+    InterestsUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Interests updated: ${event.interests}');
+    emit(state.copyWith(
+      data: state.data.copyWith(interests: event.interests),
+    ));
+  }
+
+  /// Handle profile basic info updated event
+  void _onProfileBasicInfoUpdated(
+    ProfileBasicInfoUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile basic info updated: ${event.firstName} ${event.lastName}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        firstName: event.firstName,
+        lastName: event.lastName,
+      ),
+    ));
+  }
+
+  /// Handle profile display name updated event
+  void _onProfileDisplayNameUpdated(
+    ProfileDisplayNameUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile display name updated: ${event.displayName}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        displayName: event.displayName,
+      ),
+    ));
+  }
+
+  /// Handle profile bio updated event
+  void _onProfileBioUpdated(
+    ProfileBioUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile bio updated: ${event.bio}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        bio: event.bio,
+      ),
+    ));
+  }
+
+  /// Handle profile location updated event
+  void _onProfileLocationUpdated(
+    ProfileLocationUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile location updated: ${event.currentLocation} ${event.destinationCity}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        currentLocation: event.currentLocation,
+        destinationCity: event.destinationCity,
+      ),
+    ));
+  }
+
+  /// Handle profile photo updated event
+  void _onProfilePhotoUpdated(
+    ProfilePhotoUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile photo updated: ${event.photoUrl}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        profilePhotoUrl: event.photoUrl,
+      ),
+    ));
+  }
+
+  /// Handle profile privacy updated event
+  void _onProfilePrivacyUpdated(
+    ProfilePrivacyUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    _logger.debug('OnboardingBloc', 'Profile privacy updated: ${event.isPrivate}');
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        isPrivate: event.isPrivate,
+      ),
+    ));
   }
 
   /// Handle next step request event
@@ -271,13 +399,35 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     try {
       emit(state.copyWith(isLoading: true));
       
+      // Log what we're about to save
+      _logger.debug('OnboardingBloc', 'Saving onboarding data...');
+      
+      // Log specific fields to help with debugging
+      if (state.data.birthCountry != null && state.data.birthCountry!.isNotEmpty) {
+        _logger.debug('OnboardingBloc', 'Birth country: ${state.data.birthCountry}');
+      }
+      
+      if (state.data.currentStatus != null && state.data.currentStatus!.isNotEmpty) {
+        _logger.debug('OnboardingBloc', 'Current status: ${state.data.currentStatus}');
+      }
+      
+      if (state.data.migrationSteps.isNotEmpty) {
+        _logger.debug('OnboardingBloc', 'Migration steps count: ${state.data.migrationSteps.length}');
+      }
+      
+      // Save the data
       await _saveOnboardingDataUseCase(state.data);
       
       emit(state.copyWith(isLoading: false));
       
-      _logger.debug('OnboardingBloc', 'Onboarding progress saved');
-    } catch (e) {
-      _logger.error('OnboardingBloc', 'Error saving onboarding data', error: e);
+      _logger.debug('OnboardingBloc', 'Onboarding progress saved successfully');
+    } catch (e, stackTrace) {
+      _logger.error(
+        'OnboardingBloc', 
+        'Error saving onboarding data', 
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to save progress',

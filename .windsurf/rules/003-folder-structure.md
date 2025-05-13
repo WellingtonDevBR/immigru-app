@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-description: Before creating a new file or folder check if already exists and if still create update this file
 ---
 
 lib/
@@ -13,6 +12,7 @@ lib/
 │   │   └── injection_container.dart
 │   ├── services
 │   │   ├── auth_logger.dart
+│   │   ├── edge_function_logger.dart
 │   │   ├── logger_service.dart
 │   │   ├── network_service.dart
 │   │   ├── onboarding_service.dart
@@ -24,25 +24,55 @@ lib/
 ├── data
 │   ├── datasources
 │   │   ├── remote
+│   │   │   └── user_profile_edge_function_data_source.dart
 │   │   └── supabase_data_source.dart
 │   ├── models
-│   │   └── supabase_auth_context.dart
+│   │   ├── country_model.dart
+│   │   ├── interest_model.dart
+│   │   ├── language_model.dart
+│   │   ├── onboarding_data_model.dart
+│   │   ├── profile_model.dart
+│   │   ├── supabase_auth_context.dart
+│   │   └── visa_model.dart
 │   └── repositories
 │       ├── auth_repository_impl.dart
+│       ├── country_repository_impl.dart
 │       ├── data_repository_impl.dart
-│       └── supabase_auth_service.dart
+│       ├── interest_repository_impl.dart
+│       ├── language_repository_impl.dart
+│       ├── onboarding_repository_impl.dart
+│       ├── profile_repository_impl.dart
+│       ├── supabase_auth_service.dart
+│       └── visa_repository_impl.dart
 ├── domain
 │   ├── entities
 │   │   ├── auth_context.dart
-│   │   └── user.dart
+│   │   ├── country.dart
+│   │   ├── interest.dart
+│   │   ├── language.dart
+│   │   ├── onboarding_data.dart
+│   │   ├── profile.dart
+│   │   ├── user.dart
+│   │   └── visa.dart
 │   ├── repositories
 │   │   ├── auth_repository.dart
 │   │   ├── auth_service.dart
-│   │   └── data_repository.dart
+│   │   ├── country_repository.dart
+│   │   ├── data_repository.dart
+│   │   ├── interest_repository.dart
+│   │   ├── language_repository.dart
+│   │   ├── onboarding_repository.dart
+│   │   ├── profile_repository.dart
+│   │   └── visa_repository.dart
 │   └── usecases
 │       ├── auth_usecases.dart
+│       ├── country_usecases.dart
 │       ├── data_usecases.dart
-│       └── post_usecases.dart
+│       ├── interest_usecases.dart
+│       ├── language_usecases.dart
+│       ├── onboarding_usecases.dart
+│       ├── post_usecases.dart
+│       └── profile_usecases.dart
 ├── main.dart
 └── presentation
     ├── blocs
@@ -50,10 +80,18 @@ lib/
     │   │   ├── auth_bloc.dart
     │   │   ├── auth_event.dart
     │   │   └── auth_state.dart
-    │   └── home
-    │       ├── home_bloc.dart
-    │       ├── home_event.dart
-    │       └── home_state.dart
+    │   ├── home
+    │   │   ├── home_bloc.dart
+    │   │   ├── home_event.dart
+    │   │   └── home_state.dart
+    │   ├── onboarding
+    │   │   ├── onboarding_bloc.dart
+    │   │   ├── onboarding_event.dart
+    │   │   └── onboarding_state.dart
+    │   └── profile
+    │       ├── profile_bloc.dart
+    │       ├── profile_event.dart
+    │       └── profile_state.dart
     ├── screens
     │   ├── auth
     │   │   ├── login_screen.dart
@@ -94,6 +132,39 @@ lib/
     │   │       ├── for_you_tab.dart
     │   │       ├── immi_groves_tab.dart
     │   │       └── tab_navigation.dart
+    │   ├── onboarding
+    │   │   ├── onboarding_screen.dart
+    │   │   └── widgets
+    │   │       ├── birth_country_step.dart
+    │   │       ├── current_status_step.dart
+    │   │       ├── interest_step.dart
+    │   │       ├── language_step.dart
+    │   │       ├── migration_journey
+    │   │       │   ├── enhanced_date_picker.dart
+    │   │       │   ├── index.dart
+    │   │       │   ├── migration_journey_header.dart
+    │   │       │   ├── migration_journey_step_widget.dart
+    │   │       │   ├── migration_step_modal.dart
+    │   │       │   └── migration_timeline.dart
+    │   │       ├── onboarding_progress_indicator.dart
+    │   │       ├── profession_step.dart
+    │   │       ├── profession_step.dart.new
+    │   │       └── profile
+    │   │           ├── basic_info_step.dart
+    │   │           ├── bio_step.dart
+    │   │           ├── display_name_step.dart
+    │   │           ├── location_step.dart
+    │   │           ├── photo_step.dart
+    │   │           └── privacy_step.dart
+    │   ├── profile
+    │   │   ├── profile_setup_screen.dart
+    │   │   └── widgets
+    │   │       ├── basic_info_step.dart
+    │   │       ├── bio_step.dart
+    │   │       ├── display_name_step.dart
+    │   │       ├── location_step.dart
+    │   │       ├── photo_step.dart
+    │   │       └── privacy_step.dart
     │   └── welcome
     │       └── welcome_screen.dart
     ├── theme
@@ -107,5 +178,7 @@ lib/
         │   └── social_login_button.dart
         ├── community
         │   └── community_feed_item.dart
-        └── feature
-            └── feature_item.dart
+        ├── country_selector.dart
+        ├── feature
+        │   └── feature_item.dart
+        └── loading_indicator.da

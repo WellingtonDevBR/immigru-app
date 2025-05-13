@@ -99,3 +99,91 @@ class OnboardingCompleted extends OnboardingEvent {
 class OnboardingSaved extends OnboardingEvent {
   const OnboardingSaved();
 }
+
+/// Event to update selected languages
+class LanguagesUpdated extends OnboardingEvent {
+  final List<String> languages;
+
+  const LanguagesUpdated(this.languages);
+
+  @override
+  List<Object> get props => [languages];
+}
+
+/// Event to update selected interests
+class InterestsUpdated extends OnboardingEvent {
+  final List<String> interests;
+
+  const InterestsUpdated(this.interests);
+
+  @override
+  List<Object?> get props => [interests];
+}
+
+/// Event to update the user's profile basic info
+class ProfileBasicInfoUpdated extends OnboardingEvent {
+  final String firstName;
+  final String lastName;
+
+  const ProfileBasicInfoUpdated({
+    required this.firstName,
+    required this.lastName,
+  });
+
+  @override
+  List<Object?> get props => [firstName, lastName];
+}
+
+/// Event to update the user's display name
+class ProfileDisplayNameUpdated extends OnboardingEvent {
+  final String displayName;
+
+  const ProfileDisplayNameUpdated(this.displayName);
+
+  @override
+  List<Object?> get props => [displayName];
+}
+
+/// Event to update the user's bio
+class ProfileBioUpdated extends OnboardingEvent {
+  final String bio;
+
+  const ProfileBioUpdated(this.bio);
+
+  @override
+  List<Object?> get props => [bio];
+}
+
+/// Event to update the user's location
+class ProfileLocationUpdated extends OnboardingEvent {
+  final String currentLocation;
+  final String destinationCity;
+
+  const ProfileLocationUpdated({
+    required this.currentLocation,
+    required this.destinationCity,
+  });
+
+  @override
+  List<Object?> get props => [currentLocation, destinationCity];
+}
+
+/// Event to update the user's photo
+class ProfilePhotoUpdated extends OnboardingEvent {
+  final String photoUrl;
+
+  const ProfilePhotoUpdated(this.photoUrl);
+
+  @override
+  List<Object?> get props => [photoUrl];
+}
+
+/// Event to update the user's privacy settings
+class ProfilePrivacyUpdated extends OnboardingEvent {
+  final bool isPrivate;
+
+  const ProfilePrivacyUpdated(this.isPrivate);
+
+  @override
+  List<Object?> get props => [isPrivate];
+}

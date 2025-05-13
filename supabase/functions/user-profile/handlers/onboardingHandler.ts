@@ -1,0 +1,635 @@
+/**
+ * Handler for onboarding-related operations
+ */
+import { UserProfile } from '../models/types.ts';
+import { createProfileIfNotExists } from './profileHandler.ts';
+import { sanitizeNotes } from '../utils/sanitize.ts';
+import { handleMigrationSteps } from './migrationHandler.ts';
+
+// Use type from Supabase client without importing the module
+type SupabaseClient = any;
+
+/**
+ * Process onboarding data for a specific step
+ * @param supabaseClient The Supabase client
+ * @param step The onboarding step
+ * @param data The step data
+ * @param userId The user ID
+ * @param existingProfile The existing user profile
+ * @param isCompleted Whether onboarding is completed
+ * @returns The processed data
+ */
+export async function processStepData(
+  supabaseClient: SupabaseClient,
+  step: string,
+  data: any,
+  userId: string,
+  existingProfile: UserProfile | null,
+  isCompleted: boolean
+): Promise<{ success: boolean; data?: any; error?: any }> {
+  console.log(`Processing data for step: ${step}`);
+  
+  try {
+    switch(step) {
+      case 'birthCountry':
+        // Validate the birth country
+        if (!data.birthCountry) {
+          throw new Error('Birth country is required');
+        }
+        
+        let countryName = data.birthCountry;
+        let countryId = null;
+        
+        // If it looks like an ISO code, try to find by ISO code first
+        if (data.birthCountry.length <= 3) {
+          console.log(`Input looks like an ISO code: ${data.birthCountry}, trying ISO match...`);
+          
+          // Try to find country by ISO code (exact match)
+          const { data: isoCountryData, error: isoCountryError } = await supabaseClient
+            .from("Country")
+            .select("Id, Name, IsoCode")
+            .eq("IsoCode", data.birthCountry.toUpperCase())
+            .single();
+            
+          if (!isoCountryError && isoCountryData) {
+            countryName = isoCountryData.Name;
+            countryId = isoCountryData.Id;
+            console.log(`Found country by ISO code: ${countryName} (ID: ${countryId})`);
+          } else {
+            console.log(`No country found for ISO code: ${data.birthCountry}, trying name search...`);
+            
+            // Try name search as fallback
+            const { data: nameCountryData, error: nameCountryError } = await supabaseClient
+              .from("Country")
+              .select("Id, Name")
+              .ilike("Name", `%${data.birthCountry}%`)
+              .limit(1);
+              
+            if (!nameCountryError && nameCountryData && nameCountryData.length > 0) {
+              countryName = nameCountryData[0].Name;
+              countryId = nameCountryData[0].Id;
+              console.log(`Found country by name: ${countryName} (ID: ${countryId})`);
+            } else {
+              console.warn(`Could not find country for: ${data.birthCountry}`);
+            }
+          }
+        } else {
+          // Try direct name match
+          const { data: countryData, error: countryError } = await supabaseClient
+            .from("Country")
+            .select("Id, Name")
+            .ilike("Name", `%${data.birthCountry}%`)
+            .limit(1);
+            
+          if (!countryError && countryData && countryData.length > 0) {
+            countryName = countryData[0].Name;
+            countryId = countryData[0].Id;
+            console.log(`Found country by name: ${countryName} (ID: ${countryId})`);
+          } else {
+            console.warn(`Could not find country for: ${data.birthCountry}`);
+          }
+        }
+        
+        console.log(`Saving origin country: ${countryName}`);
+        
+        // First ensure the UserProfile record exists
+        await createProfileIfNotExists(supabaseClient, userId);
+        
+        // Update the user profile with origin country
+        console.log(`Updating UserProfile.OriginCountry to ${countryName} for user ${userId}`);
+        
+        // Update UserProfile.OriginCountry using standard client update
+        console.log('Updating UserProfile.OriginCountry using standard client update');
+        const { data: updateResult, error: updateError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            OriginCountry: countryName,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId)
+          .select();
+        
+        if (updateError) {
+          console.error('Error updating UserProfile.OriginCountry:', updateError);
+        } else {
+          console.log('UserProfile.OriginCountry update result:', updateResult);
+        }
+        
+        // Also add the birth country as the first migration step (Order=1) if we have a country ID
+        if (countryId) {
+          console.log(`Adding/updating birth country as migration step with country ID: ${countryId}`);
+          
+          // Check for existing birth country step
+          const { data: existingSteps, error: stepsError } = await supabaseClient
+            .from('MigrationStep')
+            .select('*')
+            .eq('UserId', userId)
+            .eq('Order', 1)
+            .limit(1);
+            
+          if (stepsError) {
+            console.error('Error checking for existing birth country step:', stepsError);
+          } else if (existingSteps && existingSteps.length > 0) {
+            console.log(`Updating existing birth country step (ID: ${existingSteps[0].Id})`);
+            // Update existing birth country step
+            const { error: updateStepError } = await supabaseClient
+              .from('MigrationStep')
+              .update({
+                CountryId: countryId,
+                UpdatedAt: new Date().toISOString()
+              })
+              .eq('Id', existingSteps[0].Id);
+              
+            if (updateStepError) {
+              console.error('Error updating birth country step:', updateStepError);
+            }
+          } else {
+            console.log(`Creating new birth country step for country ID: ${countryId}`);
+            // Create new birth country step
+            const { error: insertStepError } = await supabaseClient
+              .from('MigrationStep')
+              .insert({
+                UserId: userId,
+                CountryId: countryId,
+                Order: 1, // Birth country is always first
+                ArrivedDate: null, // No arrival date for birth country
+                IsCurrentLocation: false,
+                IsTargetDestination: false,
+                WasSuccessful: true,
+                CreatedAt: new Date().toISOString(),
+                UpdatedAt: new Date().toISOString()
+              });
+              
+            if (insertStepError) {
+              console.error('Error inserting birth country step:', insertStepError);
+            }
+          }
+        }
+          
+        return { success: true, data: { originCountry: countryName } };
+        
+      case 'currentStatus':
+        // Validate current status
+        if (!data.currentStatus) {
+          throw new Error('Current status is required');
+        }
+        
+        // Validate that the status is a known value
+        const validStatuses = ['planning', 'gathering', 'moved', 'exploring', 'permanent'];
+        if (!validStatuses.includes(data.currentStatus)) {
+          throw new Error(`Invalid current status: ${data.currentStatus}`);
+        }
+        
+        // First ensure the UserProfile record exists
+        await createProfileIfNotExists(supabaseClient, userId);
+        
+        // Update the user profile with current status
+        console.log(`Updating UserProfile.MigrationStage to ${data.currentStatus} for user ${userId}`);
+        
+        // Update the user profile with current status
+        try {
+          // Update using UserId
+          const { data: updateResult, error: statusError } = await supabaseClient
+            .from('UserProfile')
+            .update({ 
+              MigrationStage: data.currentStatus,
+              UpdatedAt: new Date().toISOString()
+            })
+            .eq('UserId', userId)
+            .select();
+            
+          if (statusError) {
+            console.error('Status update error:', statusError);
+            throw statusError;
+          } else {
+            console.log('UserProfile.MigrationStage update successful:', updateResult);
+            
+            // Log the updated profile for debugging
+            const { data: updatedProfile } = await supabaseClient
+              .from('UserProfile')
+              .select('*')
+              .eq('UserId', userId)
+              .single();
+              
+            console.log('Updated profile after status change:', updatedProfile);
+            
+            return { success: true, data: { currentStatus: data.currentStatus } };
+          }
+        } catch (error) {
+          console.error('Error updating migration stage:', error);
+          throw error;
+        }
+        
+        return { success: true, data: { currentStatus: data.currentStatus } };
+        
+      case 'migrationJourney':
+        // Handle migration steps
+        if (!data.migrationSteps || !Array.isArray(data.migrationSteps)) {
+          console.error('Invalid migration steps data:', data.migrationSteps);
+          throw new Error('Migration steps must be an array');
+        }
+        
+        if (data.migrationSteps.length === 0) {
+          console.warn('Empty migration steps array received');
+          return { success: true, data: { message: 'No migration steps to process' } };
+        }
+        
+        console.log(`Processing ${data.migrationSteps.length} migration steps`);
+        
+        // Log the steps for debugging
+        data.migrationSteps.forEach((step: any, index: number) => {
+          console.log(`Step ${index + 1}:`, JSON.stringify({
+            countryId: step.countryId,
+            visaId: step.visaId,
+            arrivedDate: step.arrivedDate,
+            leftDate: step.leftDate,
+            isCurrentLocation: step.isCurrentLocation,
+            isTargetDestination: step.isTargetDestination
+          }));
+        });
+        
+        try {
+          const result = await handleMigrationSteps(supabaseClient, userId, data.migrationSteps);
+          console.log('Migration steps processed successfully');
+          return result;
+        } catch (error) {
+          console.error('Error processing migration steps:', error);
+          throw error;
+        }
+        
+      case 'profession':
+        // Update the user profile with profession and industry
+        if (!data.profession) {
+          throw new Error('Profession is required');
+        }
+        
+        const { success: professionSuccess, error: professionError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            Profession: data.profession,
+            Industry: data.industry || null,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (professionError) {
+          throw professionError;
+        }
+        
+        return { success: true, data: { profession: data.profession, industry: data.industry } };
+        
+      case 'languages':
+        // Handle user languages
+        if (!data.languages || !Array.isArray(data.languages) || data.languages.length === 0) {
+          throw new Error('Languages are required');
+        }
+        
+        // First delete existing languages
+        await supabaseClient
+          .from('UserLanguage')
+          .delete()
+          .eq('UserId', userId);
+          
+        // Then insert new languages
+        const languageData = data.languages.map((lang: any, index: number) => ({
+          UserId: userId,
+          LanguageId: typeof lang === 'object' ? lang.id : lang,
+          Proficiency: typeof lang === 'object' ? lang.proficiency : 'intermediate',
+          CreatedAt: new Date().toISOString(),
+          UpdatedAt: new Date().toISOString()
+        }));
+        
+        const { error: languageError } = await supabaseClient
+          .from('UserLanguage')
+          .insert(languageData);
+          
+        if (languageError) {
+          throw languageError;
+        }
+        
+        return { success: true, data: { languages: languageData } };
+        
+      case 'interests':
+        // Handle user interests
+        if (!data.interests || !Array.isArray(data.interests) || data.interests.length === 0) {
+          throw new Error('Interests are required');
+        }
+        
+        // First delete existing interests
+        await supabaseClient
+          .from('UserInterest')
+          .delete()
+          .eq('UserId', userId);
+          
+        // Then insert new interests
+        const interestData = data.interests.map((interest: any) => ({
+          UserId: userId,
+          InterestId: typeof interest === 'object' ? interest.id : interest,
+          CreatedAt: new Date().toISOString(),
+          UpdatedAt: new Date().toISOString()
+        }));
+        
+        const { error: interestError } = await supabaseClient
+          .from('UserInterest')
+          .insert(interestData);
+          
+        if (interestError) {
+          throw interestError;
+        }
+        
+        return { success: true, data: { interests: interestData } };
+        
+      case 'profileBasicInfo':
+        // Update the user profile with basic info
+        const { firstName, lastName, profilePhotoUrl } = data;
+        
+        if (!firstName || !lastName) {
+          throw new Error('First name and last name are required');
+        }
+        
+        const fullName = `${firstName} ${lastName}`.trim();
+        
+        const { success: basicInfoSuccess, error: basicInfoError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            FullName: fullName,
+            AvatarUrl: profilePhotoUrl || null,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (basicInfoError) {
+          throw basicInfoError;
+        }
+        
+        return { success: true, data: { fullName, avatarUrl: profilePhotoUrl } };
+        
+      case 'profileDisplayName':
+        // Update the user profile with display name
+        if (!data.displayName) {
+          throw new Error('Display name is required');
+        }
+        
+        const { success: displayNameSuccess, error: displayNameError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            DisplayName: data.displayName,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (displayNameError) {
+          throw displayNameError;
+        }
+        
+        return { success: true, data: { displayName: data.displayName } };
+        
+      case 'profileBio':
+        // Update the user profile with bio
+        const sanitizedBio = data.bio ? sanitizeNotes(data.bio) : null;
+        
+        const { success: bioSuccess, error: bioError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            Bio: sanitizedBio,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (bioError) {
+          throw bioError;
+        }
+        
+        return { success: true, data: { bio: sanitizedBio } };
+        
+      case 'profileLocation':
+        // Update the user profile with location
+        const { currentCity, destinationCity } = data;
+        
+        const { success: locationSuccess, error: locationError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            CurrentCity: currentCity || null,
+            DestinationCity: destinationCity || null,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (locationError) {
+          throw locationError;
+        }
+        
+        return { success: true, data: { currentCity, destinationCity } };
+        
+      case 'profilePrivacy':
+        // Update the user profile with privacy settings
+        const isPrivate = data.isPrivate === true;
+        
+        const { success: privacySuccess, error: privacyError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            IsPrivate: isPrivate,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (privacyError) {
+          throw privacyError;
+        }
+        
+        return { success: true, data: { isPrivate } };
+        
+      case 'completed':
+        // Mark onboarding as completed
+        const { success: completedSuccess, error: completedError } = await supabaseClient
+          .from('UserProfile')
+          .update({ 
+            IsOnboardingCompleted: true,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('UserId', userId);
+          
+        if (completedError) {
+          throw completedError;
+        }
+        
+        return { success: true, data: { isOnboardingCompleted: true } };
+        
+      default:
+        throw new Error(`Unknown step: ${step}`);
+    }
+  } catch (error) {
+    console.error(`Error processing step ${step}:`, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Check if onboarding is completed
+ * @param supabaseClient The Supabase client
+ * @param userId The user ID
+ * @returns Whether onboarding is completed
+ */
+export async function checkOnboardingStatus(
+  supabaseClient: SupabaseClient,
+  userId: string
+): Promise<{ completed: boolean; profile?: UserProfile }> {
+  console.log(`Checking onboarding status for user: ${userId}`);
+  
+  const { data, error } = await supabaseClient
+    .from('UserProfile')
+    .select('*')
+    .eq('UserId', userId)
+    .single();
+    
+  if (error || !data) {
+    console.error(`Error checking onboarding status:`, error);
+    return { completed: false };
+  }
+  
+  return { 
+    completed: data.IsOnboardingCompleted === true,
+    profile: data
+  };
+}
+
+/**
+ * Get data for a specific onboarding step
+ * @param supabaseClient The Supabase client
+ * @param step The onboarding step
+ * @param userId The user ID
+ * @returns The step data
+ */
+export async function getOnboardingStepData(
+  supabaseClient: SupabaseClient,
+  step: string,
+  userId: string
+): Promise<{ success: boolean; data?: any; error?: any }> {
+  console.log(`Getting data for onboarding step: ${step}`);
+  
+  try {
+    switch(step) {
+      case 'birthCountry':
+        // Get the user's birth country
+        const { data: profileData, error: profileError } = await supabaseClient
+          .from('UserProfile')
+          .select('OriginCountry')
+          .eq('UserId', userId)
+          .single();
+          
+        if (profileError) {
+          throw profileError;
+        }
+        
+        return { 
+          success: true, 
+          data: { birthCountry: profileData?.OriginCountry || null } 
+        };
+        
+      case 'currentStatus':
+        // Get the user's current migration status
+        const { data: statusData, error: statusError } = await supabaseClient
+          .from('UserProfile')
+          .select('MigrationStage')
+          .eq('UserId', userId)
+          .single();
+          
+        if (statusError) {
+          throw statusError;
+        }
+        
+        return { 
+          success: true, 
+          data: { currentStatus: statusData?.MigrationStage || null } 
+        };
+        
+      case 'migrationJourney':
+        console.log(`Retrieving migration journey steps for user: ${userId}`);
+        
+        // Get the user's migration steps with detailed country and visa information
+        const { data: migrationData, error: migrationError } = await supabaseClient
+          .from('MigrationStep')
+          .select(`
+            Id, 
+            UserId, 
+            Order, 
+            CountryId, 
+            Country:CountryId(Id, Name, IsoCode), 
+            VisaId, 
+            Visa:VisaId(Id, VisaName, VisaType), 
+            IsCurrent, 
+            IsTarget, 
+            ArrivedAt, 
+            LeftAt, 
+            Notes, 
+            MigrationReason, 
+            WasSuccessful, 
+            CreatedAt, 
+            UpdatedAt
+          `)
+          .eq('UserId', userId)
+          .order('Order', { ascending: true });
+        
+        console.log(`Migration steps query completed. Error: ${migrationError ? 'Yes' : 'No'}, Steps found: ${migrationData ? migrationData.length : 0}`);
+        
+        if (migrationError) {
+          console.error('Error retrieving migration steps:', migrationError);
+          throw migrationError;
+        }
+        
+        // Format the steps for the frontend
+        const formattedSteps = (migrationData || []).map(step => ({
+          ...step,
+          countryName: step.Country?.Name || '',
+          countryIsoCode: step.Country?.IsoCode || '',
+          visaName: step.Visa?.VisaName || null,
+          visaType: step.Visa?.VisaType || null
+        }));
+        
+        console.log(`Returning ${formattedSteps.length} formatted migration steps`);
+        
+        return { 
+          success: true, 
+          data: { migrationSteps: formattedSteps } 
+        };
+        
+      case 'languages':
+        // Get the user's languages
+        const { data: languageData, error: languageError } = await supabaseClient
+          .from('UserLanguage')
+          .select('*, Language(Id, Name, NativeName, IsoCode)')
+          .eq('UserId', userId);
+          
+        if (languageError) {
+          throw languageError;
+        }
+        
+        return { 
+          success: true, 
+          data: { languages: languageData || [] } 
+        };
+        
+      case 'interests':
+        // Get the user's interests
+        const { data: interestData, error: interestError } = await supabaseClient
+          .from('UserInterest')
+          .select('*, Interest(Id, Name, Category)')
+          .eq('UserId', userId);
+          
+        if (interestError) {
+          throw interestError;
+        }
+        
+        return { 
+          success: true, 
+          data: { interests: interestData || [] } 
+        };
+        
+      default:
+        throw new Error(`Unsupported onboarding step: ${step}`);
+    }
+  } catch (error) {
+    console.error(`Error getting data for onboarding step ${step}:`, error);
+    return { success: false, error: error.message };
+  }
+}

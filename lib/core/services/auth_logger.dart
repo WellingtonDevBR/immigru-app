@@ -9,7 +9,7 @@ extension AuthLogger on LoggerService {
     String? userId;
     String? email;
     
-    if (session != null && session.user != null) {
+    if (session != null) {
       userId = session.user.id;
       email = session.user.email;
     }

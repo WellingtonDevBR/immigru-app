@@ -14,6 +14,7 @@ import 'package:immigru/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:immigru/presentation/screens/welcome/welcome_screen.dart';
 import 'package:immigru/presentation/theme/app_theme.dart';
 
+
 class ImmigruApp extends StatelessWidget {
   const ImmigruApp({super.key});
 
@@ -52,7 +53,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<AppThemeProvider>(context);
-
+    
     return MaterialApp(
       title: 'Immigru',
       debugShowCheckedModeBanner: false,
@@ -64,6 +65,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   }
 
   Widget _buildHomeScreen() {
+    // PRODUCTION MODE NAVIGATION
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state.isLoading) {

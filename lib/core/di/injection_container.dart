@@ -1,26 +1,42 @@
 import 'package:get_it/get_it.dart';
+import 'package:immigru/core/services/edge_function_logger.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/core/services/session_manager.dart';
 import 'package:immigru/core/services/supabase_service.dart';
-import 'package:immigru/core/services/theme_service.dart';
 import 'package:immigru/data/datasources/supabase_data_source.dart';
+import 'package:immigru/data/datasources/remote/user_profile_edge_function_data_source.dart';
 import 'package:immigru/data/models/supabase_auth_context.dart';
 import 'package:immigru/data/repositories/auth_repository_impl.dart';
-import 'package:immigru/data/repositories/data_repository_impl.dart';
+import 'package:immigru/data/repositories/country_repository_impl.dart';
+// import 'package:immigru/data/repositories/data_repository_impl.dart';
+import 'package:immigru/data/repositories/interest_repository_impl.dart';
+import 'package:immigru/data/repositories/language_repository_impl.dart';
 import 'package:immigru/data/repositories/onboarding_repository_impl.dart';
 import 'package:immigru/data/repositories/supabase_auth_service.dart';
+import 'package:immigru/data/repositories/profile_repository_impl.dart';
+import 'package:immigru/data/repositories/visa_repository_impl.dart';
 import 'package:immigru/domain/entities/auth_context.dart';
 import 'package:immigru/domain/repositories/auth_repository.dart';
 import 'package:immigru/domain/repositories/auth_service.dart';
+import 'package:immigru/domain/repositories/country_repository.dart';
 import 'package:immigru/domain/repositories/data_repository.dart';
+import 'package:immigru/domain/repositories/interest_repository.dart';
+import 'package:immigru/domain/repositories/language_repository.dart';
 import 'package:immigru/domain/repositories/onboarding_repository.dart';
+import 'package:immigru/domain/repositories/profile_repository.dart';
+import 'package:immigru/domain/repositories/visa_repository.dart';
 import 'package:immigru/domain/usecases/auth_usecases.dart';
+import 'package:immigru/domain/usecases/country_usecases.dart';
 import 'package:immigru/domain/usecases/data_usecases.dart';
+import 'package:immigru/domain/usecases/interest_usecases.dart';
+import 'package:immigru/domain/usecases/language_usecases.dart';
 import 'package:immigru/domain/usecases/onboarding_usecases.dart';
 import 'package:immigru/domain/usecases/post_usecases.dart';
+import 'package:immigru/domain/usecases/profile_usecases.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
+import 'package:immigru/presentation/blocs/profile/profile_bloc.dart';
 // Theme imports are handled directly in app.dart
 
 // Service locator instance
@@ -33,12 +49,20 @@ Future<void> init() async {
     sendOtpToPhoneUseCase: sl<SendOtpToPhoneUseCase>(),
     verifyPhoneOtpUseCase: sl<VerifyPhoneOtpUseCase>(),
   ));
-  
+
   sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(
-    getOnboardingDataUseCase: sl<GetOnboardingDataUseCase>(),
     saveOnboardingDataUseCase: sl<SaveOnboardingDataUseCase>(),
-    completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
     checkOnboardingStatusUseCase: sl<CheckOnboardingStatusUseCase>(),
+    getOnboardingDataUseCase: sl<GetOnboardingDataUseCase>(),
+    completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
+    logger: sl<LoggerService>(),
+  ));
+
+  sl.registerFactory<ProfileBloc>(() => ProfileBloc(
+    getProfileUseCase: sl<GetProfileUseCase>(),
+    saveProfileUseCase: sl<SaveProfileUseCase>(),
+    uploadProfilePhotoUseCase: sl<UploadProfilePhotoUseCase>(),
+    updatePrivacySettingsUseCase: sl<UpdatePrivacySettingsUseCase>(),
     logger: sl<LoggerService>(),
   ));
 
@@ -46,31 +70,56 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(sl<SupabaseDataSource>()),
   );
-  sl.registerLazySingleton<DataRepository>(
-    () => DataRepositoryImpl(sl<SupabaseDataSource>()),
+  
+  sl.registerLazySingleton<CountryRepository>(
+    () => CountryRepositoryImpl(
+      dataSource: sl<SupabaseDataSource>(),
+      logger: sl<LoggerService>(),
+    ),
   );
+  
+  // Register OnboardingRepository with CountryRepository for country code resolution
   sl.registerLazySingleton<OnboardingRepository>(
-    () => OnboardingRepositoryImpl(sl<SupabaseService>(), sl<LoggerService>(), sl<OnboardingService>()),
+    () => OnboardingRepositoryImpl(
+      sl<SupabaseService>(), 
+      sl<LoggerService>(), 
+      sl<OnboardingService>(),
+      sl<CountryRepository>(),
+    ),
+  );
+  sl.registerLazySingleton<VisaRepository>(
+    () => VisaRepositoryImpl(sl<SupabaseService>()),
+  );
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(
+      sl<SupabaseService>(), 
+      sl<LoggerService>(), 
+      sl(),  // UserProfileEdgeFunctionDataSource
+      sl<OnboardingService>(),
+    ),
+  );
+  sl.registerLazySingleton<LanguageRepository>(
+    () => LanguageRepositoryImpl(sl<SupabaseService>()),
+  );
+  sl.registerLazySingleton<InterestRepository>(
+    () => InterestRepositoryImpl(sl<SupabaseService>()),
   );
   
   // Register data sources
   sl.registerLazySingleton<SupabaseDataSource>(
     () => SupabaseDataSourceImpl(sl<SupabaseService>()),
   );
+  sl.registerLazySingleton<UserProfileEdgeFunctionDataSource>(
+    () => UserProfileEdgeFunctionDataSource(sl<SupabaseService>(), sl<LoggerService>()),
+  );
   
-  // Register services
+  // Register core services first
   sl.registerLazySingleton<LoggerService>(() => LoggerService());
-  sl.registerLazySingleton<OnboardingService>(() => OnboardingService());
-  sl.registerLazySingleton<ThemeService>(() => ThemeService());
   
   // Register Supabase service as a singleton that's immediately initialized
   final supabaseService = SupabaseService();
   await supabaseService.initialize();
   sl.registerLazySingleton<SupabaseService>(() => supabaseService);
-  
-  sl.registerLazySingleton<SessionManager>(
-    () => SessionManager(sl<AuthService>()),
-  );
   
   // Register authentication context and service
   sl.registerLazySingleton<AuthContext>(
@@ -79,6 +128,12 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthService>(
     () => SupabaseAuthService(sl<SupabaseService>()),
   );
+  
+  // Register remaining services
+  sl.registerLazySingleton<EdgeFunctionLogger>(() => EdgeFunctionLogger(sl<LoggerService>()));
+  sl.registerLazySingleton<OnboardingService>(() => OnboardingService());
+  sl.registerLazySingleton<SessionManager>(() => SessionManager(sl<AuthService>()));
+  
   
   // Register use cases
   // Auth use cases
@@ -106,9 +161,20 @@ Future<void> init() async {
   // Onboarding use cases
   sl.registerLazySingleton(() => GetOnboardingDataUseCase(sl<OnboardingRepository>()));
   sl.registerLazySingleton(() => SaveOnboardingDataUseCase(sl<OnboardingRepository>()));
-  sl.registerLazySingleton(() => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()));
   sl.registerLazySingleton(() => CompleteOnboardingUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton(() => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton(() => GetLanguagesUseCase(sl<LanguageRepository>()));
+  sl.registerLazySingleton(() => GetInterestsUseCase(sl<InterestRepository>()));
   
+  // Profile use cases
+  sl.registerLazySingleton(() => GetProfileUseCase(sl<ProfileRepository>()));
+  sl.registerLazySingleton(() => SaveProfileUseCase(sl<ProfileRepository>()));
+  sl.registerLazySingleton(() => UploadProfilePhotoUseCase(sl<ProfileRepository>()));
+  sl.registerLazySingleton(() => UpdatePrivacySettingsUseCase(sl<ProfileRepository>()));
+
+  // Country use cases
+  sl.registerLazySingleton(() => GetCountriesUseCase(sl<CountryRepository>()));
+
   // Theme management is handled directly in app.dart with AppThemeProvider
   
   // Supabase is already initialized above

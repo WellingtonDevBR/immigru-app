@@ -61,7 +61,7 @@ class LoggerService {
     }
     
     final timestamp = DateTime.now().toIso8601String();
-    final levelStr = _getLevelEmoji(level) + ' ' + level.toString().split('.').last.toUpperCase();
+    final levelStr = '${_getLevelEmoji(level)} ${level.toString().split('.').last.toUpperCase()}';
     final categoryStr = '[${category.toString().split('.').last.toUpperCase()}]';
     
     debugPrint('$timestamp | $levelStr $categoryStr: $message');

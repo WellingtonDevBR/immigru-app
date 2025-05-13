@@ -41,29 +41,22 @@ class SupabaseService {
     // Add auth state change listener for debugging
     _client.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
-      print('🔐 AUTH EVENT: $event');
       
       switch (event) {
         case AuthChangeEvent.signedIn:
-          print('✅ USER SIGNED IN: ${data.session?.user.email}');
           break;
         case AuthChangeEvent.signedOut:
-          print('🚪 USER SIGNED OUT');
           break;
         case AuthChangeEvent.userUpdated:
-          print('🔄 USER UPDATED: ${data.session?.user.email}');
           break;
         case AuthChangeEvent.passwordRecovery:
-          print('🔑 PASSWORD RECOVERY');
           break;
         case AuthChangeEvent.tokenRefreshed:
-          print('🔄 TOKEN REFRESHED');
           break;
         case AuthChangeEvent.mfaChallengeVerified:
-          print('✅ MFA CHALLENGE VERIFIED');
           break;
         default:
-          print('⚠️ OTHER AUTH EVENT: $event');
+          break;
       }
     });
   }
@@ -101,7 +94,6 @@ class SupabaseService {
     try {
       throw Exception('This method is deprecated. Use SupabaseAuthService.signInWithGoogle() instead.');
     } catch (e) {
-      print('Error signing in with Google: $e');
       rethrow;
     }
   }
@@ -218,5 +210,27 @@ class SupabaseService {
     }
     
     return await _client.from(tableName).delete().eq(parts[0], parts[1]).select();
+  }
+  
+  /// Call a Supabase Edge Function
+  /// 
+  /// This method calls a Supabase Edge Function with the given name and optional parameters.
+  /// It returns the response data as a dynamic object that can be cast to the appropriate type.
+  Future<dynamic> callEdgeFunction(String functionName, {Map<String, dynamic>? params}) async {
+    try {
+      
+      final response = await _client.functions.invoke(
+        functionName,
+        body: params,
+      );
+      
+      if (response.status != 200) {
+        throw Exception('Edge function error: ${response.status} - ${response.data}');
+      }
+      
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
   }
 }

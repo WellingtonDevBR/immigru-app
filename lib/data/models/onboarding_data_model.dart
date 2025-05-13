@@ -1,4 +1,5 @@
 import 'package:immigru/domain/entities/onboarding_data.dart';
+import 'package:immigru/data/models/visa_model.dart';
 
 /// Data model for onboarding information
 class OnboardingDataModel extends OnboardingData {
@@ -8,6 +9,16 @@ class OnboardingDataModel extends OnboardingData {
     super.migrationSteps = const [],
     super.profession,
     super.isCompleted = false,
+    super.languages = const [],
+    super.interests = const [],
+    super.firstName,
+    super.lastName,
+    super.displayName,
+    super.bio,
+    super.profilePhotoUrl,
+    super.currentLocation,
+    super.destinationCity,
+    super.isPrivate,
   });
 
   /// Create a model from a JSON map
@@ -24,6 +35,20 @@ class OnboardingDataModel extends OnboardingData {
           : [],
       profession: json['profession'],
       isCompleted: json['isCompleted'] ?? false,
+      languages: json['languages'] != null
+          ? List<String>.from(json['languages'])
+          : [],
+      interests: json['interests'] != null
+          ? List<String>.from(json['interests'])
+          : [],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      displayName: json['displayName'],
+      bio: json['bio'],
+      profilePhotoUrl: json['profilePhotoUrl'],
+      currentLocation: json['currentLocation'],
+      destinationCity: json['destinationCity'],
+      isPrivate: json['isPrivate'] ?? false,
     );
   }
 
@@ -37,6 +62,16 @@ class OnboardingDataModel extends OnboardingData {
           .toList(),
       'profession': profession,
       'isCompleted': isCompleted,
+      'languages': languages,
+      'interests': interests,
+      'firstName': firstName,
+      'lastName': lastName,
+      'displayName': displayName,
+      'bio': bio,
+      'profilePhotoUrl': profilePhotoUrl,
+      'currentLocation': currentLocation,
+      'destinationCity': destinationCity,
+      'isPrivate': isPrivate,
     };
   }
 
@@ -50,6 +85,16 @@ class OnboardingDataModel extends OnboardingData {
           .toList(),
       profession: entity.profession,
       isCompleted: entity.isCompleted,
+      languages: entity.languages,
+      interests: entity.interests,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      displayName: entity.displayName,
+      bio: entity.bio,
+      profilePhotoUrl: entity.profilePhotoUrl,
+      currentLocation: entity.currentLocation,
+      destinationCity: entity.destinationCity,
+      isPrivate: entity.isPrivate,
     );
   }
 }
@@ -57,43 +102,82 @@ class OnboardingDataModel extends OnboardingData {
 /// Data model for migration step information
 class MigrationStepModel extends MigrationStep {
   const MigrationStepModel({
-    required super.country,
-    required super.year,
-    super.status = '',
+    super.id,
+    super.order,
+    required super.countryId,
+    required super.countryName,
+    super.visaId,
+    super.visaName = '',
+    super.arrivedDate,
+    super.leftDate,
     super.isCurrentLocation = false,
+    super.isTargetDestination = false,
     super.notes,
+    super.migrationReason,
+    super.wasSuccessful = true,
   });
 
   /// Create a model from a JSON map
   factory MigrationStepModel.fromJson(Map<String, dynamic> json) {
     return MigrationStepModel(
-      country: json['country'],
-      year: json['year'] ?? DateTime.now().year,
-      status: json['status'] ?? '',
-      isCurrentLocation: json['isCurrentLocation'] ?? false,
-      notes: json['notes'],
+      id: json['Id'] ?? json['id'],
+      order: json['Order'] ?? json['order'],
+      countryId: json['CountryId'] ?? json['countryId'],
+      countryName: json['countryName'] ?? '', // This will need to be populated separately
+      visaId: json['VisaId'] ?? json['visaId'],
+      visaName: json['visaName'] ?? '', // This will need to be populated separately
+      arrivedDate: json['ArrivedAt'] != null || json['arrivedAt'] != null
+          ? DateTime.parse(json['ArrivedAt'] ?? json['arrivedAt'])
+          : null,
+      leftDate: json['LeftAt'] != null || json['leftAt'] != null
+          ? DateTime.parse(json['LeftAt'] ?? json['leftAt'])
+          : null,
+      isCurrentLocation: json['IsCurrent'] ?? json['isCurrent'] ?? false,
+      isTargetDestination: json['IsTarget'] ?? json['isTarget'] ?? false,
+      notes: json['Notes'] ?? json['notes'],
+      migrationReason: MigrationReasonUtils.fromString(
+          json['MigrationReason'] ?? json['migrationReason']),
+      wasSuccessful: json['WasSuccessful'] ?? json['wasSuccessful'] ?? true,
     );
   }
 
   /// Convert model to a JSON map
+  @override
   Map<String, dynamic> toJson() {
-    return {
-      'country': country,
-      'year': year,
-      'status': status,
-      'isCurrentLocation': isCurrentLocation,
-      'notes': notes,
+    final Map<String, dynamic> data = {
+      'CountryId': countryId,
+      'ArrivedAt': arrivedDate?.toIso8601String(),
+      'LeftAt': leftDate?.toIso8601String(),
+      'IsCurrent': isCurrentLocation,
+      'IsTarget': isTargetDestination,
+      'Notes': notes,
+      'WasSuccessful': wasSuccessful,
     };
+    
+    if (id != null) data['Id'] = id;
+    if (order != null) data['Order'] = order;
+    if (visaId != null) data['VisaId'] = visaId;
+    if (migrationReason != null) data['MigrationReason'] = migrationReason!.toJson();
+    
+    return data;
   }
 
   /// Create a model from a domain entity
   factory MigrationStepModel.fromEntity(MigrationStep entity) {
     return MigrationStepModel(
-      country: entity.country,
-      year: entity.year,
-      status: entity.status,
+      id: entity.id,
+      order: entity.order,
+      countryId: entity.countryId,
+      countryName: entity.countryName,
+      visaId: entity.visaId,
+      visaName: entity.visaName,
+      arrivedDate: entity.arrivedDate,
+      leftDate: entity.leftDate,
       isCurrentLocation: entity.isCurrentLocation,
+      isTargetDestination: entity.isTargetDestination,
       notes: entity.notes,
+      migrationReason: entity.migrationReason,
+      wasSuccessful: entity.wasSuccessful,
     );
   }
 }

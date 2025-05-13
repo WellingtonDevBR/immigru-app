@@ -7,6 +7,13 @@ enum OnboardingStep {
   currentStatus,
   migrationJourney,
   profession,
+  languages,
+  interests,
+  profileBasicInfo,
+  profileDisplayName,
+  profileBio,
+  profileLocation,
+  profilePrivacy,
   completed,
 }
 
@@ -57,6 +64,28 @@ class OnboardingState extends Equatable {
         return true;
       case OnboardingStep.profession:
         // Profession can be skipped, so it's always valid
+        return true;
+      case OnboardingStep.languages:
+        // Languages can be skipped, but at least one is recommended
+        return true;
+      case OnboardingStep.interests:
+        // Interests can be skipped, but at least one is recommended
+        return true;
+      case OnboardingStep.profileBasicInfo:
+        // Profile basic info is optional but recommended
+        return true;
+      case OnboardingStep.profileDisplayName:
+        // Display name is optional but recommended
+        return true;
+      case OnboardingStep.profileBio:
+        // Bio is optional
+        return true;
+      case OnboardingStep.profileLocation:
+        // Location is optional
+        return true;
+      // Photo step has been integrated into BasicInfoStep
+      case OnboardingStep.profilePrivacy:
+        // Privacy settings are pre-filled
         return true;
       case OnboardingStep.completed:
         return true;

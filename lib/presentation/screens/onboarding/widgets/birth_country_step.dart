@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/core/di/injection_container.dart' as di;
+import 'package:immigru/domain/entities/country.dart';
+import 'package:immigru/domain/usecases/country_usecases.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/presentation/widgets/country_selector.dart';
 
 /// Widget for the birth country selection step in onboarding
+/// Uses the shared CountrySelector component for consistent UI
 class BirthCountryStep extends StatefulWidget {
-  final String? selectedCountry;
-  final Function(String) onCountrySelected;
+  final Function(Country) onCountrySelected;
+  final String? selectedCountryId;
 
   const BirthCountryStep({
     super.key,
-    this.selectedCountry,
     required this.onCountrySelected,
+    this.selectedCountryId,
   });
 
   @override
@@ -17,223 +25,153 @@ class BirthCountryStep extends StatefulWidget {
 }
 
 class _BirthCountryStepState extends State<BirthCountryStep> {
-  // List of common countries (this would typically come from an API or larger dataset)
-  final List<String> _commonCountries = [
-    'Australia',
-    'Brazil',
-    'Canada',
-    'China',
-    'France',
-    'Germany',
-    'India',
-    'Indonesia',
-    'Italy',
-    'Japan',
-    'Mexico',
-    'Nigeria',
-    'Philippines',
-    'Russia',
-    'South Korea',
-    'Spain',
-    'United Kingdom',
-    'United States',
-    'Vietnam',
-  ];
-
-  // Controller for the search field
-  late TextEditingController _searchController;
-  
-  // Filtered countries based on search
-  List<String> _filteredCountries = [];
+  // Country data
+  final GetCountriesUseCase _countriesUseCase = di.sl<GetCountriesUseCase>();
+  List<Country> _countries = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  Country? _selectedCountry;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
-    _filteredCountries = _commonCountries;
-    
-    // Set initial search text if a country is already selected
-    if (widget.selectedCountry != null && widget.selectedCountry!.isNotEmpty) {
-      _searchController.text = widget.selectedCountry!;
-    }
+    _fetchCountries();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  // Filter countries based on search query
-  void _filterCountries(String query) {
+  /// Fetch countries from the repository
+  Future<void> _fetchCountries() async {
     setState(() {
-      if (query.isEmpty) {
-        _filteredCountries = _commonCountries;
-      } else {
-        _filteredCountries = _commonCountries
-            .where((country) => 
-                country.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final countries = await _countriesUseCase();
+
+      setState(() {
+        _countries = countries;
+        _isLoading = false;
+
+        // Set selected country if ID was provided
+        if (widget.selectedCountryId != null &&
+            widget.selectedCountryId!.isNotEmpty &&
+            _countries.isNotEmpty) {
+          try {
+            final matchingCountries = _countries
+                .where((country) => country.isoCode == widget.selectedCountryId)
+                .toList();
+
+            if (matchingCountries.isNotEmpty) {
+              _selectedCountry = matchingCountries.first;
+            }
+          } catch (e) {
+            // Ignore errors when trying to set initial selection
+          }
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load countries. Please try again.';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            'Your Journey',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Subtitle
-          Text(
-            'Track your migration path and future goals',
-            style: TextStyle(
-              fontSize: 16,
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Country of birth label
-          Text(
-            'Country of Birth',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Country search field
-          Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? AppColors.surfaceDark : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDarkMode ? AppColors.borderDark : AppColors.borderLight,
-                width: 1,
+
+    return Container(
+      color: isDarkMode ? AppColors.darkBackground : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            // Animated header with brand colors
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border:
+                    Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
               ),
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterCountries,
-              decoration: InputDecoration(
-                hintText: 'Select your country of birth',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _filterCountries('');
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Country list
-          Expanded(
-            child: _filteredCountries.isEmpty
-                ? Center(
-                    child: Text(
-                      'No countries found',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _filteredCountries.length,
-                    itemBuilder: (context, index) {
-                      final country = _filteredCountries[index];
-                      final isSelected = widget.selectedCountry == country;
-                      
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : Colors.transparent,
-                            width: 1,
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isSelected
-                                ? theme.colorScheme.primary
-                                : isDarkMode
-                                    ? AppColors.surfaceDark
-                                    : AppColors.surfaceLight,
-                            child: Text(
-                              country.substring(0, 1),
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : isDarkMode
-                                        ? Colors.white
-                                        : Colors.black87,
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            country,
-                            style: TextStyle(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isDarkMode ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          trailing: isSelected
-                              ? Icon(
-                                  Icons.check_circle,
-                                  color: theme.colorScheme.primary,
-                                )
-                              : null,
-                          onTap: () {
-                            widget.onCountrySelected(country);
-                            _searchController.text = country;
-                          },
-                        ),
-                      );
-                    },
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.public,
+                    color: AppColors.primaryColor,
+                    size: 32,
                   ),
-          ),
-        ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'I was born in...',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Select your country of birth to continue',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Country selector component with auto-navigation
+            Expanded(
+              child: CountrySelector(
+                countries: _countries,
+                selectedCountry: _selectedCountry,
+                onCountrySelected: (country) {
+                  setState(() {
+                    _selectedCountry = country;
+                  });
+                  
+                  // Call the callback to move to the next step
+                  widget.onCountrySelected(country);
+                  
+                  // Add a visual feedback before moving to next step
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Selected ${country.name} as your birth country'),
+                      backgroundColor: AppColors.primaryColor,
+                      duration: const Duration(milliseconds: 800),
+                    ),
+                  );
+                  
+                  // Automatically trigger next step after a short delay
+                  Future.delayed(const Duration(milliseconds: 1000), () {
+                    // Find the onboarding bloc and request next step
+                    final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
+                    onboardingBloc.add(const NextStepRequested());
+                  });
+                },
+                isLoading: _isLoading,
+                errorMessage: _errorMessage,
+                onRetry: _fetchCountries,
+                searchHint: 'Search for your birth country',
+              ),
+            ),
+          ],
+        ), // <-- closes Column
       ),
     );
   }

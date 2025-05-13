@@ -218,8 +218,7 @@ class SupabaseAuthService implements AuthService {
       );
       
       // Log the current configuration for debugging
-      logger.i('Google Sign-In configured with:' +
-               '\nWeb Client ID: ${webClientId.substring(0, 10)}...' +
+      logger.i('Google Sign-In configured with:' '\nWeb Client ID: ${webClientId.substring(0, 10)}...' +
                '\niOS Client ID: ${iosClientId.substring(0, 10)}...', 
                category: LogCategory.auth);
       

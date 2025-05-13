@@ -9,9 +9,17 @@ import 'package:immigru/presentation/blocs/onboarding/onboarding_state.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/birth_country_step.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/current_status_step.dart';
-import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/interest_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/language_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey/migration_journey_step_widget.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/onboarding_progress_indicator.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/profession_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/profile/basic_info_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/profile/bio_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/profile/display_name_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/profile/location_step.dart';
+// Photo step has been integrated into BasicInfoStep
+import 'package:immigru/presentation/screens/onboarding/widgets/profile/privacy_step.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Screen that manages the onboarding flow for new users
@@ -41,24 +49,49 @@ class OnboardingView extends StatefulWidget {
   State<OnboardingView> createState() => _OnboardingViewState();
 }
 
-class _OnboardingViewState extends State<OnboardingView> with SingleTickerProviderStateMixin {
-  late final AnimationController _animationController;
+class _OnboardingViewState extends State<OnboardingView> with TickerProviderStateMixin {
+  // Animation controllers for different aspects of the UI
+  late final AnimationController _pageTransitionController;
+  late final AnimationController _contentAnimationController;
   late final PageController _pageController;
   final LoggerService _logger = sl<LoggerService>();
-
+  
+  // Animation for the page indicator
+  late final Animation<double> _pageIndicatorAnimation;
+  
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    
+    // Controller for page transitions
+    _pageTransitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+    
+    // Controller for content animations (buttons, fields, etc.)
+    _contentAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    
+    // Initialize page controller
     _pageController = PageController();
+    
+    // Start content animation immediately for the first screen
+    _contentAnimationController.forward();
+    
+    // Animation for the progress indicator
+    _pageIndicatorAnimation = CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _pageTransitionController.dispose();
+    _contentAnimationController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -74,19 +107,30 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
           previousState.errorMessage != currentState.errorMessage,
       listener: (context, state) {
         // Handle page changes when step changes
-        if (state.currentStep != OnboardingStep.birthCountry) {
-          // Animate to the new page
-          _animationController.forward(from: 0.0);
+        
+        if (state.currentStep != OnboardingStep.completed) {
+          // Only handle transitions between different steps
+          // Prepare animations for page transition
+          _contentAnimationController.reset();
+          _pageTransitionController.reset();
           
-          // Only animate page if not on completed step
-          if (state.currentStep != OnboardingStep.completed) {
-            final pageIndex = OnboardingStep.values.indexOf(state.currentStep);
-            _pageController.animateToPage(
-              pageIndex,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          }
+          // Get the page index based on the current step
+          final pageIndex = OnboardingStep.values.indexOf(state.currentStep);
+          
+          // Animate to the new page with a smooth transition
+          _pageController.animateToPage(
+            pageIndex,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+          );
+          
+          // Start animations in sequence for a polished effect
+          _pageTransitionController.forward().then((_) {
+            _contentAnimationController.forward();
+          });
+        } else if (state.currentStep == OnboardingStep.completed) {
+          // Special handling for completion
+          _pageTransitionController.forward();
         }
         
         // Handle errors
@@ -116,7 +160,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: Text(
-              'Your Immigration Journey',
+              state.currentStep == OnboardingStep.migrationJourney ? 'Your International Journey' : 'Your Immigration Journey',
               style: TextStyle(
                 color: isDarkMode ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.bold,
@@ -138,12 +182,18 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
           ),
           body: SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Progress indicator
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                  child: OnboardingProgressIndicator(
-                    progress: state.progressPercentage,
+                  child: AnimatedBuilder(
+                    animation: _pageIndicatorAnimation,
+                    builder: (context, child) {
+                      return OnboardingProgressIndicator(
+                        progress: state.progressPercentage,
+                      );
+                    },
                   ),
                 ),
                 
@@ -152,103 +202,307 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                   child: PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(), // Disable swiping
+                    onPageChanged: (index) {
+                      // Animation will be handled by the listener
+                    },
                     children: [
-                      // Birth country step
-                      FadeTransition(
-                        opacity: _animationController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.1, 0),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          )),
-                          child: BirthCountryStep(
-                            selectedCountry: state.data.birthCountry,
-                            onCountrySelected: (country) {
-                              context.read<OnboardingBloc>().add(
-                                    BirthCountryUpdated(country),
-                                  );
-                            },
-                          ),
+                      // Birth country step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: BirthCountryStep(
+                          selectedCountryId: state.data.birthCountry,
+                          onCountrySelected: (country) {
+                            context.read<OnboardingBloc>().add(
+                                  BirthCountryUpdated(country.isoCode),
+                                );
+                          },
+                        ),
+                      ),
+
+                      
+                      // Current status step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: CurrentStatusStep(
+                          selectedStatus: state.data.currentStatus,
+                          onStatusSelected: (status) {
+                            context.read<OnboardingBloc>().add(
+                                  CurrentStatusUpdated(status),
+                                );
+                          },
                         ),
                       ),
                       
-                      // Current status step
-                      FadeTransition(
-                        opacity: _animationController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.1, 0),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          )),
-                          child: CurrentStatusStep(
-                            selectedStatus: state.data.currentStatus,
-                            onStatusSelected: (status) {
-                              context.read<OnboardingBloc>().add(
-                                    CurrentStatusUpdated(status),
-                                  );
-                            },
-                          ),
+                      // Migration journey step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: MigrationJourneyStepWidget(
+                          birthCountry: state.data.birthCountry ?? '',
+                          migrationSteps: state.data.migrationSteps,
+                          onAddStep: (step) {
+                            context.read<OnboardingBloc>().add(
+                                  MigrationStepAdded(step),
+                                );
+                          },
+                          onUpdateStep: (index, step) {
+                            context.read<OnboardingBloc>().add(
+                                  MigrationStepUpdated(index, step),
+                                );
+                          },
+                          onRemoveStep: (index) {
+                            context.read<OnboardingBloc>().add(
+                                  MigrationStepRemoved(index),
+                                );
+                          },
                         ),
                       ),
                       
-                      // Migration journey step
-                      FadeTransition(
-                        opacity: _animationController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.1, 0),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          )),
-                          child: MigrationJourneyStep(
-                            birthCountry: state.data.birthCountry ?? '',
-                            migrationSteps: state.data.migrationSteps,
-                            onAddStep: (step) {
-                              context.read<OnboardingBloc>().add(
-                                    MigrationStepAdded(step),
-                                  );
-                            },
-                            onUpdateStep: (index, step) {
-                              context.read<OnboardingBloc>().add(
-                                    MigrationStepUpdated(index, step),
-                                  );
-                            },
-                            onRemoveStep: (index) {
-                              context.read<OnboardingBloc>().add(
-                                    MigrationStepRemoved(index),
-                                  );
-                            },
-                          ),
+                      // Profession step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: ProfessionStep(
+                          selectedProfession: state.data.profession,
+                          onProfessionSelected: (profession) {
+                            context.read<OnboardingBloc>().add(
+                                  ProfessionUpdated(profession),
+                                );
+                          },
                         ),
                       ),
                       
-                      // Profession step
-                      FadeTransition(
-                        opacity: _animationController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.1, 0),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          )),
-                          child: ProfessionStep(
-                            selectedProfession: state.data.profession,
-                            onProfessionSelected: (profession) {
-                              context.read<OnboardingBloc>().add(
-                                    ProfessionUpdated(profession),
-                                  );
-                            },
-                          ),
+                      // Language step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: LanguageStep(
+                          selectedLanguages: state.data.languages,
+                          onLanguagesSelected: (languages) {
+                            context.read<OnboardingBloc>().add(
+                                  LanguagesUpdated(languages),
+                                );
+                          },
+                        ),
+                      ),
+                      
+                      // Interest step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: InterestStep(
+                          selectedInterests: state.data.interests,
+                          onInterestsSelected: (interests) {
+                            context.read<OnboardingBloc>().add(
+                                  InterestsUpdated(interests),
+                                );
+                          },
+                        ),
+                      ),
+                      
+                      // Profile Basic Info step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: BasicInfoStep(
+                          firstName: state.data.firstName ?? '',
+                          lastName: state.data.lastName ?? '',
+                          photoUrl: state.data.profilePhotoUrl ?? '',
+                        ),
+                      ),
+                      
+                      // Profile Display Name step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: DisplayNameStep(
+                          displayName: state.data.displayName ?? '',
+                        ),
+                      ),
+                      
+                      // Profile Bio step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: BioStep(
+                          bio: state.data.bio ?? '',
+                        ),
+                      ),
+                      
+                      // Profile Location step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: LocationStep(
+                          currentLocation: state.data.currentLocation ?? '',
+                          destinationCity: state.data.destinationCity ?? '',
+                        ),
+                      ),
+                      
+                      // Profile Photo step has been integrated into BasicInfoStep
+                      
+                      // Profile Privacy step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: PrivacyStep(
+                          isPrivate: state.data.isPrivate,
                         ),
                       ),
                     ],
@@ -263,7 +517,14 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                     children: [
                       // Skip button (only show for optional steps)
                       if (state.currentStep == OnboardingStep.migrationJourney ||
-                          state.currentStep == OnboardingStep.profession)
+                          state.currentStep == OnboardingStep.profession ||
+                          state.currentStep == OnboardingStep.languages ||
+                          state.currentStep == OnboardingStep.interests ||
+                          state.currentStep == OnboardingStep.profileBasicInfo ||
+                          state.currentStep == OnboardingStep.profileDisplayName ||
+                          state.currentStep == OnboardingStep.profileBio ||
+                          state.currentStep == OnboardingStep.profileLocation ||
+                          state.currentStep == OnboardingStep.profilePrivacy)
                         TextButton(
                           onPressed: () {
                             context.read<OnboardingBloc>().add(
@@ -280,34 +541,38 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                       else
                         const SizedBox(width: 80),
                       
-                      // Next button
-                      ElevatedButton(
-                        onPressed: state.isCurrentStepValid
-                            ? () {
-                                context.read<OnboardingBloc>().add(
-                                      const NextStepRequested(),
-                                    );
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32.0,
-                            vertical: 12.0,
+                      // Next button - only show for steps other than birth country and current status
+                      if (state.currentStep != OnboardingStep.birthCountry && 
+                          state.currentStep != OnboardingStep.currentStatus)
+                        ElevatedButton(
+                          onPressed: state.isCurrentStepValid
+                              ? () {
+                                  context.read<OnboardingBloc>().add(
+                                        const NextStepRequested(),
+                                      );
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32.0,
+                              vertical: 12.0,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
+                          child: const Text(
+                            'Next',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                        )
+                      else
+                        const SizedBox(width: 80), // Empty space when button is hidden
                     ],
                   ),
                 ),

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
+import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Widget for the current immigration status selection step in onboarding
@@ -16,180 +20,249 @@ class CurrentStatusStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
-    // List of possible immigration statuses
+
     final statuses = [
       {
         'id': 'planning',
         'title': 'I\'m planning to migrate',
         'subtitle': 'Researching options and requirements',
-        'icon': Icons.lightbulb_outline,
         'emoji': '💡',
       },
       {
-        'id': 'getting_ready',
+        'id': 'preparing',
         'title': 'I\'m getting ready',
         'subtitle': 'Documents, language, research',
-        'icon': Icons.flight_takeoff_outlined,
         'emoji': '✈️',
       },
       {
         'id': 'moved',
         'title': 'I\'ve already moved',
         'subtitle': 'Living in my destination country',
-        'icon': Icons.home_outlined,
         'emoji': '🏠',
       },
       {
         'id': 'exploring',
         'title': 'I\'m exploring new visa options',
         'subtitle': 'Looking at different pathways',
-        'icon': Icons.explore_outlined,
         'emoji': '🧭',
       },
       {
         'id': 'permanent',
         'title': 'I\'m already a permanent resident/citizen',
         'subtitle': 'Settled in my new country',
-        'icon': Icons.verified_user_outlined,
         'emoji': '👤',
       },
     ];
-    
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            'Where are you in this journey?',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Subtitle
-          Text(
-            'This helps us personalize your experience',
-            style: TextStyle(
-              fontSize: 16,
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Status options
-          Expanded(
-            child: ListView.builder(
-              itemCount: statuses.length,
-              itemBuilder: (context, index) {
-                final status = statuses[index];
-                final isSelected = selectedStatus == status['id'];
-                
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? AppColors.cardDark : AppColors.cardLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : isDarkMode
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : [],
+
+    return Container(
+      color: isDarkMode ? AppColors.darkBackground : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.map_outlined,
+                    color: AppColors.primaryColor,
+                    size: 32,
                   ),
-                  child: InkWell(
-                    onTap: () => onStatusSelected(status['id'] as String),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          // Status emoji/icon
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(
-                                status['emoji'] as String,
-                                style: const TextStyle(fontSize: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "I'm at the stage where...",
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Select your current immigration status',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: ListView.builder(
+                itemCount: statuses.length,
+                itemBuilder: (context, index) {
+                  final status = statuses[index];
+                  final isSelected = selectedStatus == status['id'];
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          
+                          // Get the selected status ID
+                          final selectedStatus = status['id'] as String;
+                          
+                          // EXTENSIVE LOGGING: Log the selection with more details
+                          print('==== CURRENT STATUS SELECTION ====');
+                          print('User selected status: "${status['title']}"');
+                          print('Status ID: $selectedStatus');
+                          print('Full status object: $status');
+                          print('================================');
+                          
+                          // Update the status in the bloc
+                          print('Calling onStatusSelected with status: $selectedStatus');
+                          onStatusSelected(selectedStatus);
+                          
+                          // Then explicitly trigger a save before moving to the next step
+                          if (context.mounted) {
+                            final bloc = context.read<OnboardingBloc>();
+                            
+                            // Get the current data from the bloc to verify it was updated
+                            final currentData = bloc.state.data;
+                            print('==== CURRENT DATA BEFORE SAVE ====');
+                            print('Current status in bloc: ${currentData.currentStatus}');
+                            print('Birth country in bloc: ${currentData.birthCountry}');
+                            print('================================');
+                            
+                            // Add the save event
+                            print('Triggering OnboardingSaved event');
+                            bloc.add(const OnboardingSaved());
+                            
+                            // Wait longer for the save to complete before moving to the next step
+                            print('Waiting 2 seconds before moving to next step...');
+                            Future.delayed(const Duration(milliseconds: 2000), () {
+                              if (context.mounted) {
+                                // Check if the data was properly saved
+                                final updatedData = bloc.state.data;
+                                print('==== CURRENT DATA BEFORE NEXT STEP ====');
+                                print('Current status in bloc: ${updatedData.currentStatus}');
+                                print('Expected status: $selectedStatus');
+                                print('================================');
+                                
+                                print('Moving to next step now');
+                                bloc.add(const NextStepRequested());
+                              }
+                            });
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primaryColor.withValues(alpha: 0.15)
+                                : isDarkMode
+                                    ? AppColors.cardDark
+                                    : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primaryColor.withValues(alpha: 0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ]
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                            border: isSelected
+                                ? Border.all(color: AppColors.primaryColor, width: 2)
+                                : Border.all(
+                                    color: isDarkMode ? AppColors.borderDark : AppColors.borderLight,
+                                    width: 1,
+                                  ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primaryColor.withValues(alpha: 0.2)
+                                      : isDarkMode
+                                          ? AppColors.surfaceDark
+                                          : AppColors.surfaceLight,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    status['emoji'] as String,
+                                    style: const TextStyle(fontSize: 24),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          
-                          const SizedBox(width: 16),
-                          
-                          // Status text
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  status['title'] as String,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isDarkMode
-                                        ? Colors.white
-                                        : Colors.black87,
-                                  ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      status['title'] as String,
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      status['subtitle'] as String,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  status['subtitle'] as String,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: isDarkMode
-                                        ? Colors.white70
-                                        : Colors.black54,
-                                  ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: theme.colorScheme.primary,
+                                  size: 24,
                                 ),
-                              ],
-                            ),
+                            ],
                           ),
-                          
-                          // Selected indicator
-                          if (isSelected)
-                            Icon(
-                              Icons.check_circle,
-                              color: theme.colorScheme.primary,
-                              size: 24,
-                            ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
