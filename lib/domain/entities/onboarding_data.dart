@@ -19,6 +19,9 @@ class OnboardingData extends Equatable {
   final String? profilePhotoUrl;
   final bool isPrivate;
   
+  // ImmiGroves data
+  final List<String> selectedImmiGroves;
+  
   final bool isCompleted;
 
   const OnboardingData({
@@ -35,6 +38,7 @@ class OnboardingData extends Equatable {
     this.destinationCity,
     this.profilePhotoUrl,
     this.isPrivate = false,
+    this.selectedImmiGroves = const [],
     this.isCompleted = false,
   });
 
@@ -53,6 +57,7 @@ class OnboardingData extends Equatable {
     String? destinationCity,
     String? profilePhotoUrl,
     bool? isPrivate,
+    List<String>? selectedImmiGroves,
     bool? isCompleted,
   }) {
     return OnboardingData(
@@ -69,6 +74,7 @@ class OnboardingData extends Equatable {
       destinationCity: destinationCity ?? this.destinationCity,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
       isPrivate: isPrivate ?? this.isPrivate,
+      selectedImmiGroves: selectedImmiGroves ?? this.selectedImmiGroves,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
@@ -82,6 +88,7 @@ class OnboardingData extends Equatable {
         destinationCity: '',
         profilePhotoUrl: '',
         isPrivate: false,
+        selectedImmiGroves: [],
       );
 
   @override

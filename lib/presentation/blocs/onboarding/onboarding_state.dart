@@ -12,8 +12,9 @@ enum OnboardingStep {
   profileBasicInfo,
   profileDisplayName,
   profileBio,
-  profileLocation,
+  // profileLocation has been removed
   profilePrivacy,
+  immiGroves,
   completed,
 }
 
@@ -52,7 +53,7 @@ class OnboardingState extends Equatable {
     );
   }
 
-  /// Check if the current step is valid and can proceed to the next step
+  /// Check if the current step is valid (has required data)
   bool get isCurrentStepValid {
     switch (currentStep) {
       case OnboardingStep.birthCountry:
@@ -60,34 +61,35 @@ class OnboardingState extends Equatable {
       case OnboardingStep.currentStatus:
         return data.currentStatus != null && data.currentStatus!.isNotEmpty;
       case OnboardingStep.migrationJourney:
-        // Migration journey can be skipped, so it's always valid
+        // Migration journey is optional, so always valid
         return true;
       case OnboardingStep.profession:
-        // Profession can be skipped, so it's always valid
+        // Profession is optional, so always valid
         return true;
       case OnboardingStep.languages:
-        // Languages can be skipped, but at least one is recommended
-        return true;
+        // At least one language is required
+        return data.languages.isNotEmpty;
       case OnboardingStep.interests:
-        // Interests can be skipped, but at least one is recommended
-        return true;
+        // At least one interest is required
+        return data.interests.isNotEmpty;
       case OnboardingStep.profileBasicInfo:
-        // Profile basic info is optional but recommended
-        return true;
+        // Full name is required, photo is optional
+        return data.fullName != null && data.fullName!.isNotEmpty;
       case OnboardingStep.profileDisplayName:
-        // Display name is optional but recommended
-        return true;
+        // Display name is required
+        return data.displayName != null && data.displayName!.isNotEmpty;
       case OnboardingStep.profileBio:
-        // Bio is optional
+        // Bio is optional, so always valid
         return true;
-      case OnboardingStep.profileLocation:
-        // Location is optional
-        return true;
-      // Photo step has been integrated into BasicInfoStep
+      // profileLocation step has been removed
       case OnboardingStep.profilePrivacy:
-        // Privacy settings are pre-filled
+        // Privacy setting is always valid (default is private)
+        return true;
+      case OnboardingStep.immiGroves:
+        // ImmiGroves selection is optional, so always valid
         return true;
       case OnboardingStep.completed:
+        // Completed step is always valid
         return true;
     }
   }

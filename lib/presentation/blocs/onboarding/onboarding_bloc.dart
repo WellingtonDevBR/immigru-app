@@ -43,6 +43,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<ProfileLocationUpdated>(_onProfileLocationUpdated);
     on<ProfilePhotoUpdated>(_onProfilePhotoUpdated);
     on<ProfilePrivacyUpdated>(_onProfilePrivacyUpdated);
+    on<ImmiGrovesUpdated>(_onImmiGrovesUpdated);
     on<NextStepRequested>(_onNextStepRequested);
     on<PreviousStepRequested>(_onPreviousStepRequested);
     on<StepSkipped>(_onStepSkipped);
@@ -300,6 +301,21 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         isPrivate: event.isPrivate,
       ),
     ));
+  }
+
+  /// Handle ImmiGroves selection update
+  void _onImmiGrovesUpdated(
+    ImmiGrovesUpdated event,
+    Emitter<OnboardingState> emit,
+  ) {
+    emit(state.copyWith(
+      data: state.data.copyWith(
+        selectedImmiGroves: event.selectedImmiGroves,
+      ),
+    ));
+    
+    // Save the ImmiGroves selection to the backend
+    add(const OnboardingSaved());
   }
 
   // Track the last saved step to prevent redundant saves during navigation

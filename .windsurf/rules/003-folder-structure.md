@@ -137,6 +137,7 @@ lib/
     │   │   └── widgets
     │   │       ├── birth_country_step.dart
     │   │       ├── current_status_step.dart
+    │   │       ├── immi_groves_step.dart
     │   │       ├── interest_step.dart
     │   │       ├── language_step.dart
     │   │       ├── migration_journey
@@ -152,7 +153,6 @@ lib/
     │   │           ├── basic_info_step.dart
     │   │           ├── bio_step.dart
     │   │           ├── display_name_step.dart
-    │   │           ├── location_step.dart
     │   │           ├── photo_step.dart
     │   │           └── privacy_step.dart
     │   └── welcome

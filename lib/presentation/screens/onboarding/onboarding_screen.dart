@@ -17,9 +17,10 @@ import 'package:immigru/presentation/screens/onboarding/widgets/profession_step.
 import 'package:immigru/presentation/screens/onboarding/widgets/profile/basic_info_step.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/profile/bio_step.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/profile/display_name_step.dart';
-import 'package:immigru/presentation/screens/onboarding/widgets/profile/location_step.dart';
+// Location step has been removed
 // Photo step has been integrated into BasicInfoStep
 import 'package:immigru/presentation/screens/onboarding/widgets/profile/privacy_step.dart';
+import 'package:immigru/presentation/screens/onboarding/widgets/immi_groves_step.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Screen that manages the onboarding flow for new users
@@ -456,29 +457,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                         ),
                       ),
                       
-                      // Profile Location step with animations
-                      AnimatedBuilder(
-                        animation: _contentAnimationController,
-                        builder: (context, child) {
-                          return FadeTransition(
-                            opacity: _contentAnimationController,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: _contentAnimationController,
-                                curve: Curves.easeOutCubic,
-                              )),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: LocationStep(
-                          currentLocation: state.data.currentLocation ?? '',
-                          destinationCity: state.data.destinationCity ?? '',
-                        ),
-                      ),
+                      // Profile Location step has been removed
                       
                       // Profile Photo step has been integrated into BasicInfoStep
                       
@@ -504,6 +483,27 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           isPrivate: state.data.isPrivate,
                         ),
                       ),
+                      
+                      // ImmiGroves step with animations
+                      AnimatedBuilder(
+                        animation: _contentAnimationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _contentAnimationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: _contentAnimationController,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: const ImmiGrovesStep(),
+                      ),
                     ],
                   ),
                 ),
@@ -522,8 +522,8 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           state.currentStep == OnboardingStep.profileBasicInfo ||
                           state.currentStep == OnboardingStep.profileDisplayName ||
                           state.currentStep == OnboardingStep.profileBio ||
-                          state.currentStep == OnboardingStep.profileLocation ||
-                          state.currentStep == OnboardingStep.profilePrivacy)
+                          state.currentStep == OnboardingStep.profilePrivacy ||
+                          state.currentStep == OnboardingStep.immiGroves)
                         TextButton(
                           onPressed: () {
                             context.read<OnboardingBloc>().add(

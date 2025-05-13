@@ -183,5 +183,15 @@ class ProfilePrivacyUpdated extends OnboardingEvent {
   const ProfilePrivacyUpdated(this.isPrivate);
 
   @override
-  List<Object?> get props => [isPrivate];
+  List<Object> get props => [isPrivate];
+}
+
+/// Event to update the user's selected ImmiGroves
+class ImmiGrovesUpdated extends OnboardingEvent {
+  final List<String> selectedImmiGroves;
+
+  const ImmiGrovesUpdated(this.selectedImmiGroves);
+
+  @override
+  List<Object> get props => [selectedImmiGroves];
 }

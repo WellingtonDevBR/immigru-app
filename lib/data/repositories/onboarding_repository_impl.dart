@@ -259,6 +259,21 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         step = 'interests';
 
         stepData = {'interests': data.interests};
+      } else if (data.selectedImmiGroves.isNotEmpty) {
+        step = 'immiGroves';
+
+        stepData = {'selectedImmiGroves': data.selectedImmiGroves};
+
+        // Check if we should save (throttle and check for changes)
+        final lastSavedImmiGroves = _lastSavedData['selectedImmiGroves'] as List<dynamic>?;
+        if (!_shouldSave(step, data.selectedImmiGroves, lastSavedImmiGroves)) {
+          // Skip saving if no changes or throttled
+          step = '';
+          stepData = {};
+        } else {
+          // Update last saved data after successful save
+          _lastSavedData['selectedImmiGroves'] = List<String>.from(data.selectedImmiGroves);
+        }
       } else {
         // Default to saving the entire data object
         step = 'all';
