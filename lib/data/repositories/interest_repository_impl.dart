@@ -30,7 +30,7 @@ class InterestRepositoryImpl implements InterestRepository {
           .map((json) => InterestModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _logger.error('InterestRepositoryImpl', 'Error getting interests: $e');
+
       // Return empty list on error, could also throw a custom exception
       return [];
     }
@@ -53,7 +53,7 @@ class InterestRepositoryImpl implements InterestRepository {
       final data = response.data as Map<String, dynamic>;
       return data['success'] == true;
     } catch (e) {
-      _logger.error('InterestRepositoryImpl', 'Error saving user interests: $e');
+
       return false;
     }
   }
@@ -96,7 +96,7 @@ class InterestRepositoryImpl implements InterestRepository {
       
       return interests;
     } catch (e) {
-      _logger.error('InterestRepositoryImpl', 'Error getting user interests: $e');
+
       return [];
     }
   }

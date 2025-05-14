@@ -92,7 +92,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoadingPosts: true));
     
     try {
-      _logger.info('HomeBloc', 'Loading posts with category: ${event.category ?? "All"}');
+
       
       List<Map<String, dynamic>> posts = [];
       
@@ -102,7 +102,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           limit: 20,
         ).timeout(const Duration(seconds: 5));
       } catch (e) {
-        _logger.info('HomeBloc', 'Using sample posts data as fallback', error: e);
+
         posts = _samplePosts;
       }
       
@@ -112,7 +112,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         errorMessage: null,
       ));
     } catch (e) {
-      _logger.error('HomeBloc', 'Error loading posts', error: e);
+
       emit(state.copyWith(
         isLoadingPosts: false,
         posts: _samplePosts,
@@ -127,7 +127,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoadingEvents: true));
     
     try {
-      _logger.info('HomeBloc', 'Loading events with upcomingOnly: ${event.upcomingOnly}');
+
       
       List<Map<String, dynamic>> events = [];
       
@@ -137,7 +137,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           limit: 10,
         ).timeout(const Duration(seconds: 5));
       } catch (e) {
-        _logger.info('HomeBloc', 'Using sample events data as fallback', error: e);
+
         events = _sampleEvents;
       }
       
@@ -147,7 +147,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         errorMessage: null,
       ));
     } catch (e) {
-      _logger.error('HomeBloc', 'Error loading events', error: e);
+
       emit(state.copyWith(
         isLoadingEvents: false,
         events: _sampleEvents,
@@ -158,7 +158,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onCreatePost(CreatePostEvent event, Emitter<HomeState> emit) async {
     try {
-      _logger.info('HomeBloc', 'Creating new post');
+
       
       emit(state.copyWith(isLoadingPosts: true));
       
@@ -173,7 +173,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // Reload posts after creating a new one
       add(LoadPostsEvent(category: state.selectedCategory));
     } catch (e) {
-      _logger.error('HomeBloc', 'Error creating post', error: e);
+
       emit(state.copyWith(
         isLoadingPosts: false,
         errorMessage: 'Failed to create post. Please try again.',
@@ -183,7 +183,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onCreateEvent(CreateEventEvent event, Emitter<HomeState> emit) async {
     try {
-      _logger.info('HomeBloc', 'Creating new event');
+
       
       emit(state.copyWith(isLoadingEvents: true));
       
@@ -199,7 +199,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // Reload events after creating a new one
       add(const LoadEventsEvent());
     } catch (e) {
-      _logger.error('HomeBloc', 'Error creating event', error: e);
+
       emit(state.copyWith(
         isLoadingEvents: false,
         errorMessage: 'Failed to create event. Please try again.',

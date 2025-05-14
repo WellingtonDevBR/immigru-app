@@ -88,5 +88,5 @@ if (fs.existsSync(startDir)) {
     
   });
 } else {
-  console.error('❌ "lib" directory not found. Run this from the root of a Flutter project.');
+
 }

@@ -52,7 +52,7 @@ serve(async (req) => {
           .eq('UserId', user.id);
 
         if (error) {
-          console.error('Database error:', error);
+
           throw new Error(error.message);
         }
 
@@ -77,7 +77,7 @@ serve(async (req) => {
           status: 200,
         });
       } catch (dbError) {
-        console.error('Error in database query:', dbError);
+
         throw dbError;
       }
     }
@@ -92,7 +92,7 @@ serve(async (req) => {
         
 
         if (!Array.isArray(interestIds)) {
-          console.error('Invalid interestIds array:', interestIds);
+
           return new Response(JSON.stringify({ error: 'Invalid interestIds array' }), {
             headers: corsHeaders,
             status: 400,
@@ -109,7 +109,7 @@ serve(async (req) => {
           .eq('UserId', user.id);
 
         if (deleteError) {
-          console.error('Error deleting existing interests:', deleteError);
+
           throw new Error(`Failed to delete existing interests: ${deleteError.message}`);
         }
         
@@ -129,7 +129,7 @@ serve(async (req) => {
             .insert(inserts);
 
           if (insertError) {
-            console.error('Error inserting new interests:', insertError);
+
             throw new Error(`Failed to insert new interests: ${insertError.message}`);
           }
           
@@ -146,7 +146,7 @@ serve(async (req) => {
           status: 200,
         });
       } catch (error) {
-        console.error('Error processing POST request:', error);
+
         return new Response(JSON.stringify({ error: error.message }), {
           headers: corsHeaders,
           status: 500,

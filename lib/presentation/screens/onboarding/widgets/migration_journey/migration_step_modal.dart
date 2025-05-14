@@ -54,61 +54,61 @@ class MigrationStepModal extends StatefulWidget {
 class _MigrationStepModalState extends State<MigrationStepModal> {
   // Repository
   final VisaRepository _visaRepository = di.sl<VisaRepository>();
-  
+
   // Form controllers
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _customVisaController = TextEditingController();
   final TextEditingController _visaSearchController = TextEditingController();
-  
+
   // Class properties
   final _formKey = GlobalKey<FormState>();
-  
+
   // Selected values
   CountryModel? _selectedCountry;
   Visa? _selectedVisa;
   DateTime? _arrivedDate;
   DateTime? _leftDate;
-  
+
   // Form flags
   bool _isCurrentLocation = false;
   bool _isTargetDestination = false;
   bool _useCustomVisa = false;
   bool _wasSuccessful = true;
   bool _isLoadingVisas = false;
-  
+
   // Dropdown visibility flags
   MigrationReason _selectedReason = MigrationReason.work;
-  
+
   // Search functionality
   String _visaSearchQuery = '';
   bool _isSearchingVisa = false;
-  
+
   // Filtered visas based on selected country
   List<Visa> _filteredVisas = [];
 
   @override
   void initState() {
     super.initState();
-    
+
     if (widget.initialStep != null) {
       _initializeWithExistingStep(widget.initialStep!);
     }
   }
-  
+
   void _initializeWithExistingStep(MigrationStep step) {
     _selectedCountry = widget.countries.firstWhere(
       (country) => country.id == step.countryId,
       orElse: () => widget.countries.first,
     );
-    
+
     if (step.visaId != null) {
       // Try to find the visa in the provided list
       _selectedVisa = widget.visas.cast<Visa?>().firstWhere(
-        (visa) => visa?.id == step.visaId,
-        orElse: () => null,
-      );
-      
+            (visa) => visa?.id == step.visaId,
+            orElse: () => null,
+          );
+
       // If visa not found and we have a name, create a fallback visa
       if (_selectedVisa == null && step.visaName.isNotEmpty) {
         // Only proceed if the visa name is not empty
@@ -129,23 +129,23 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       _useCustomVisa = true;
       _customVisaController.text = step.visaName;
     }
-    
+
     _arrivedDate = step.arrivedDate;
     _leftDate = step.leftDate;
     _isCurrentLocation = step.isCurrentLocation;
     _isTargetDestination = step.isTargetDestination;
     _selectedReason = step.migrationReason ?? MigrationReason.work;
     _wasSuccessful = step.wasSuccessful;
-    
+
     if (step.arrivedDate != null) {
       _yearController.text = DateFormat('yyyy').format(step.arrivedDate!);
     }
-    
+
     _notesController.text = step.notes ?? '';
-    
+
     _filterVisas();
   }
-  
+
   Future<void> _filterVisas() async {
     if (_selectedCountry != null) {
       try {
@@ -154,23 +154,26 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
           _isLoadingVisas = true;
           _filteredVisas = [];
         });
-        
+
         // Fetch visas for the selected country using the repository
-        final countryVisas = await _visaRepository.getVisasForCountry(_selectedCountry!.id);
-        
+        final countryVisas =
+            await _visaRepository.getVisasForCountry(_selectedCountry!.id);
+
         setState(() {
           _filteredVisas = countryVisas;
           _isLoadingVisas = false;
-          
+
           // Clear selected visa if it doesn't belong to the selected country
-          if (_selectedVisa != null && _selectedVisa!.countryId != _selectedCountry!.id) {
+          if (_selectedVisa != null &&
+              _selectedVisa!.countryId != _selectedCountry!.id) {
             _selectedVisa = null;
           }
-          
+
           // If no visas are available for the selected country, use fallback options
           if (_filteredVisas.isEmpty) {
-            _filteredVisas = _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
-            
+            _filteredVisas =
+                _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
+
             // Show a message to the user
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -184,9 +187,10 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
         setState(() {
           _isLoadingVisas = false;
           // Use fallback visa options when API fails
-          _filteredVisas = _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
+          _filteredVisas =
+              _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load visas: $e'),
@@ -213,86 +217,57 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
   }
 
   void _saveStep() {
-
-    
     // Make country selection mandatory
     if (_selectedCountry == null) {
-
       _showValidationError('Please select a country');
       return;
     }
 
     // Make arrival date mandatory
     if (_arrivedDate == null) {
-
       _showValidationError('Please select an arrival date');
       return;
     }
-    
+
     // Validate arrival date is not in the future
     if (_arrivedDate!.isAfter(DateTime.now())) {
-
       _showValidationError('Arrival date cannot be in the future');
       return;
     }
 
-    // Make departure date optional for all cases
-    // Only validate the date if it's provided
-
-    
     // Validate departure date is after arrival date (only if provided)
     if (_leftDate != null && _leftDate!.isBefore(_arrivedDate!)) {
-
       _showValidationError('Departure date must be after arrival date');
       return;
     }
 
     // Make visa selection mandatory
     if (!_useCustomVisa && _selectedVisa == null) {
-
       _showValidationError('Please select a visa type');
       return;
     }
-    
+
     // Validate custom visa name if using custom visa
     if (_useCustomVisa && _customVisaController.text.trim().isEmpty) {
-
       _showValidationError('Please enter a visa name');
       return;
     }
-    
+
     // Log detailed information about the form state
 
-
-
-
-
-
-
-
-
-
-    
     if (_formKey.currentState!.validate()) {
       // Log visa information before creating the step
 
-
-      
       if (_useCustomVisa) {
-
-
       } else if (_selectedVisa != null) {
+      } else {}
 
-
-
-      } else {
-
-      }
-      
       // Create the migration step
       final int? visaId = _useCustomVisa ? null : _selectedVisa?.id;
-      final String visaName = _useCustomVisa ? _customVisaController.text.trim() : _selectedVisa?.visaName ?? '';
-      
+      final String visaName = _useCustomVisa
+          ? _customVisaController.text.trim()
+          : _selectedVisa?.visaName ?? '';
+
       final MigrationStep step = MigrationStep(
         id: widget.initialStep?.id,
         order: widget.initialStep?.order,
@@ -304,24 +279,25 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
         leftDate: _isCurrentLocation ? null : _leftDate,
         isCurrentLocation: _isCurrentLocation,
         isTargetDestination: _isTargetDestination,
-        notes: _notesController.text.trim().isNotEmpty ? _sanitizeNotes(_notesController.text.trim()) : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _sanitizeNotes(_notesController.text.trim())
+            : null,
         migrationReason: _selectedReason,
         wasSuccessful: _wasSuccessful,
       );
+      widget.onSave(step); // ✅ Save it before closing
       Navigator.of(context).pop();
-      Future.microtask(() {
-      });
-
     }
   }
-  
+
   void _showValidationError(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 8),
             const Text('Validation Error'),
           ],
@@ -336,26 +312,27 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ),
     );
   }
-  
+
   /// Sanitize notes to prevent XSS attacks and other security issues
   String _sanitizeNotes(String input) {
     // Log original input for debugging
 
-    
     // Remove potentially dangerous HTML/script tags
     String sanitized = input
-      .replaceAll(RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false, dotAll: true), '')
-      .replaceAll(RegExp(r'<[^>]*>'), '') // Remove any HTML tags
-      .replaceAll(RegExp(r'javascript:', caseSensitive: false), '')
-      .replaceAll(RegExp(r'on\w+\s*=', caseSensitive: false), '')
-      .replaceAll(RegExp(r'\\x[0-9a-fA-F]{2}'), '') // Remove hex escapes
-      .replaceAll(RegExp(r'\\u[0-9a-fA-F]{4}'), ''); // Remove unicode escapes
-    
+        .replaceAll(
+            RegExp(r'<script[^>]*>.*?</script>',
+                caseSensitive: false, dotAll: true),
+            '')
+        .replaceAll(RegExp(r'<[^>]*>'), '') // Remove any HTML tags
+        .replaceAll(RegExp(r'javascript:', caseSensitive: false), '')
+        .replaceAll(RegExp(r'on\w+\s*=', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\\x[0-9a-fA-F]{2}'), '') // Remove hex escapes
+        .replaceAll(RegExp(r'\\u[0-9a-fA-F]{4}'), ''); // Remove unicode escapes
+
     // Limit the length of notes to prevent excessive data
     if (sanitized.length > 500) {
       sanitized = sanitized.substring(0, 500);
     }
-    
 
     return sanitized;
   }
@@ -364,7 +341,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    
+
     return SizedBox(
       height: mediaQuery.size.height * 0.9,
       child: Container(
@@ -395,7 +372,9 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        widget.isEditing ? 'Edit Travel History' : 'Add Travel History',
+                        widget.isEditing
+                            ? 'Edit Travel History'
+                            : 'Add Travel History',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -412,14 +391,14 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                   Text(
                     'Add countries that are part of your story',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha:0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-          
+
             // Form content
             Expanded(
               child: SingleChildScrollView(
@@ -432,23 +411,23 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                       // Country selection
                       _buildCountrySection(),
                       const SizedBox(height: 24),
-                      
+
                       // Visa selection
                       _buildVisaSection(),
                       const SizedBox(height: 24),
-                      
+
                       // Year field
                       _buildYearField(),
                       const SizedBox(height: 24),
-                      
+
                       // Migration reason
                       _buildMigrationReasonSection(),
                       const SizedBox(height: 24),
-                      
+
                       // Additional options
                       _buildAdditionalOptions(),
                       const SizedBox(height: 24),
-                      
+
                       // Notes field
                       _buildNotesField(),
                       const SizedBox(height: 32),
@@ -457,7 +436,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                 ),
               ),
             ),
-            
+
             // Action buttons
             Container(
               padding: EdgeInsets.only(
@@ -470,7 +449,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                 color: theme.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -508,7 +487,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ),
     );
   }
-  
+
   Widget _buildCountrySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -521,7 +500,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Custom compact implementation for the migration step modal
         Container(
           decoration: BoxDecoration(
@@ -529,23 +508,23 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: _selectedCountry != null
-            ? ListTile(
-                title: Text(_selectedCountry!.name),
-                subtitle: Text(_selectedCountry!.nationality),
-                leading: const Icon(Icons.flag),
-                trailing: const Icon(Icons.arrow_drop_down),
-                onTap: () => _showCountrySelectionDialog(context),
-              )
-            : ListTile(
-                title: const Text('Select a country'),
-                trailing: const Icon(Icons.arrow_drop_down),
-                onTap: () => _showCountrySelectionDialog(context),
-              ),
+              ? ListTile(
+                  title: Text(_selectedCountry!.name),
+                  subtitle: Text(_selectedCountry!.nationality),
+                  leading: const Icon(Icons.flag),
+                  trailing: const Icon(Icons.arrow_drop_down),
+                  onTap: () => _showCountrySelectionDialog(context),
+                )
+              : ListTile(
+                  title: const Text('Select a country'),
+                  trailing: const Icon(Icons.arrow_drop_down),
+                  onTap: () => _showCountrySelectionDialog(context),
+                ),
         ),
       ],
     );
   }
-  
+
   // Show a dialog with the CountrySelector
   void _showCountrySelectionDialog(BuildContext context) {
     showDialog(
@@ -597,7 +576,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ),
     );
   }
-  
+
   Widget _buildVisaSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,7 +589,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Custom visa checkbox
         Row(
           children: [
@@ -630,7 +609,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             const Text('Use custom visa name'),
           ],
         ),
-        
+
         // Custom visa field or visa dropdown
         if (_useCustomVisa)
           TextField(
@@ -641,7 +620,8 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           )
         else if (_selectedCountry != null)
@@ -652,7 +632,9 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             ),
             child: ListTile(
               title: Text(_selectedVisa?.visaName ?? 'Select a visa'),
-              subtitle: _selectedVisa?.type != null ? Text(_selectedVisa!.type) : null,
+              subtitle: _selectedVisa?.type != null
+                  ? Text(_selectedVisa!.type)
+                  : null,
               trailing: const Icon(Icons.arrow_drop_down),
               onTap: () => _showVisaSelectionDialog(context),
             ),
@@ -673,7 +655,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ],
     );
   }
-  
+
   // Show a dialog with visa selection options
   void _showVisaSelectionDialog(BuildContext context) {
     showDialog(
@@ -692,7 +674,8 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                   children: [
                     const Text(
                       'Select Visa Type',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -701,7 +684,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Search field
                 TextField(
                   controller: _visaSearchController,
@@ -709,17 +692,17 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                     hintText: 'Search visas...',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _visaSearchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              _visaSearchController.clear();
-                              _visaSearchQuery = '';
-                              _isSearchingVisa = false;
-                            });
-                          },
-                        )
-                      : null,
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _visaSearchController.clear();
+                                _visaSearchQuery = '';
+                                _isSearchingVisa = false;
+                              });
+                            },
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -732,43 +715,55 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Visa list
                 Expanded(
                   child: _isLoadingVisas
-                    ? const Center(child: CircularProgressIndicator())
-                    : _filteredVisas.isEmpty
-                      ? const Center(child: Text('No visas available for this country'))
-                      : ListView.builder(
-                          itemCount: _filteredVisas.where((visa) {
-                            return _isSearchingVisa
-                              ? visa.visaName.toLowerCase().contains(_visaSearchQuery)
-                              : true;
-                          }).length,
-                          itemBuilder: (context, index) {
-                            final filteredVisaList = _filteredVisas.where((visa) {
-                              return _isSearchingVisa
-                                ? visa.visaName.toLowerCase().contains(_visaSearchQuery)
-                                : true;
-                            }).toList();
-                            
-                            final visa = filteredVisaList[index];
-                            final isSelected = _selectedVisa?.id == visa.id;
-                            
-                            return ListTile(
-                              title: Text(visa.visaName),
-                              subtitle: Text(visa.type),
-                              selected: isSelected,
-                              tileColor: isSelected ? Theme.of(context).primaryColor.withValues(alpha:0.1) : null,
-                              onTap: () {
-                                setState(() {
-                                  _selectedVisa = visa;
-                                });
-                                Navigator.of(context).pop(); // Close dialog after selection
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredVisas.isEmpty
+                          ? const Center(
+                              child:
+                                  Text('No visas available for this country'))
+                          : ListView.builder(
+                              itemCount: _filteredVisas.where((visa) {
+                                return _isSearchingVisa
+                                    ? visa.visaName
+                                        .toLowerCase()
+                                        .contains(_visaSearchQuery)
+                                    : true;
+                              }).length,
+                              itemBuilder: (context, index) {
+                                final filteredVisaList =
+                                    _filteredVisas.where((visa) {
+                                  return _isSearchingVisa
+                                      ? visa.visaName
+                                          .toLowerCase()
+                                          .contains(_visaSearchQuery)
+                                      : true;
+                                }).toList();
+
+                                final visa = filteredVisaList[index];
+                                final isSelected = _selectedVisa?.id == visa.id;
+
+                                return ListTile(
+                                  title: Text(visa.visaName),
+                                  subtitle: Text(visa.type),
+                                  selected: isSelected,
+                                  tileColor: isSelected
+                                      ? Theme.of(context)
+                                          .primaryColor
+                                          .withValues(alpha: 0.1)
+                                      : null,
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedVisa = visa;
+                                    });
+                                    Navigator.of(context)
+                                        .pop(); // Close dialog after selection
+                                  },
+                                );
                               },
-                            );
-                          },
-                        ),
+                            ),
                 ),
               ],
             ),
@@ -777,7 +772,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ),
     );
   }
-  
+
   Widget _buildYearField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,9 +822,9 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             ),
           ),
         ),
-        
+
         // Only show departure date field if not current location
-        if (!_isCurrentLocation) ...[  
+        if (!_isCurrentLocation) ...[
           const SizedBox(height: 16),
           const Text(
             'Date of Departure (Optional)',
@@ -861,9 +856,8 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
                           ? DateFormat('MMMM yyyy').format(_leftDate!)
                           : 'Select departure date (optional)',
                       style: TextStyle(
-                        color: _leftDate != null
-                            ? Colors.black87
-                            : Colors.black54,
+                        color:
+                            _leftDate != null ? Colors.black87 : Colors.black54,
                       ),
                     ),
                   ),
@@ -879,17 +873,20 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ],
     );
   }
-  
-  Future<void> _showMonthYearPicker(BuildContext context, {bool isArrival = true}) async {
-    final initialDate = isArrival ? (_arrivedDate ?? DateTime.now()) : (_leftDate ?? DateTime.now());
+
+  Future<void> _showMonthYearPicker(BuildContext context,
+      {bool isArrival = true}) async {
+    final initialDate = isArrival
+        ? (_arrivedDate ?? DateTime.now())
+        : (_leftDate ?? DateTime.now());
     final firstDate = DateTime(1950);
     final lastDate = DateTime.now();
-    
+
     // If this is for departure date, ensure the first date is after arrival date
-    final effectiveFirstDate = !isArrival && _arrivedDate != null 
+    final effectiveFirstDate = !isArrival && _arrivedDate != null
         ? (_arrivedDate!.isAfter(firstDate) ? _arrivedDate! : firstDate)
         : firstDate;
-    
+
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -897,7 +894,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       lastDate: lastDate,
       initialDatePickerMode: DatePickerMode.year,
     );
-    
+
     if (pickedDate != null) {
       setState(() {
         if (isArrival) {
@@ -955,7 +952,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ],
     );
   }
-  
+
   String _getMigrationReasonText(MigrationReason reason) {
     switch (reason) {
       case MigrationReason.work:
@@ -976,7 +973,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
         return 'Other';
     }
   }
-  
+
   Widget _buildAdditionalOptions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -989,7 +986,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Current location checkbox
         CheckboxListTile(
           title: const Text('This is my current location'),
@@ -1002,7 +999,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             });
           },
         ),
-        
+
         // Target destination checkbox
         CheckboxListTile(
           title: const Text('This is my target destination'),
@@ -1015,7 +1012,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
             });
           },
         ),
-        
+
         // Was successful checkbox
         CheckboxListTile(
           title: const Text('This migration was successful'),
@@ -1031,7 +1028,7 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
       ],
     );
   }
-  
+
   Widget _buildNotesField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

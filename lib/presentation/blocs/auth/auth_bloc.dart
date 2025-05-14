@@ -89,7 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthState.error('Signup failed'));
       }
     } catch (e) {
-      _logger.error('AuthBloc', 'Error during signup', error: e);
+
       emit(AuthState.error(e.toString()));
     }
   }
@@ -199,7 +199,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthState.initial());
       }
     } catch (e) {
-      _logger.error('Auth', 'Error checking authentication status: $e');
+
       emit(AuthState.error(e.toString()));
     }
   }

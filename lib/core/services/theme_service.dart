@@ -24,7 +24,7 @@ class ThemeService {
       
       return theme;
     } catch (e, stackTrace) {
-      _logger.error('Theme', 'Failed to get theme from storage', error: e, stackTrace: stackTrace);
+
       return system;
     }
   }
@@ -37,7 +37,7 @@ class ThemeService {
       
       return true;
     } catch (e, stackTrace) {
-      _logger.error('Theme', 'Failed to save theme to storage', error: e, stackTrace: stackTrace);
+
       return false;
     }
   }

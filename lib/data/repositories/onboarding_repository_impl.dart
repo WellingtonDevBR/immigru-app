@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
@@ -39,15 +40,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
     // Check if enough time has passed since the last save
     if (timeSinceLastSave < _saveThrottleMs) {
-      print(
-          '🔍 OnboardingRepository - Throttling $step save - too soon after previous save');
       return false;
     }
 
     // If we have old data to compare, check if the data has actually changed
     if (oldData != null && oldData == newData) {
-      print(
-          '🔍 OnboardingRepository - Skipping $step save - no changes detected');
       return false;
     }
 
@@ -65,8 +62,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       // This ensures the display name is always saved when present
       if (data.displayName != null && data.displayName!.isNotEmpty) {
         // Use our throttled save method which handles caching internally
-        print(
-            '🔍 OnboardingRepository - Checking if display name needs saving: "${data.displayName}"');
         await _saveDisplayName(data.displayName!);
       }
 
@@ -202,8 +197,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
                 Map<String, dynamic>.from(profileData);
           } catch (e) {
             // Log error but continue with other data
-            print(
-                '🔍 OnboardingRepository - Error saving profileBasicInfo: $e');
           }
         }
 
@@ -213,26 +206,45 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         step = 'migrationJourney';
 
         // Log detailed information about each migration step
+        _logger.debug('Migration Steps', 'Saving ${data.migrationSteps.length} migration steps');
 
         for (int i = 0; i < data.migrationSteps.length; i++) {
           final step = data.migrationSteps[i];
 
           // Validate critical fields
-          if (step.countryId <= 0) {}
+          if (step.countryId <= 0) {
+            _logger.error('Validation', 'Migration step $i has invalid countryId: ${step.countryId}');
+          }
           if (step.visaId == null) {
-          } else if (step.visaId! <= 0) {}
-          if (step.arrivedDate == null) {}
+            _logger.debug('Validation', 'Migration step $i has null visaId');
+          } else if (step.visaId! <= 0) {
+            _logger.error('Validation', 'Migration step $i has invalid visaId: ${step.visaId}');
+          }
+          if (step.arrivedDate == null) {
+            _logger.error('Validation', 'Migration step $i has null arrivedDate');
+          }
         }
 
-        // Ensure we're sending the correct country ID format for each step
+        // Important: Send migration steps to the dedicated migration-steps edge function
+        try {
+          await _saveMigrationSteps(data.migrationSteps);
+          _logger.debug('Migration Steps', 'Successfully sent migration steps to edge function');
+        } catch (e) {
+          _logger.error('Migration Steps', 'Failed to save migration steps: $e');
+        }
 
+        // Also prepare the data for the user-profile edge function
         final migrationStepsData = data.migrationSteps.map((step) {
           final stepJson = step.toJson();
 
           // Verify the JSON has all required fields
           if (!stepJson.containsKey('countryId') ||
-              stepJson['countryId'] == null) {}
-          if (!stepJson.containsKey('visaId') || stepJson['visaId'] == null) {}
+              stepJson['countryId'] == null) {
+            _logger.error('Validation', 'Migration step JSON missing countryId');
+          }
+          if (!stepJson.containsKey('visaId') || stepJson['visaId'] == null) {
+            _logger.debug('Validation', 'Migration step JSON missing visaId');
+          }
 
           return stepJson;
         }).toList();
@@ -289,25 +301,12 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
             data: stepData,
             isCompleted: data.isCompleted,
           );
-        } catch (e, stackTrace) {
-          _logger.error(
-            'OnboardingRepository',
-            'Error saving step: $step',
-            error: e,
-            stackTrace: stackTrace,
-          );
-
+        } catch (e) {
           // Don't rethrow here, we want to continue with other operations
           // even if one step fails
         }
       }
     } catch (e, stackTrace) {
-      _logger.error(
-        'OnboardingRepository',
-        'Error saving onboarding data',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }
@@ -336,13 +335,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       
     } catch (e, stackTrace) {
-      
-      _logger.error(
-        'OnboardingRepository',
-        'Error saving display name',
-        error: e,
-        stackTrace: stackTrace,
-      );
       // Don't rethrow, we want to continue with other operations
     }
   }
@@ -361,24 +353,51 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       // Update our tracked value before making the API call
       _lastSavedData['bio'] = bio;
       
-      
-      
       await _edgeFunctionDataSource.saveStepData(
         step: stepName,
         data: stepData,
         isCompleted: false,
       );
       
-      
     } catch (e, stackTrace) {
-      
-      _logger.error(
-        'OnboardingRepository',
-        'Error saving bio',
-        error: e,
-        stackTrace: stackTrace,
-      );
       // Don't rethrow, we want to continue with other operations
+    }
+  }
+  
+  /// Helper method to save migration steps to the dedicated migration-steps edge function
+  Future<void> _saveMigrationSteps(List<MigrationStep> steps) async {
+    try {
+      _logger.debug('Migration Steps', 'Preparing to save ${steps.length} migration steps to migration-steps edge function');
+      
+      // Convert steps to JSON format expected by the migration-steps edge function
+      final stepsJson = steps.map((step) => step.toJson()).toList();
+      
+      // Directly invoke the migration-steps edge function
+      final response = await _supabaseService.client.functions.invoke(
+        'migration-steps',
+        body: {
+          'action': 'save',
+          'data': stepsJson,
+        },
+      );
+      
+      // Log response for debugging
+      if (response.data == null) {
+        _logger.error('Migration Steps', 'Migration steps edge function returned null data');
+      } else {
+        _logger.debug('Migration Steps', 'Migration steps saved successfully: ${response.data}');
+      }
+      
+      // Check for errors
+      if (response.status != 200) {
+        final errorMessage = 'Error status: ${response.status}';
+        _logger.error('Migration Steps', 'Error saving migration steps: $errorMessage');
+        throw Exception('Failed to save migration steps: $errorMessage');
+      }
+    } catch (e, stackTrace) {
+      _logger.error('Migration Steps', 'Exception saving migration steps: $e');
+      debugPrintStack(stackTrace: stackTrace, label: 'Migration Steps Save Error');
+      rethrow;
     }
   }
 
@@ -422,15 +441,9 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       );
 
       return onboardingData;
-    } catch (e, stackTrace) {
-      _logger.error(
-        'OnboardingRepository',
-        'Error retrieving onboarding data from edge function',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
+    } catch (e) {
       // Return empty data on error instead of crashing
+      _logger.error('OnboardingRepository', 'Failed to get onboarding data: $e');
       return OnboardingData.empty();
     }
   }
@@ -534,11 +547,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           await _onboardingService.markOnboardingCompleted();
         }
       } catch (serverError) {
-        _logger.error(
-          'OnboardingRepository',
-          'Error checking server onboarding status, falling back to local',
-          error: serverError,
-        );
         // If server check fails, rely on local storage
         return hasCompletedLocally;
       }
@@ -546,12 +554,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       // Return the server status as the source of truth
       return hasCompletedOnServer;
     } catch (e, stackTrace) {
-      _logger.error(
-        'OnboardingRepository',
-        'Error checking onboarding completion status',
-        error: e,
-        stackTrace: stackTrace,
-      );
       return false;
     }
   }
@@ -576,12 +578,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       // Also save to local storage for faster access
       await _onboardingService.markOnboardingCompleted();
     } catch (e, stackTrace) {
-      _logger.error(
-        'OnboardingRepository',
-        'Error completing onboarding',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }

@@ -188,9 +188,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("=== ERROR PROCESSING REQUEST ===");
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
+
+
+
 
     // Log more details about the request that caused the error
     try {
@@ -208,7 +208,7 @@ serve(async (req) => {
         JSON.stringify(parsedData.data, null, 2),
       );
     } catch (e) {
-      console.error("Could not log request details:", e.message);
+
     }
 
     // Return the error

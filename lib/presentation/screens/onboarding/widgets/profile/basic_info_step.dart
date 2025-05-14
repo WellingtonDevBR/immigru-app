@@ -50,7 +50,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
       final uri = Uri.parse(url);
       return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
     } catch (e) {
-      _logger.error('BasicInfoStep', 'Invalid image URL: $url', error: e);
+
       return false;
     }
   }
@@ -439,7 +439,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
         );
       }
     } catch (e) {
-      _logger.error('BasicInfoStep', 'Error uploading photo: $e');
+
       // Show error snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

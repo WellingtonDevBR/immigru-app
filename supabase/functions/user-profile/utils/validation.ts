@@ -12,13 +12,13 @@ export function validateMigrationStep(step: any): void {
   
   // Check if we have a step object
   if (!step) {
-    console.error('Migration step is undefined or null');
+
     throw new Error('Migration step is undefined or null');
   }
   
   // Validate country ID (required)
   if (!step.countryId) {
-    console.error('Country ID is required for migration steps');
+
     throw new Error('Country ID is required for migration steps');
   } else {
     
@@ -31,7 +31,7 @@ export function validateMigrationStep(step: any): void {
     
     // We'll make this optional to be more flexible
     // Instead of throwing an error, we'll just log a warning
-    console.warn('Arrived date is recommended for migration steps but not strictly required');
+
   }
   
   // Validate that arrived date is not in the future (if provided)
@@ -45,12 +45,12 @@ export function validateMigrationStep(step: any): void {
       // Add a small buffer (1 day) to account for timezone differences
       const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
       if (arrivedAtDate.getTime() > (currentDate.getTime() + oneDayBuffer)) {
-        console.warn('Arrived date appears to be in the future, but will allow it for flexibility');
+
         // Instead of throwing an error, just warn about it
         // throw new Error('Arrived date cannot be in the future');
       }
     } catch (e) {
-      console.error(`Error parsing arrived date: ${step.arrivedDate}`, e);
+
       throw new Error(`Invalid arrived date format: ${step.arrivedDate}`);
     }
   }
@@ -64,12 +64,12 @@ export function validateMigrationStep(step: any): void {
       
       
       if (arrivedAtDate.getTime() > leftAtDate.getTime()) {
-        console.warn('Left date is before arrived date, but will allow it for flexibility');
+
         // Instead of throwing an error, just warn about it
         // throw new Error('Left date must be after arrived date');
       }
     } catch (e) {
-      console.error(`Error comparing dates: arrived=${step.arrivedDate}, left=${step.leftDate}`, e);
+
       // Just log the error but don't throw to be more flexible
     }
   } else if (step.leftDate) {
@@ -92,7 +92,7 @@ export function validateMigrationReason(reason: string | null): string | null {
     return reason;
   }
   
-  console.warn(`Invalid migration reason: ${reason}. Will be set to null.`);
+
   return null;
 }
 

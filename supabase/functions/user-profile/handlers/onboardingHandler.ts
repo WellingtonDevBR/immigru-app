@@ -70,7 +70,7 @@ export async function processStepData(
               countryId = nameCountryData[0].Id;
               
             } else {
-              console.warn(`Could not find country for: ${data.birthCountry}`);
+
             }
           }
         } else {
@@ -86,7 +86,7 @@ export async function processStepData(
             countryId = countryData[0].Id;
             
           } else {
-            console.warn(`Could not find country for: ${data.birthCountry}`);
+
           }
         }
         
@@ -110,7 +110,7 @@ export async function processStepData(
           .select();
         
         if (updateError) {
-          console.error('Error updating UserProfile.OriginCountry:', updateError);
+
         } else {
           
         }
@@ -128,7 +128,7 @@ export async function processStepData(
             .limit(1);
             
           if (stepsError) {
-            console.error('Error checking for existing birth country step:', stepsError);
+
           } else if (existingSteps && existingSteps.length > 0) {
             
             // Update existing birth country step
@@ -141,7 +141,7 @@ export async function processStepData(
               .eq('Id', existingSteps[0].Id);
               
             if (updateStepError) {
-              console.error('Error updating birth country step:', updateStepError);
+
             }
           } else {
             
@@ -161,7 +161,7 @@ export async function processStepData(
               });
               
             if (insertStepError) {
-              console.error('Error inserting birth country step:', insertStepError);
+
             }
           }
         }
@@ -199,7 +199,7 @@ export async function processStepData(
             .select();
             
           if (statusError) {
-            console.error('Status update error:', statusError);
+
             throw statusError;
           } else {
             
@@ -216,19 +216,19 @@ export async function processStepData(
             return { success: true, data: { currentStatus: data.currentStatus } };
           }
         } catch (error) {
-          console.error('Error updating migration stage:', error);
+
           throw error;
         }
                 
       case 'migrationJourney':
         // Handle migration steps
         if (!data.migrationSteps || !Array.isArray(data.migrationSteps)) {
-          console.error('Invalid migration steps data:', data.migrationSteps);
+
           throw new Error('Migration steps must be an array');
         }
         
         if (data.migrationSteps.length === 0) {
-          console.warn('Empty migration steps array received');
+
           return { success: true, data: { message: 'No migration steps to process' } };
         }
         
@@ -251,7 +251,7 @@ export async function processStepData(
           
           return result;
         } catch (error) {
-          console.error('Error processing migration steps:', error);
+
           throw error;
         }
         
@@ -474,7 +474,7 @@ export async function processStepData(
         throw new Error(`Unknown step: ${step}`);
     }
   } catch (error) {
-    console.error(`Error processing step ${step}:`, error);
+
     return { success: false, error };
   }
 }
@@ -498,7 +498,7 @@ export async function checkOnboardingStatus(
     .single();
     
   if (error || !data) {
-    console.error(`Error checking onboarding status:`, error);
+
     return { completed: false };
   }
   
@@ -588,7 +588,7 @@ export async function getOnboardingStepData(
         
         
         if (migrationError) {
-          console.error('Error retrieving migration steps:', migrationError);
+
           throw migrationError;
         }
         
@@ -644,7 +644,7 @@ export async function getOnboardingStepData(
         throw new Error(`Unsupported onboarding step: ${step}`);
     }
   } catch (error) {
-    console.error(`Error getting data for onboarding step ${step}:`, error);
+
     return { success: false, error: error.message };
   }
 }

@@ -28,7 +28,7 @@ class AppThemeProvider extends ChangeNotifier {
       
       notifyListeners();
     } catch (e, stackTrace) {
-      _logger.error('Theme', 'Failed to load theme', error: e, stackTrace: stackTrace);
+
       // Already initialized with ThemeMode.system as default
     }
   }
@@ -42,7 +42,7 @@ class AppThemeProvider extends ChangeNotifier {
     final success = await _themeService.setThemeMode(themeString);
     
     if (!success) {
-      _logger.error('Theme', 'Failed to save theme mode: $mode');
+
     }
   }
   

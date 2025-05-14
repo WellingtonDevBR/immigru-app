@@ -64,7 +64,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isLoading: false,
         errorMessage: 'Failed to load profile: $e',
       ));
-      _logger.error('ProfileBloc', 'Error loading profile: $e');
+
     }
   }
 
@@ -116,8 +116,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     LocationUpdated event,
     Emitter<ProfileState> emit,
   ) {
-    _logger.debug('ProfileBloc',
-        'Location updated: ${event.currentLocation} -> ${event.destinationCity}');
     emit(state.copyWith(
       profile: state.profile.copyWith(
         currentLocation: event.currentLocation,
@@ -150,14 +148,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           isPhotoUploading: false,
           errorMessage: 'Failed to upload profile photo',
         ));
-        _logger.error('ProfileBloc', 'Failed to upload profile photo');
+
       }
     } catch (e) {
       emit(state.copyWith(
         isPhotoUploading: false,
         errorMessage: 'Error uploading profile photo: $e',
       ));
-      _logger.error('ProfileBloc', 'Error uploading profile photo: $e');
+
     }
   }
 
@@ -266,7 +264,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isSubmitting: false,
         errorMessage: 'Failed to save profile: $e',
       ));
-      _logger.error('ProfileBloc', 'Error saving profile: $e');
+
     }
   }
 
@@ -296,7 +294,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isSubmitting: false,
         errorMessage: 'Failed to complete profile setup: $e',
       ));
-      _logger.error('ProfileBloc', 'Error completing profile setup: $e');
+
     }
   }
 }

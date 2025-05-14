@@ -100,7 +100,7 @@ class _LanguageStepState extends State<LanguageStep> {
       });
       
     } catch (e) {
-      _logger.error('LanguageStep', 'Error fetching languages: $e');
+
       setState(() {
         _errorMessage = 'Failed to load languages. Please try again.';
         _isLoading = false;
@@ -185,7 +185,7 @@ class _LanguageStepState extends State<LanguageStep> {
         
       }
     } catch (e) {
-      _logger.error('LanguageStep', '❌ Error fetching user languages: $e');
+
       // Don't show an error to the user, they can still select languages
     } finally {
       setState(() {

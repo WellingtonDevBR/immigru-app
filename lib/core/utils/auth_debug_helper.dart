@@ -70,20 +70,6 @@ class AuthDebugHelper {
 
     
     if (exception.toString().contains('ApiException: 10')) {
-      print('''
-⚠️ GOOGLE SIGN-IN ERROR CODE 10: Developer Error
-This typically means one of the following:
-1. SHA-1 fingerprint in Firebase console doesn't match your app's signing certificate
-2. Package name in Google Cloud Console doesn't match your app's package name
-3. OAuth client ID is incorrect or missing
-4. Google Play Services is not installed or outdated on the device
-
-RECOMMENDED ACTIONS:
-1. Verify SHA-1 fingerprint in Firebase console
-2. Check package name in Google Cloud Console
-3. Ensure OAuth client ID is correctly configured
-4. Update Google Play Services on the device
-''');
     }
   }
   

@@ -30,7 +30,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
           .map((json) => LanguageModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _logger.error('LanguageRepositoryImpl', 'Error getting languages: $e');
+
       // Return empty list on error, could also throw a custom exception
       return [];
     }
@@ -53,7 +53,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
       final data = response.data as Map<String, dynamic>;
       return data['success'] == true;
     } catch (e) {
-      _logger.error('LanguageRepositoryImpl', 'Error saving user languages: $e');
+
       return false;
     }
   }
@@ -97,7 +97,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
       
       return languages;
     } catch (e) {
-      _logger.error('LanguageRepositoryImpl', 'Error getting user languages: $e');
+
       return [];
     }
   }

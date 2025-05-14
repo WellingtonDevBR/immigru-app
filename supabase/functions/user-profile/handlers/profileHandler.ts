@@ -23,7 +23,7 @@ export async function getUserProfile(supabaseClient: SupabaseClient, userId: str
     .single();
     
   if (error) {
-    console.error(`Error getting user profile:`, error);
+
     return null;
   }
   
@@ -64,7 +64,7 @@ export async function updateUserProfile(
     .single();
     
   if (error) {
-    console.error(`Error updating user profile:`, error);
+
     return { success: false, error };
   }
   

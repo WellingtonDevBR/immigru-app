@@ -6,12 +6,14 @@ import 'package:immigru/core/services/session_manager.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:immigru/data/datasources/supabase_data_source.dart';
 import 'package:immigru/data/datasources/remote/user_profile_edge_function_data_source.dart';
+import 'package:immigru/data/datasources/remote/migration_steps_edge_function_data_source.dart';
 import 'package:immigru/data/models/supabase_auth_context.dart';
 import 'package:immigru/data/repositories/auth_repository_impl.dart';
 import 'package:immigru/data/repositories/country_repository_impl.dart';
 // import 'package:immigru/data/repositories/data_repository_impl.dart';
 import 'package:immigru/data/repositories/interest_repository_impl.dart';
 import 'package:immigru/data/repositories/language_repository_impl.dart';
+import 'package:immigru/data/repositories/migration_steps_repository_impl.dart';
 import 'package:immigru/data/repositories/onboarding_repository_impl.dart';
 import 'package:immigru/data/repositories/supabase_auth_service.dart';
 import 'package:immigru/data/repositories/profile_repository_impl.dart';
@@ -25,6 +27,7 @@ import 'package:immigru/domain/repositories/country_repository.dart';
 import 'package:immigru/domain/repositories/data_repository.dart';
 import 'package:immigru/domain/repositories/interest_repository.dart';
 import 'package:immigru/domain/repositories/language_repository.dart';
+import 'package:immigru/domain/repositories/migration_steps_repository.dart';
 import 'package:immigru/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/domain/repositories/profile_repository.dart';
 import 'package:immigru/domain/repositories/visa_repository.dart';
@@ -34,11 +37,13 @@ import 'package:immigru/domain/usecases/country_usecases.dart';
 import 'package:immigru/domain/usecases/data_usecases.dart';
 import 'package:immigru/domain/usecases/interest_usecases.dart';
 import 'package:immigru/domain/usecases/language_usecases.dart';
+import 'package:immigru/domain/usecases/migration_steps_usecases.dart';
 import 'package:immigru/domain/usecases/onboarding_usecases.dart';
 import 'package:immigru/domain/usecases/post_usecases.dart';
 import 'package:immigru/domain/usecases/profile_usecases.dart';
 import 'package:immigru/domain/usecases/immi_grove_usecases.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
+import 'package:immigru/presentation/blocs/migration_steps/migration_steps_bloc.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:immigru/presentation/blocs/profile/profile_bloc.dart';
 import 'package:immigru/presentation/blocs/immi_grove/immi_grove_bloc.dart';
@@ -77,6 +82,12 @@ Future<void> init() async {
     updatePrivacySettingsUseCase: sl<UpdatePrivacySettingsUseCase>(),
     logger: sl<LoggerService>(),
   ));
+  
+  sl.registerFactory<MigrationStepsBloc>(() => MigrationStepsBloc(
+    getMigrationStepsUseCase: sl<GetMigrationStepsUseCase>(),
+    saveMigrationStepsUseCase: sl<SaveMigrationStepsUseCase>(),
+    logger: sl<LoggerService>(),
+  ));
 
   // Register repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -87,6 +98,14 @@ Future<void> init() async {
     () => CountryRepositoryImpl(
       dataSource: sl<SupabaseDataSource>(),
       logger: sl<LoggerService>(),
+    ),
+  );
+  
+  // Register MigrationStepsRepository for handling migration steps
+  sl.registerLazySingleton<MigrationStepsRepository>(
+    () => MigrationStepsRepositoryImpl(
+      sl<MigrationStepsEdgeFunctionDataSource>(),
+      sl<LoggerService>(),
     ),
   );
   
@@ -130,6 +149,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<UserProfileEdgeFunctionDataSource>(
     () => UserProfileEdgeFunctionDataSource(sl<SupabaseService>(), sl<LoggerService>()),
+  );
+  sl.registerLazySingleton<MigrationStepsEdgeFunctionDataSource>(
+    () => MigrationStepsEdgeFunctionDataSource(sl<SupabaseService>(), sl<LoggerService>()),
   );
   sl.registerLazySingleton<ImmiGroveEdgeFunctionDataSource>(
     () => ImmiGroveEdgeFunctionDataSource(
@@ -184,17 +206,41 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreateEventUseCase(sl<DataRepository>()));
   
   // Onboarding use cases
-  sl.registerLazySingleton(() => GetOnboardingDataUseCase(sl<OnboardingRepository>()));
-  sl.registerLazySingleton(() => SaveOnboardingDataUseCase(sl<OnboardingRepository>()));
-  sl.registerLazySingleton(() => CompleteOnboardingUseCase(sl<OnboardingRepository>()));
-  sl.registerLazySingleton(() => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()));
+  sl.registerLazySingleton<GetOnboardingDataUseCase>(
+    () => GetOnboardingDataUseCase(sl<OnboardingRepository>()),
+  );
+  
+  sl.registerLazySingleton<SaveOnboardingDataUseCase>(
+    () => SaveOnboardingDataUseCase(sl<OnboardingRepository>()),
+  );
+  
+  sl.registerLazySingleton<CompleteOnboardingUseCase>(
+    () => CompleteOnboardingUseCase(sl<OnboardingRepository>()),
+  );
+  
+  sl.registerLazySingleton<CheckOnboardingStatusUseCase>(
+    () => CheckOnboardingStatusUseCase(sl<OnboardingRepository>()),
+  );
+  
+  // Register migration steps use cases
+  sl.registerLazySingleton<GetMigrationStepsUseCase>(
+    () => GetMigrationStepsUseCase(sl<MigrationStepsRepository>()),
+  );
+  
+  sl.registerLazySingleton<SaveMigrationStepsUseCase>(
+    () => SaveMigrationStepsUseCase(sl<MigrationStepsRepository>()),
+  );
+  
+  // Language use cases
   sl.registerLazySingleton(() => GetLanguagesUseCase(sl<LanguageRepository>()));
   sl.registerLazySingleton(() => SaveUserLanguagesUseCase(sl<LanguageRepository>()));
   sl.registerLazySingleton(() => GetUserLanguagesUseCase(sl<LanguageRepository>()));
+
+  // Interest use cases
   sl.registerLazySingleton(() => GetInterestsUseCase(sl<InterestRepository>()));
   sl.registerLazySingleton(() => SaveUserInterestsUseCase(sl<InterestRepository>()));
   sl.registerLazySingleton(() => GetUserInterestsUseCase(sl<InterestRepository>()));
-  
+
   // ImmiGrove use cases
   sl.registerLazySingleton(() => GetRecommendedImmiGrovesUseCase(sl<ImmiGroveRepository>()));
   sl.registerLazySingleton(() => JoinImmiGroveUseCase(sl<ImmiGroveRepository>()));

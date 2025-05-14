@@ -20,16 +20,6 @@ class EdgeFunctionLogger {
     final requestJson = jsonEncode(requestData);
     final stepInfo = step != null ? ' for step: $step' : '';
     final actionInfo = action != null ? ' with action: $action' : '';
-    
-    _logger.debug(
-      'EdgeFunction',
-      '➡️ REQUEST to $functionName$stepInfo$actionInfo',
-    );
-    
-    _logger.debug(
-      'EdgeFunction',
-      '📤 REQUEST PAYLOAD: $requestJson',
-    );
   }
   
   /// Log a response from an edge function
@@ -44,16 +34,6 @@ class EdgeFunctionLogger {
     final stepInfo = step != null ? ' for step: $step' : '';
     final actionInfo = action != null ? ' with action: $action' : '';
     final statusEmoji = isSuccess ? '✅' : '❌';
-    
-    _logger.debug(
-      'EdgeFunction',
-      '⬅️ RESPONSE from $functionName$stepInfo$actionInfo: $statusEmoji',
-    );
-    
-    _logger.debug(
-      'EdgeFunction',
-      '📥 RESPONSE PAYLOAD: $responseJson',
-    );
   }
   
   /// Log an error during edge function interaction
@@ -66,12 +46,5 @@ class EdgeFunctionLogger {
   }) {
     final stepInfo = step != null ? ' for step: $step' : '';
     final actionInfo = action != null ? ' with action: $action' : '';
-    
-    _logger.error(
-      'EdgeFunction',
-      '❌ ERROR in $functionName$stepInfo$actionInfo',
-      error: error,
-      stackTrace: stackTrace,
-    );
   }
 }

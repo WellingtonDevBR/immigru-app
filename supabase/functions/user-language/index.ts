@@ -36,7 +36,7 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (userError || !user) {
-      console.error('Invalid user token:', userError);
+
       throw new Error('Invalid user token');
     }
 
@@ -56,7 +56,7 @@ serve(async (req) => {
           .eq('UserId', user.id);
 
         if (error) {
-          console.error('Database error:', error);
+
           throw new Error(error.message);
         }
 
@@ -81,7 +81,7 @@ serve(async (req) => {
           status: 200,
         });
       } catch (dbError) {
-        console.error('Error in database query:', dbError);
+
         throw dbError;
       }
     }
@@ -96,7 +96,7 @@ serve(async (req) => {
         
         
         if (!bodyText || bodyText.trim() === '') {
-          console.error('Empty request body');
+
           return new Response(JSON.stringify({ error: 'Empty request body' }), {
             headers: corsHeaders,
             status: 400,
@@ -106,7 +106,7 @@ serve(async (req) => {
         body = JSON.parse(bodyText);
         
       } catch (parseError) {
-        console.error('Error parsing request body:', parseError);
+
         return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
           headers: corsHeaders,
           status: 400,
@@ -117,7 +117,7 @@ serve(async (req) => {
       
 
       if (!Array.isArray(languageIds)) {
-        console.error('languageIds is not an array:', languageIds);
+
         return new Response(JSON.stringify({ error: 'Invalid languageIds array' }), {
           headers: corsHeaders,
           status: 400,
@@ -149,7 +149,7 @@ serve(async (req) => {
       status: 405,
     });
   } catch (err) {
-    console.error('Error in user-language function:', err);
+
     
     // Create a safe error response
     let errorMessage = 'Unknown error';

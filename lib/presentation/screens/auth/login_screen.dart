@@ -58,8 +58,6 @@ class _LoginScreenState extends State<LoginScreen>
   void _toggleTheme(BuildContext context) {
     final themeProvider = Provider.of<AppThemeProvider>(context, listen: false);
     themeProvider.toggleTheme();
-    _logger.debug('Login',
-        'Theme toggled to: ${themeProvider.isDarkMode ? 'dark' : 'light'}');
   }
 
   void _submitForm(BuildContext context, AuthState state) {
@@ -173,8 +171,6 @@ class _LoginScreenState extends State<LoginScreen>
             setState(() {
               _errorMessage = state.errorMessage ?? 'An error occurred';
             });
-            _logger.error(
-                'Login', 'Authentication error: ${state.errorMessage}');
           } else if (!state.isLoading) {
             // Clear error message if no error and not loading
             setState(() {
@@ -184,8 +180,6 @@ class _LoginScreenState extends State<LoginScreen>
 
           // Navigate to home screen when authentication is successful
           if (state.isAuthenticated && state.user != null) {
-            _logger.info('Login',
-                'Authentication successful, navigating to home screen');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                   builder: (context) => HomeScreen(user: state.user)),

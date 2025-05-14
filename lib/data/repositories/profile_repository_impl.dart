@@ -45,7 +45,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       return ProfileModel.fromJson(response);
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error fetching profile: $e');
+
       return null;
     }
   }
@@ -69,7 +69,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving profile: $e');
+
       throw Exception('Failed to save profile: $e');
     }
   }
@@ -99,7 +99,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       
       return photoUrl;
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error uploading profile photo: $e');
+
       return null;
     }
   }
@@ -126,7 +126,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error updating privacy settings: $e');
+
       throw Exception('Failed to update privacy settings: $e');
     }
   }
@@ -140,7 +140,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving birth country: $e');
+
       throw Exception('Failed to save birth country: $e');
     }
   }
@@ -154,7 +154,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving current status: $e');
+
       throw Exception('Failed to save current status: $e');
     }
   }
@@ -183,7 +183,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving migration journey: $e');
+
       throw Exception('Failed to save migration journey: $e');
     }
   }
@@ -200,7 +200,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving profession: $e');
+
       throw Exception('Failed to save profession: $e');
     }
   }
@@ -214,7 +214,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving languages: $e');
+
       throw Exception('Failed to save languages: $e');
     }
   }
@@ -228,7 +228,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving interests: $e');
+
       throw Exception('Failed to save interests: $e');
     }
   }
@@ -250,7 +250,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving basic info: $e');
+
       throw Exception('Failed to save basic info: $e');
     }
   }
@@ -264,7 +264,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving display name: $e');
+
       throw Exception('Failed to save display name: $e');
     }
   }
@@ -278,7 +278,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving bio: $e');
+
       throw Exception('Failed to save bio: $e');
     }
   }
@@ -298,7 +298,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error saving location: $e');
+
       throw Exception('Failed to save location: $e');
     }
   }
@@ -317,7 +317,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       
       
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error completing onboarding: $e');
+
       throw Exception('Failed to complete onboarding: $e');
     }
   }
@@ -335,7 +335,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       final profile = await getProfile();
       return profile != null; // If we have a profile, consider onboarding completed
     } catch (e) {
-      _logger.error('ProfileRepository', 'Error checking onboarding completion: $e');
+
       return false;
     }
   }

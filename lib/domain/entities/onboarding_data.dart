@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'visa.dart';
+import 'visa.dart'; // Import for MigrationReason enum
 
 /// Entity representing user onboarding data
 class OnboardingData extends Equatable {
@@ -192,18 +192,48 @@ class MigrationStep extends Equatable {
       
   /// Convert the migration step to a JSON map
   Map<String, dynamic> toJson() {
-    // Log the migration step data before serialization
-
-
-
-
+    // Ensure countryId is a number
+    dynamic countryIdValue;
+    if (countryId != null) {
+      if (countryId is int) {
+        countryIdValue = countryId;
+      } else if (countryId is String) {
+        try {
+          countryIdValue = countryId.toString();
+        } catch (e) {
+          // Log error but continue
+          print('Error parsing countryId: $e');
+          countryIdValue = countryId; // Keep original value as fallback
+        }
+      } else {
+        countryIdValue = countryId; // Keep original value as fallback
+      }
+    }
+    
+    // Ensure visaId is a number if present
+    dynamic visaIdValue;
+    if (visaId != null) {
+      if (visaId is int) {
+        visaIdValue = visaId;
+      } else if (visaId is String) {
+        try {
+          visaIdValue = visaId.toString();
+        } catch (e) {
+          // Log error but continue
+          print('Error parsing visaId: $e');
+          visaIdValue = visaId; // Keep original value as fallback
+        }
+      } else {
+        visaIdValue = visaId; // Keep original value as fallback
+      }
+    }
     
     return {
       'id': id,
       'order': order,
-      'countryId': countryId,
+      'countryId': countryIdValue ?? countryId,
       'countryName': countryName,
-      'visaId': visaId, // Ensure this is sent correctly
+      'visaId': visaIdValue ?? visaId,
       'visaName': visaName,
       'arrivedDate': arrivedDate?.toIso8601String(),
       'leftDate': leftDate?.toIso8601String(),
@@ -212,6 +242,8 @@ class MigrationStep extends Equatable {
       'notes': notes,
       'migrationReason': migrationReason?.name,
       'wasSuccessful': wasSuccessful == true, // Ensure boolean conversion
+      // Add fields expected by the edge function
+      'isDeleted': false, // Add this field to indicate it's not a deletion request
     };
   }
 }

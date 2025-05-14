@@ -44,7 +44,7 @@ serve(async (req) => {
     const { data, error } = await query;
     
     if (error) {
-      console.error('Error fetching languages:', error.message);
+
       throw new Error(error.message);
     }
     
@@ -65,7 +65,7 @@ serve(async (req) => {
       }
     );
   } catch (err) {
-    console.error('Error in get-languages function:', err.message);
+
     
     return new Response(
       JSON.stringify({

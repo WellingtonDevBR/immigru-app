@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _signOutUseCase.call();
       // TODO: Navigate to login screen after sign out
     } catch (e) {
-      _logger.error('HomeScreen', 'Error signing out', error: e);
+
       // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         });
       }
     } catch (e) {
-      _logger.error('HomeScreen', 'Error fetching posts', error: e);
+
       
       // Use sample data as fallback
       if (mounted) {
@@ -236,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         });
       }
     } catch (e) {
-      _logger.error('HomeScreen', 'Error fetching events', error: e);
+
       
       // Use sample data as fallback
       if (mounted) {
@@ -273,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       }
     } catch (e) {
-      _logger.error('HomeScreen', 'Error creating post', error: e);
+
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

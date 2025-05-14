@@ -47,7 +47,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   @override
   void initState() {
     super.initState();
-    _logger.info('App', 'Initializing ImmigruApp');
+
   }
 
   @override
@@ -75,7 +75,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
             ),
           );
         } else if (state.isAuthenticated && state.user != null) {
-          _logger.info('App', 'User authenticated, checking onboarding status');
+
           return FutureBuilder<bool>(
             future: sl<OnboardingRepository>().hasCompletedOnboarding(),
             builder: (context, snapshot) {
@@ -90,10 +90,10 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
               final hasCompletedOnboarding = snapshot.data ?? false;
               
               if (hasCompletedOnboarding) {
-                _logger.info('App', 'Onboarding completed, showing home screen');
+
                 return HomeScreen(user: state.user);
               } else {
-                _logger.info('App', 'Onboarding not completed, showing onboarding screen');
+
                 return OnboardingScreen(user: state.user);
               }
             },
@@ -113,10 +113,10 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
               final hasSeenWelcomeScreen = snapshot.data ?? false;
               
               if (hasSeenWelcomeScreen) {
-                _logger.info('App', 'User not authenticated, showing login screen');
+
                 return const LoginScreen();
               } else {
-                _logger.info('App', 'First-time user, showing welcome screen');
+
                 return const WelcomeScreen();
               }
             },

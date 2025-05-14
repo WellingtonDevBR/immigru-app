@@ -24,6 +24,8 @@ export async function handleMigrationSteps(
   userId: string,
   migrationSteps: any[],
 ): Promise<{ success: boolean; data?: any; error?: any }> {
+  // Log the received data from the client
+
   const results: any[] = [];
 
   // Process each migration step
@@ -32,7 +34,57 @@ export async function handleMigrationSteps(
     // Order will be determined later based on existing steps
 
     try {
-      // Validate the step data
+      // Check if this is a deletion request
+
+      if (step.isDeleted === true || step.isDeleted === "true") {
+        if (!step.id) {
+          throw new Error("Cannot delete step without ID");
+        }
+
+        try {
+          // First verify the step exists
+          const { data: existingStep, error: checkError } = await supabaseClient
+            .from("MigrationStep")
+            .select("Id, CountryId")
+            .eq("Id", step.id)
+            .single();
+
+          if (checkError) {
+          } else {
+          }
+
+          // Delete the step
+
+          try {
+            const { data: deletedStep, error: deleteError } =
+              await supabaseClient
+                .from("MigrationStep")
+                .delete()
+                .eq("Id", step.id)
+                .select("*");
+
+            if (deleteError) {
+              throw deleteError;
+            }
+
+            if (!deletedStep || deletedStep.length === 0) {
+            } else {
+            }
+
+            return { success: true, data: { id: step.id, deleted: true } };
+          } catch (error) {
+            throw error;
+          }
+
+          // This code is now handled in the try-catch block above
+        } catch (error) {
+          throw error;
+        }
+
+        continue; // Skip to the next step
+      }
+
+      // For non-deletion requests, validate the step data
 
       // Ensure countryId is a number
       if (step.countryId && typeof step.countryId !== "number") {
@@ -42,11 +94,20 @@ export async function handleMigrationSteps(
       validateMigrationStep(step);
 
       // First get all existing steps for this user to determine proper ordering
-      const { data: allExistingSteps } = await supabaseClient
-        .from("MigrationStep")
-        .select("Id, Order")
-        .eq("UserId", userId)
-        .order("Order", { ascending: true });
+
+      const { data: allExistingSteps, error: existingStepsError } =
+        await supabaseClient
+          .from("MigrationStep")
+          .select("Id, Order, CountryId, VisaId")
+          .eq("UserId", userId)
+          .order("Order", { ascending: true });
+
+      if (existingStepsError) {
+        throw existingStepsError;
+      }
+
+      if (allExistingSteps && allExistingSteps.length > 0) {
+      }
 
       // Check if this step already exists by matching country and visa
       let existingStep: { Id: number; Order: number } | null = null;
@@ -108,6 +169,10 @@ export async function handleMigrationSteps(
         try {
           visaIdValue = Number(step.visaId);
         } catch (e) {
+          console.error(
+            `Failed to convert visaId to number: ${step.visaId}`,
+            e,
+          );
         }
       }
 
@@ -121,6 +186,9 @@ export async function handleMigrationSteps(
             .single();
 
           if (visaError || !visaData) {
+            console.warn(
+              `Visa ID ${visaIdValue} does not exist in the database. Setting to null.`,
+            );
             visaIdValue = null;
           }
         } catch (e) {
@@ -177,10 +245,10 @@ export async function handleMigrationSteps(
         }
       }
 
-      const stepData: Partial<MigrationStep> = {
+      // Final step data to insert or update
+      const stepData = {
         UserId: userId,
-        Order: stepOrder,
-        CountryId: Number(step.countryId),
+        CountryId: step.countryId,
         VisaId: visaIdValue,
         IsCurrent: isCurrentValue,
         IsTarget: isTargetValue,
@@ -189,6 +257,7 @@ export async function handleMigrationSteps(
         Notes: sanitizedNotes,
         MigrationReason: migrationReason,
         WasSuccessful: wasSuccessfulValue,
+        Order: stepOrder,
         UpdatedAt: new Date().toISOString(),
       };
 
@@ -225,7 +294,7 @@ export async function handleMigrationSteps(
         result = data;
       }
 
-      results.push(result as any);
+      results.push(result);
     } catch (error) {
       return { success: false, error };
     }
@@ -234,12 +303,6 @@ export async function handleMigrationSteps(
   return { success: true, data: results };
 }
 
-/**
- * Get migration steps for a user
- * @param supabaseClient The Supabase client
- * @param userId The user ID
- * @returns The user's migration steps
- */
 export async function getMigrationSteps(
   supabaseClient: SupabaseClient,
   userId: string,

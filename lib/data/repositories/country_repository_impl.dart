@@ -25,7 +25,7 @@ class CountryRepositoryImpl implements CountryRepository {
       
       return countriesData.map((data) => CountryModel.fromJson(data)).toList();
     } catch (e) {
-      _logger.error('CountryRepository', 'Error fetching countries: $e');
+
       return [];
     }
   }

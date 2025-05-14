@@ -79,7 +79,7 @@ class _InterestStepState extends State<InterestStep>
       // Now fetch user's selected interests
       await _fetchUserInterests();
     } catch (e) {
-      _logger.error('InterestStep', 'Error fetching interests: $e');
+
       setState(() {
         _errorMessage = 'Failed to load interests. Please try again.';
         _isLoading = false;
@@ -100,9 +100,6 @@ class _InterestStepState extends State<InterestStep>
             userInterests.map((interest) => interest.name).toList();
 
         // Log for debugging
-        print(
-            'User has ${userInterests.length} previously selected interests: $userInterestNames');
-
         // If we have user interests and no interests were passed from the parent widget,
         // use the user interests as the selected interests
         if (widget.selectedInterests.isEmpty) {

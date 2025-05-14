@@ -49,6 +49,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<StepSkipped>(_onStepSkipped);
     on<OnboardingCompleted>(_onOnboardingCompleted);
     on<OnboardingSaved>(_onOnboardingSaved);
+    on<OnboardingDataChanged>(_onOnboardingDataChanged);
   }
 
   /// Handle initialization event
@@ -80,7 +81,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       
       
     } catch (e) {
-      _logger.error('OnboardingBloc', 'Error initializing', error: e);
+
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to load onboarding data',
@@ -112,7 +113,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     // Validate the status value
     final validStatuses = ['planning', 'preparing', 'moved', 'exploring', 'permanent'];
     if (!validStatuses.contains(event.status)) {
-      _logger.error('OnboardingBloc', 'Invalid status value: ${event.status}');
+
       emit(state.copyWith(errorMessage: 'Invalid status value: ${event.status}'));
       return;
     }
@@ -364,7 +365,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         // Update the last saved step
         _lastSavedStep = currentStep;
       }).catchError((error) {
-        _logger.error('OnboardingBloc', 'Error saving step data', error: error);
+
       });
     } else {
       
@@ -428,7 +429,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           // Update the last saved step
           _lastSavedStep = currentStep;
         }).catchError((error) {
-          _logger.error('OnboardingBloc', 'Error saving step data before skip', error: error);
+
         });
       } else {
         
@@ -475,7 +476,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       
       
     } catch (e) {
-      _logger.error('OnboardingBloc', 'Error completing onboarding', error: e);
+
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to complete onboarding',
@@ -524,15 +525,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       // Log success with minimal information
       
     } catch (e, stackTrace) {
-      _logger.error(
-        'OnboardingBloc', 
-        'Error saving onboarding data', 
-        error: e,
-        stackTrace: stackTrace,
-      );
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to save progress',
+      ));
+    }
+  }
+
+  /// Handle onboarding data changed event
+  Future<void> _onOnboardingDataChanged(
+    OnboardingDataChanged event,
+    Emitter<OnboardingState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(
+        data: event.data,
+        isLoading: false,
+      ));
+    } catch (e, stackTrace) {
+      _logger.error('OnboardingBloc', 'Error updating onboarding data', error: e, stackTrace: stackTrace);
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to update onboarding data',
       ));
     }
   }

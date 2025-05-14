@@ -195,3 +195,13 @@ class ImmiGrovesUpdated extends OnboardingEvent {
   @override
   List<Object> get props => [selectedImmiGroves];
 }
+
+/// Event to update the entire onboarding data object
+class OnboardingDataChanged extends OnboardingEvent {
+  final OnboardingData data;
+
+  const OnboardingDataChanged(this.data);
+
+  @override
+  List<Object> get props => [data];
+}

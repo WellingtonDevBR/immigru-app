@@ -30,12 +30,6 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
         return ImmiGroveModel.fromJson(immigroveJson as Map<String, dynamic>);
       }).toList();
     } catch (e, stackTrace) {
-      _logger.error(
-        'ImmiGroveRepository',
-        'Error getting recommended ImmiGroves',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }
@@ -45,12 +39,6 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
     try {
       await _edgeFunctionDataSource.joinImmiGrove(immiGroveId);
     } catch (e, stackTrace) {
-      _logger.error(
-        'ImmiGroveRepository',
-        'Error joining ImmiGrove',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }
@@ -60,12 +48,6 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
     try {
       await _edgeFunctionDataSource.leaveImmiGrove(immiGroveId);
     } catch (e, stackTrace) {
-      _logger.error(
-        'ImmiGroveRepository',
-        'Error leaving ImmiGrove',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }
@@ -97,12 +79,6 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
         return ImmiGroveModel.fromJson(formattedJson);
       }).toList();
     } catch (e, stackTrace) {
-      _logger.error(
-        'ImmiGroveRepository',
-        'Error getting joined ImmiGroves',
-        error: e,
-        stackTrace: stackTrace,
-      );
       rethrow;
     }
   }

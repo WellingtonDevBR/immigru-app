@@ -92,8 +92,6 @@ class _SignupScreenState extends State<SignupScreen>
   void _toggleTheme(BuildContext context) {
     final themeProvider = Provider.of<AppThemeProvider>(context, listen: false);
     themeProvider.toggleTheme();
-    _logger.debug('Login',
-        'Theme toggled to: ${themeProvider.isDarkMode ? 'dark' : 'light'}');
   }
 
   // Helper method to sign up with Google
@@ -152,9 +150,6 @@ class _SignupScreenState extends State<SignupScreen>
               setState(() {
                 _errorMessage = state.errorMessage ?? 'An error occurred';
               });
-              _logger.info(
-                  'Signup', 'Authentication error: ${state.errorMessage}');
-
               // Reset the form state to allow resubmission
               _formKey.currentState?.validate();
             } else if (!state.isLoading) {
@@ -166,7 +161,7 @@ class _SignupScreenState extends State<SignupScreen>
 
             // Handle email verification needed state
             if (state.needsEmailVerification) {
-              _logger.info('Signup', 'Email verification required');
+
               setState(() {
                 _errorMessage = null;
               });
@@ -192,8 +187,6 @@ class _SignupScreenState extends State<SignupScreen>
 
             // Navigate to home screen when authentication is successful
             if (state.isAuthenticated) {
-              _logger.info('Signup',
-                  'Authentication successful, navigating to home screen');
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
               );
