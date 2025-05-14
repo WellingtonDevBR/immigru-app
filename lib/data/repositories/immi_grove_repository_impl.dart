@@ -57,29 +57,47 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
     try {
       final List<Map<String, dynamic>> response = await _edgeFunctionDataSource.getJoinedImmiGroves();
       
-      return response.map((immigroveJson) {
-        // Convert the keys to match our model's expected format
-        final formattedJson = {
-          'Id': immigroveJson['Id'] ?? immigroveJson['ImmiGroveId'],
-          'Name': immigroveJson['Name'],
-          'Slug': immigroveJson['Slug'] ?? '',
-          'Description': immigroveJson['Description'],
-          'Type': immigroveJson['Type'],
-          'CountryId': immigroveJson['CountryId'],
-          'VisaId': immigroveJson['VisaId'],
-          'LanguageId': immigroveJson['LanguageId'],
-          'IsPublic': immigroveJson['ImmiGroveIsPublic'] ?? true,
-          'CreatedBy': immigroveJson['CreatedBy'] ?? '',
-          'CoverImageUrl': immigroveJson['CoverImageUrl'],
-          'CreatedAt': immigroveJson['CreatedAt'] ?? DateTime.now().toIso8601String(),
-          'UpdatedAt': immigroveJson['UpdatedAt'] ?? DateTime.now().toIso8601String(),
-          'MemberCount': immigroveJson['MemberCount'],
-        };
-        
-        return ImmiGroveModel.fromJson(formattedJson);
-      }).toList();
+      if (response.isEmpty) {
+        return [];
+      }
+      
+      final List<ImmiGrove> result = [];
+      
+      for (final immigroveJson in response) {
+        try {
+          // Convert the keys to match our model's expected format
+          final formattedJson = {
+            'Id': immigroveJson['Id'] ?? immigroveJson['ImmiGroveId'] ?? '',
+            'Name': immigroveJson['Name'] ?? 'Unknown Community',
+            'Slug': immigroveJson['Slug'] ?? '',
+            'Description': immigroveJson['Description'],
+            'Type': immigroveJson['Type'],
+            'CountryId': immigroveJson['CountryId'],
+            'VisaId': immigroveJson['VisaId'],
+            'LanguageId': immigroveJson['LanguageId'],
+            'IsPublic': immigroveJson['ImmiGroveIsPublic'] ?? true,
+            'CreatedBy': immigroveJson['CreatedBy'] ?? '',
+            'CoverImageUrl': immigroveJson['CoverImageUrl'],
+            'CreatedAt': immigroveJson['CreatedAt'] ?? DateTime.now().toIso8601String(),
+            'UpdatedAt': immigroveJson['UpdatedAt'] ?? DateTime.now().toIso8601String(),
+            'MemberCount': immigroveJson['MemberCount'],
+          };
+          
+          final immiGrove = ImmiGroveModel.fromJson(formattedJson);
+          result.add(immiGrove);
+        } catch (itemError) {
+          // Log the error but continue processing other items
+          _logger.error('ImmiGroveRepositoryImpl', 'Error processing ImmiGrove item: $itemError');
+          // Skip this item and continue with the next one
+          continue;
+        }
+      }
+      
+      return result;
     } catch (e, stackTrace) {
-      rethrow;
+      _logger.error('ImmiGroveRepositoryImpl', 'Error in getJoinedImmiGroves: $e\n$stackTrace');
+      // Return empty list instead of throwing to avoid crashing the UI
+      return [];
     }
   }
 }

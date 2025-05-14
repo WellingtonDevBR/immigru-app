@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/domain/entities/immi_grove.dart';
 import 'package:immigru/domain/usecases/immi_grove_usecases.dart';
 import 'package:immigru/presentation/blocs/immi_grove/immi_grove_event.dart';
 import 'package:immigru/presentation/blocs/immi_grove/immi_grove_state.dart';
@@ -38,18 +39,47 @@ class ImmiGroveBloc extends Bloc<ImmiGroveEvent, ImmiGroveState> {
     ));
 
     try {
+      // Try to load recommended ImmiGroves
       final immiGroves = await _getRecommendedImmiGrovesUseCase(limit: event.limit);
+      
+      // If we successfully loaded recommended ImmiGroves, update the state
       emit(state.copyWith(
         status: ImmiGroveStatus.loaded,
         recommendedImmiGroves: immiGroves,
         isLoading: false,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        status: ImmiGroveStatus.error,
-        errorMessage: e.toString(),
-        isLoading: false,
-      ));
+      try {
+        // If loading recommended ImmiGroves failed, check if the user has joined any communities
+        // This helps us determine if they've joined all available communities
+        final joinedImmiGroves = await _getJoinedImmiGrovesUseCase();
+        
+        if (joinedImmiGroves.isNotEmpty) {
+          // User has joined communities, so show the empty state with success message
+          // instead of an error
+          emit(state.copyWith(
+            status: ImmiGroveStatus.loaded,
+            recommendedImmiGroves: [], // Empty list since we couldn't load recommendations
+            joinedImmiGroves: joinedImmiGroves,
+            isLoading: false,
+            errorMessage: null, // Clear any error message
+          ));
+        } else {
+          // User hasn't joined any communities, so this is likely a real error
+          emit(state.copyWith(
+            status: ImmiGroveStatus.error,
+            errorMessage: e.toString(),
+            isLoading: false,
+          ));
+        }
+      } catch (joinedError) {
+        // If both operations fail, show the error state
+        emit(state.copyWith(
+          status: ImmiGroveStatus.error,
+          errorMessage: e.toString(),
+          isLoading: false,
+        ));
+      }
     }
   }
 
@@ -151,17 +181,32 @@ class ImmiGroveBloc extends Bloc<ImmiGroveEvent, ImmiGroveState> {
 
     try {
       // Load both recommended and joined ImmiGroves
-      final recommendedFuture = _getRecommendedImmiGrovesUseCase();
-      final joinedFuture = _getJoinedImmiGrovesUseCase();
+      List<ImmiGrove> recommended = [];
+      List<ImmiGrove> joined = [];
       
-      final recommended = await recommendedFuture;
-      final joined = await joinedFuture;
+      try {
+        recommended = await _getRecommendedImmiGrovesUseCase();
+      } catch (e) {
+        // If we fail to load recommended, continue with empty list
+        // but don't fail the whole operation
+      }
       
+      try {
+        joined = await _getJoinedImmiGrovesUseCase();
+      } catch (e) {
+        // If we fail to load joined, continue with empty list
+        // but don't fail the whole operation
+      }
+      
+      // If both operations failed, we still want to update the UI with empty lists
+      // rather than showing an error
       emit(state.copyWith(
         status: ImmiGroveStatus.loaded,
         recommendedImmiGroves: recommended,
         joinedImmiGroves: joined,
         isLoading: false,
+        // Clear any previous error message
+        errorMessage: null,
       ));
     } catch (e) {
       emit(state.copyWith(

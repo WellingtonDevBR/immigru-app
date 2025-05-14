@@ -10,7 +10,7 @@ import 'package:immigru/data/datasources/remote/migration_steps_edge_function_da
 import 'package:immigru/data/models/supabase_auth_context.dart';
 import 'package:immigru/data/repositories/auth_repository_impl.dart';
 import 'package:immigru/data/repositories/country_repository_impl.dart';
-// import 'package:immigru/data/repositories/data_repository_impl.dart';
+import 'package:immigru/data/repositories/data_repository_impl.dart';
 import 'package:immigru/data/repositories/interest_repository_impl.dart';
 import 'package:immigru/data/repositories/language_repository_impl.dart';
 import 'package:immigru/data/repositories/migration_steps_repository_impl.dart';
@@ -133,6 +133,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<InterestRepository>(
     () => InterestRepositoryImpl(sl<SupabaseService>()),
+  );
+  
+  // Register DataRepository for general data operations
+  sl.registerLazySingleton<DataRepository>(
+    () => DataRepositoryImpl(sl<SupabaseDataSource>()),
   );
   
   // Register ImmiGrove repository

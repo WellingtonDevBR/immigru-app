@@ -10,6 +10,8 @@ import 'package:immigru/presentation/blocs/migration_steps/migration_steps_state
 
 /// BLoC for managing migration steps
 class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> {
+  // Track deleted steps that need to be sent to the backend
+  final List<MigrationStep> _deletedSteps = [];
   final GetMigrationStepsUseCase _getMigrationStepsUseCase;
   final SaveMigrationStepsUseCase _saveMigrationStepsUseCase;
   final LoggerService _logger;
@@ -40,8 +42,11 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
       
       final steps = await _getMigrationStepsUseCase();
       
+      // Ensure only one step is marked as current location
+      final processedSteps = _ensureSingleCurrentLocation(steps);
+      
       emit(state.copyWith(
-        steps: steps,
+        steps: processedSteps,
         isLoading: false,
       ));
       
@@ -61,19 +66,42 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
     Emitter<MigrationStepsState> emit,
   ) {
     try {
-      final updatedSteps = List<MigrationStep>.from(state.steps)..add(event.step);
+      final timestamp = DateTime.now().toIso8601String();
       
+      // Create a copy of the current steps
+      List<MigrationStep> updatedSteps = List.from(state.steps);
+      
+      // Ensure the country name is set in the new step
+      MigrationStep stepToAdd = event.step;
+      if (stepToAdd.countryName.isEmpty && stepToAdd.countryId > 0) {
+        // Log warning about missing country name
+        debugPrint('[$timestamp] ⚠️ WARNING: Adding step with missing country name. CountryId: ${stepToAdd.countryId}');
+        stepToAdd = stepToAdd.copyWith(countryName: 'Unknown Country');
+      }
+      
+      // Add the new step
+      updatedSteps.add(stepToAdd);
+      
+      // Process steps to ensure proper ordering and single current location
+      final processedSteps = _processSteps(updatedSteps);
+      
+      // Use the processed steps in the emit call
       emit(state.copyWith(
-        steps: updatedSteps,
+        steps: processedSteps,
         hasChanges: true,
       ));
       
-      _logger.debug('MigrationStepsBloc', 'Added migration step for ${event.step.countryName}');
+      // Log the updated steps
+      debugPrint('[$timestamp] Updated steps after addition:');
+      for (int i = 0; i < processedSteps.length; i++) {
+        final step = processedSteps[i];
+        debugPrint('[$timestamp] Step ${i + 1}: ${step.countryName} (isCurrentLocation: ${step.isCurrentLocation})');
+      }
+      
+      _logger.debug('MigrationStepsBloc', 'Added migration step for ${stepToAdd.countryName}');
     } catch (e) {
       _logger.error('MigrationStepsBloc', 'Failed to add migration step: $e');
-      emit(state.copyWith(
-        errorMessage: 'Failed to add migration step: $e',
-      ));
+      emit(state.copyWith(errorMessage: e.toString()));
     }
   }
 
@@ -83,28 +111,57 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
     Emitter<MigrationStepsState> emit,
   ) {
     try {
-      if (event.index < 0 || event.index >= state.steps.length) {
-        _logger.error('MigrationStepsBloc', 'Invalid index for updating migration step: ${event.index}');
+      final timestamp = DateTime.now().toIso8601String();
+      
+      // Create a copy of the current steps
+      List<MigrationStep> updatedSteps = List.from(state.steps);
+      
+      // Find the index of the step to update
+      final index = updatedSteps.indexWhere((step) => step.id == event.step.id);
+      
+      if (index != -1) {
+        // Ensure the country name is preserved in the updated step
+        MigrationStep stepToUpdate = event.step;
+        if (stepToUpdate.countryName.isEmpty && stepToUpdate.countryId > 0) {
+          // Try to use the original country name if available
+          final originalCountryName = updatedSteps[index].countryName;
+          if (originalCountryName.isNotEmpty) {
+            stepToUpdate = stepToUpdate.copyWith(countryName: originalCountryName);
+            debugPrint('[$timestamp] Preserved original country name: $originalCountryName');
+          } else {
+            // Log warning about missing country name
+            debugPrint('[$timestamp] ⚠️ WARNING: Updating step with missing country name. CountryId: ${stepToUpdate.countryId}');
+            stepToUpdate = stepToUpdate.copyWith(countryName: 'Unknown Country');
+          }
+        }
+        
+        // Update the step
+        updatedSteps[index] = stepToUpdate;
+        
+        // Process steps to ensure proper ordering and single current location
+        final processedSteps = _processSteps(updatedSteps);
+        
+        // Use the processed steps in the emit call
         emit(state.copyWith(
-          errorMessage: 'Invalid index for updating migration step',
+          steps: processedSteps,
+          hasChanges: true,
         ));
-        return;
+        
+        // Log the updated steps
+        debugPrint('[$timestamp] Updated steps after update:');
+        for (int i = 0; i < processedSteps.length; i++) {
+          final step = processedSteps[i];
+          debugPrint('[$timestamp] Step ${i + 1}: ${step.countryName} (isCurrentLocation: ${step.isCurrentLocation})');
+        }
+        
+        _logger.debug('MigrationStepsBloc', 'Updated migration step for ${stepToUpdate.countryName}');
+      } else {
+        _logger.error('MigrationStepsBloc', 'Failed to update migration step: Step not found');
+        emit(state.copyWith(errorMessage: 'Failed to update migration step: Step not found'));
       }
-      
-      final updatedSteps = List<MigrationStep>.from(state.steps);
-      updatedSteps[event.index] = event.step;
-      
-      emit(state.copyWith(
-        steps: updatedSteps,
-        hasChanges: true,
-      ));
-      
-      _logger.debug('MigrationStepsBloc', 'Updated migration step at index ${event.index} for ${event.step.countryName}');
     } catch (e) {
       _logger.error('MigrationStepsBloc', 'Failed to update migration step: $e');
-      emit(state.copyWith(
-        errorMessage: 'Failed to update migration step: $e',
-      ));
+      emit(state.copyWith(errorMessage: e.toString()));
     }
   }
 
@@ -114,28 +171,50 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
     Emitter<MigrationStepsState> emit,
   ) {
     try {
+      final timestamp = DateTime.now().toIso8601String();
+      debugPrint('[$timestamp] 🗑️ MigrationStepsBloc._onMigrationStepRemoved called for index ${event.index}');
+      
+      // Check if we have a valid index
       if (event.index < 0 || event.index >= state.steps.length) {
         _logger.error('MigrationStepsBloc', 'Invalid index for removing migration step: ${event.index}');
-        emit(state.copyWith(
-          errorMessage: 'Invalid index for removing migration step',
-        ));
+        emit(state.copyWith(errorMessage: 'Invalid index for removing migration step'));
         return;
       }
       
-      final updatedSteps = List<MigrationStep>.from(state.steps);
-      final removedStep = updatedSteps.removeAt(event.index);
+      // Remove by index
+      final removedStep = state.steps[event.index];
+      debugPrint('[$timestamp] 🗑️ Removing step by index ${event.index}: ${removedStep.countryName}');
       
+      // Add to deleted steps list if it has an ID (exists in the database)
+      if (removedStep.id != null) {
+        _deletedSteps.add(removedStep);
+        debugPrint('[$timestamp] 🗑️ Added step with ID ${removedStep.id} to deleted steps list');
+      }
+      
+      // Create a copy of the current steps without the removed step
+      final updatedSteps = List<MigrationStep>.from(state.steps);
+      updatedSteps.removeAt(event.index);
+      
+      // Process steps to ensure proper ordering and single current location
+      final processedSteps = _processSteps(updatedSteps);
+      
+      // Use the processed steps in the emit call
       emit(state.copyWith(
-        steps: updatedSteps,
+        steps: processedSteps,
         hasChanges: true,
       ));
       
-      _logger.debug('MigrationStepsBloc', 'Removed migration step at index ${event.index} for ${removedStep.countryName}');
+      // Log the updated steps
+      debugPrint('[$timestamp] Updated steps after removal:');
+      for (int i = 0; i < processedSteps.length; i++) {
+        final step = processedSteps[i];
+        debugPrint('[$timestamp] Step ${i + 1}: ${step.countryName} (isCurrentLocation: ${step.isCurrentLocation})');
+      }
+      
+      _logger.debug('MigrationStepsBloc', 'Removed migration step for ${removedStep.countryName}');
     } catch (e) {
       _logger.error('MigrationStepsBloc', 'Failed to remove migration step: $e');
-      emit(state.copyWith(
-        errorMessage: 'Failed to remove migration step: $e',
-      ));
+      emit(state.copyWith(errorMessage: e.toString()));
     }
   }
 
@@ -147,49 +226,40 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
     final timestamp = DateTime.now().toIso8601String();
     try {
       debugPrint('[$timestamp] 🚀 SAVE FLOW: MigrationStepsBloc._onMigrationStepsSaved called');
-      debugPrint('[$timestamp] 📊 Current steps: ${state.steps.length}');
-      debugPrint('[$timestamp] 📊 Has changes flag: ${state.hasChanges}');
       
-      // CRITICAL: Always force save regardless of hasChanges flag
-      // This ensures edits are always saved with action="save"
-      debugPrint('[$timestamp] 🚀 SAVE FLOW: Setting isSaving to true and forcing save');
-      emit(state.copyWith(isSaving: true, hasChanges: true));
+      // Mark as saving
+      emit(state.copyWith(isSaving: true));
       
-      // Log details of each step being saved
-      for (int i = 0; i < state.steps.length; i++) {
-        final step = state.steps[i];
-        debugPrint('[$timestamp] 💾 Step $i: countryId=${step.countryId}, countryName=${step.countryName}');
-        debugPrint('[$timestamp] 💾   visaId=${step.visaId}, visaName=${step.visaName}');
-        debugPrint('[$timestamp] 💾   isCurrent=${step.isCurrentLocation}, isTarget=${step.isTargetDestination}');
-        debugPrint('[$timestamp] 💾   dates: ${step.arrivedDate} to ${step.leftDate}');
-        debugPrint('[$timestamp] 💾   id: ${step.id}, order: ${step.order}');
+      // Process steps to ensure proper ordering and single current location
+      final processedSteps = _processSteps(state.steps);
+      
+      // Save the steps
+      final result = await _saveMigrationStepsUseCase(
+        processedSteps,
+        deletedSteps: _deletedSteps,
+      );
+      
+      // Clear the deleted steps list after successful save
+      if (result) {
+        debugPrint('[$timestamp] 🗑️ Clearing deleted steps list after successful save');
+        _deletedSteps.clear();
       }
       
-      debugPrint('[$timestamp] 🚀 SAVE FLOW: Calling _saveMigrationStepsUseCase with EXPLICIT action="save"');
-      final success = await _saveMigrationStepsUseCase(state.steps);
-      debugPrint('[$timestamp] 🚀 SAVE FLOW: Save result: $success');
+      // Update the state
+      emit(state.copyWith(
+        steps: processedSteps,
+        isSaving: false,
+        hasChanges: false,
+        lastSavedAt: DateTime.now(),
+      ));
       
-      if (success) {
-        emit(state.copyWith(
-          isSaving: false,
-          hasChanges: false,
-          lastSavedAt: DateTime.now(),
-        ));
-        
-        _logger.debug('MigrationStepsBloc', 'Successfully saved ${state.steps.length} migration steps');
-      } else {
-        emit(state.copyWith(
-          isSaving: false,
-          errorMessage: 'Failed to save migration steps',
-        ));
-        
-        _logger.error('MigrationStepsBloc', 'Failed to save migration steps');
-      }
+      debugPrint('[$timestamp] 🚀 SAVE FLOW: Save result: $result');
+      _logger.debug('MigrationStepsBloc', 'Saved ${processedSteps.length} migration steps');
     } catch (e) {
-      _logger.error('MigrationStepsBloc', 'Error saving migration steps: $e');
+      _logger.error('MigrationStepsBloc', 'Failed to save migration steps: $e');
       emit(state.copyWith(
         isSaving: false,
-        errorMessage: 'Error saving migration steps: $e',
+        errorMessage: 'Failed to save migration steps: $e',
       ));
     }
   }
@@ -199,15 +269,93 @@ class MigrationStepsBloc extends Bloc<MigrationStepsEvent, MigrationStepsState> 
     MigrationStepsForceChanged event,
     Emitter<MigrationStepsState> emit,
   ) {
-    _logger.debug('MigrationStepsBloc', '🔄 Force setting hasChanges flag to true');
+    try {
+      emit(state.copyWith(hasChanges: true));
+      _logger.debug('MigrationStepsBloc', 'Forced hasChanges flag to true');
+    } catch (e) {
+      _logger.error('MigrationStepsBloc', 'Failed to force hasChanges flag: $e');
+      emit(state.copyWith(errorMessage: e.toString()));
+    }
+  }
+  
+  /// Process steps to ensure proper ordering and single current location
+  List<MigrationStep> _processSteps(List<MigrationStep> steps) {
+    final timestamp = DateTime.now().toIso8601String();
     
-    // Make sure we emit a new state with hasChanges set to true
-    final newState = state.copyWith(hasChanges: true);
+    // Log incoming steps for debugging
+    debugPrint('[$timestamp] Processing ${steps.length} migration steps');
+    for (int i = 0; i < steps.length; i++) {
+      final step = steps[i];
+      debugPrint('[$timestamp] Input step $i: countryId=${step.countryId}, countryName="${step.countryName}", isCurrentLocation=${step.isCurrentLocation}');
+    }
     
-    // Log the change for debugging
-    _logger.debug('MigrationStepsBloc', '🔄 Previous hasChanges: ${state.hasChanges}, New hasChanges: ${newState.hasChanges}');
+    // Sort steps by arrival date
+    steps.sort((a, b) {
+      if (a.arrivedDate == null && b.arrivedDate == null) return 0;
+      if (a.arrivedDate == null) return -1;
+      if (b.arrivedDate == null) return 1;
+      return a.arrivedDate!.compareTo(b.arrivedDate!);
+    });
     
-    // Emit the new state
-    emit(newState);
+    // First pass: update orders and remove current location flag from all steps
+    final List<MigrationStep> processedSteps = [];
+    for (int i = 0; i < steps.length; i++) {
+      // CRITICAL: Ensure country name is preserved exactly as it was
+      // Do not modify the country name unless it's actually empty
+      final String countryName = steps[i].countryName.isNotEmpty 
+          ? steps[i].countryName 
+          : 'Unknown Country';
+      
+      // Create a copy with updated order but preserve the original country name
+      final step = steps[i].copyWith(
+        order: i + 1, // 1-based ordering
+        isCurrentLocation: false, // Reset current location flag
+        // Only set countryName if it was empty, otherwise keep the original
+        countryName: countryName,
+      );
+      
+      // Log the step details for debugging
+      debugPrint('[$timestamp] Processed step $i: countryId=${step.countryId}, countryName="${step.countryName}"');
+      
+      processedSteps.add(step);
+    }
+    
+    // Second pass: determine the most recent step (by arrival date) and mark it as current location
+    if (processedSteps.isNotEmpty) {
+      // Find the most recent step (with the latest arrival date)
+      MigrationStep? mostRecentStep;
+      DateTime? latestDate;
+      
+      for (final step in processedSteps) {
+        if (step.arrivedDate != null && (latestDate == null || step.arrivedDate!.isAfter(latestDate))) {
+          latestDate = step.arrivedDate;
+          mostRecentStep = step;
+        }
+      }
+      
+      // Mark the most recent step as current location
+      if (mostRecentStep != null) {
+        final index = processedSteps.indexOf(mostRecentStep);
+        processedSteps[index] = mostRecentStep.copyWith(isCurrentLocation: true);
+        debugPrint('[$timestamp] Marked step ${index + 1} (${mostRecentStep.countryName}) as current location');
+      }
+    }
+    
+    return processedSteps;
+  }
+  
+  /// Ensure only one step is marked as current location
+  List<MigrationStep> _ensureSingleCurrentLocation(List<MigrationStep> steps) {
+    // If no steps, return empty list
+    if (steps.isEmpty) return [];
+    
+    // Check if multiple steps are marked as current location
+    final currentLocationSteps = steps.where((step) => step.isCurrentLocation).toList();
+    
+    // If only one or zero steps are marked as current location, return the original list
+    if (currentLocationSteps.length <= 1) return steps;
+    
+    // Otherwise, process the steps to ensure only one is marked as current location
+    return _processSteps(steps);
   }
 }

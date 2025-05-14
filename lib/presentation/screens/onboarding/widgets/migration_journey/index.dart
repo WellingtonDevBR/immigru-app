@@ -1,7 +1,6 @@
 // Export all migration journey components for easier imports
 
 // Core components
-export 'migration_journey_header.dart';
 export 'migration_journey_step_widget.dart';
 export 'migration_timeline.dart';
 export 'enhanced_date_picker.dart';

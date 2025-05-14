@@ -20,7 +20,10 @@ class SaveMigrationStepsUseCase {
   SaveMigrationStepsUseCase(this._repository);
 
   /// Execute the use case to save migration steps
-  Future<bool> call(List<MigrationStep> steps) async {
-    return await _repository.saveMigrationSteps(steps);
+  /// 
+  /// [steps] - The list of migration steps to save
+  /// [deletedSteps] - Optional list of steps to be deleted
+  Future<bool> call(List<MigrationStep> steps, {List<MigrationStep>? deletedSteps}) async {
+    return await _repository.saveMigrationSteps(steps, deletedSteps: deletedSteps);
   }
 }

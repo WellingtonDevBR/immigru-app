@@ -13,9 +13,9 @@ import 'package:immigru/presentation/blocs/migration_steps/migration_steps_state
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/widgets/loading_indicator.dart';
-import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey/migration_journey_header.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey/migration_timeline.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey/migration_step_modal.dart';
+import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Widget for the migration journey step in onboarding
 class MigrationJourneyStepWidget extends StatefulWidget {
@@ -172,6 +172,71 @@ class _MigrationJourneyStepWidgetState
     );
   }
 
+  /// Build the header section with illustration
+  Widget _buildHeaderSection() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.map_outlined,
+            color: AppColors.primaryColor,
+            size: 32,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "I've been to...",
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Track your migration journey timeline',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build a modern add step button
+  Widget _buildAddStepButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _showAddStepModal,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Migration Step'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _editStep(int index) {
     MigrationStepModal.show(
       context: context,
@@ -185,8 +250,40 @@ class _MigrationJourneyStepWidgetState
 
   void _addStep(MigrationStep step) {
     try {
+      final timestamp = DateTime.now().toIso8601String();
+
+      // Ensure country name is set
+      if (step.countryName.isEmpty && step.countryId > 0) {
+        // Try to find country name from the countries list
+        final country = _countries.firstWhere(
+          (c) => c.id == step.countryId,
+          orElse: () => CountryModel(
+            id: step.countryId,
+            name: 'Unknown Country',
+            isoCode: '',
+            officialName: '',
+            continent: '',
+            region: '',
+            subRegion: '',
+            nationality: '',
+            phoneCode: '',
+            currency: '',
+            currencySymbol: '',
+            timezones: '',
+            flagUrl: '',
+            isActive: true,
+            updatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        // Create a new step with the country name
+        step = step.copyWith(countryName: country.name);
+      }
+
       // Log the step being added for debugging
-      debugPrint('Adding migration step for country: ${step.countryName}');
+      debugPrint(
+          '[$timestamp] Adding migration step for country: ${step.countryName} (ID: ${step.countryId})');
 
       // Add the step to the widget state through the callback
       widget.onAddStep(step);
@@ -220,6 +317,37 @@ class _MigrationJourneyStepWidgetState
   void _updateStep(int index, MigrationStep step) {
     final timestamp = DateTime.now().toIso8601String();
     try {
+      // Ensure country name is preserved
+      if (step.countryName.isEmpty && step.countryId > 0) {
+        // Try to find country name from the countries list
+        final country = _countries.firstWhere(
+          (c) => c.id == step.countryId,
+          orElse: () => CountryModel(
+            id: step.countryId,
+            name: widget.migrationSteps[index].countryName.isNotEmpty
+                ? widget.migrationSteps[index].countryName
+                : 'Unknown Country',
+            isoCode: '',
+            officialName: '',
+            continent: '',
+            region: '',
+            subRegion: '',
+            nationality: '',
+            phoneCode: '',
+            currency: '',
+            currencySymbol: '',
+            timezones: '',
+            flagUrl: '',
+            isActive: true,
+            updatedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        // Create a new step with the country name
+        step = step.copyWith(countryName: country.name);
+      }
+
       // Log the step being updated for debugging
       debugPrint(
           '[$timestamp] 🚀 EDIT FLOW: Starting edit operation for step $index');
@@ -365,34 +493,104 @@ class _MigrationJourneyStepWidgetState
   }
 
   void _removeStep(int index) {
+    final timestamp = DateTime.now().toIso8601String();
+    final stepToRemove = widget.migrationSteps[index];
+
+    // Show a confirmation dialog with more details about the step being removed
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Migration Step'),
-        content:
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const Text('Are you sure you want to remove this migration step?'),
+            const SizedBox(height: 16),
+            _buildStepInfoRow(
+                Icons.location_on, 'Country', stepToRemove.countryName),
+            if (stepToRemove.visaName.isNotEmpty)
+              _buildStepInfoRow(
+                  Icons.verified_user_outlined, 'Visa', stepToRemove.visaName),
+            if (stepToRemove.arrivedDate != null)
+              _buildStepInfoRow(Icons.calendar_today, 'Arrived',
+                  '${stepToRemove.arrivedDate!.month}/${stepToRemove.arrivedDate!.year}'),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
             onPressed: () {
+              debugPrint(
+                  '[$timestamp] 🗑️ Removing migration step at index $index for ${stepToRemove.countryName}');
               Navigator.of(context).pop();
+
+              // Show a loading indicator
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Removing migration step...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
 
               // Remove the step from the widget state through the callback
               widget.onRemoveStep(index);
 
               // Also remove the step from the MigrationStepsBloc
+              debugPrint(
+                  '[$timestamp] 🗑️ Dispatching MigrationStepRemoved event for index $index');
               _migrationStepsBloc
                   .add(migration_steps.MigrationStepRemoved(index));
 
               // Trigger save after removing a step
               Future.delayed(const Duration(milliseconds: 500), () async {
+                debugPrint(
+                    '[$timestamp] 🗑️ Triggering save after step removal');
                 await _triggerSaveData();
+
+                // Show success message
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Removed migration step for ${stepToRemove.countryName}'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
               });
             },
             child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Helper method to build information rows in the deletion confirmation dialog
+  Widget _buildStepInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -457,35 +655,31 @@ class _MigrationJourneyStepWidgetState
 
             return SingleChildScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MigrationJourneyHeader(
-                      birthCountry: _birthCountryName,
-                      stepCount: widget.migrationSteps.length),
                   const SizedBox(height: 16),
+                  
+                  // Header section with "I've been to..." text
+                  _buildHeaderSection(),
+
+                  const SizedBox(height: 24),
+
+                  // Timeline visualization
                   MigrationTimeline(
                     migrationSteps: widget.migrationSteps,
                     onEditStep: _editStep,
                     onRemoveStep: _removeStep,
                     birthCountry: _birthCountryName,
                   ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: _showAddStepModal,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Migration Step'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                    ),
-                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Add step button
+                  _buildAddStepButton(),
+
+                  // Conditional widgets (add them here inside the Column)
                   if (widget.migrationSteps.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(top: 24),
@@ -497,6 +691,7 @@ class _MigrationJourneyStepWidgetState
                         ),
                       ),
                     ),
+
                   if (migrationStepsState.isSaving)
                     const Padding(
                       padding: EdgeInsets.only(top: 16),

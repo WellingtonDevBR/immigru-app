@@ -35,9 +35,11 @@ export async function handleMigrationSteps(
 
     try {
       // Check if this is a deletion request
-
       if (step.isDeleted === true || step.isDeleted === "true") {
+        console.log(`Processing deletion request for step ID: ${step.id}`);
+
         if (!step.id) {
+          console.error("Cannot delete step without ID");
           throw new Error("Cannot delete step without ID");
         }
 
@@ -45,16 +47,28 @@ export async function handleMigrationSteps(
           // First verify the step exists
           const { data: existingStep, error: checkError } = await supabaseClient
             .from("MigrationStep")
-            .select("Id, CountryId")
+            .select("Id, CountryId, Order")
             .eq("Id", step.id)
             .single();
 
           if (checkError) {
+            console.error(
+              `Error checking if step ${step.id} exists:`,
+              checkError.message,
+            );
+            throw checkError;
+          } else if (!existingStep) {
+            console.warn(
+              `Step ${step.id} not found, may have been already deleted`,
+            );
+            continue; // Skip to the next step
           } else {
+            console.log(
+              `Found step ${step.id} with order ${existingStep.Order}, proceeding with deletion`,
+            );
           }
 
           // Delete the step
-
           try {
             const { data: deletedStep, error: deleteError } =
               await supabaseClient
@@ -64,24 +78,81 @@ export async function handleMigrationSteps(
                 .select("*");
 
             if (deleteError) {
+              console.error(
+                `Error deleting step ${step.id}:`,
+                deleteError.message,
+              );
               throw deleteError;
             }
 
             if (!deletedStep || deletedStep.length === 0) {
+              console.warn(`No data returned after deleting step ${step.id}`);
             } else {
+              console.log(`Successfully deleted step ${step.id}`);
             }
 
-            return { success: true, data: { id: step.id, deleted: true } };
+            // Get all remaining steps for this user to update their order
+            const { data: remainingSteps, error: remainingError } =
+              await supabaseClient
+                .from("MigrationStep")
+                .select("Id, Order, ArrivedAt")
+                .eq("UserId", userId)
+                .order("ArrivedAt", { ascending: true });
+
+            if (remainingError) {
+              console.error(
+                "Error fetching remaining steps:",
+                remainingError.message,
+              );
+            } else if (remainingSteps && remainingSteps.length > 0) {
+              console.log(
+                `Found ${remainingSteps.length} remaining steps, updating their order`,
+              );
+
+              // Update the order of each remaining step
+              for (let i = 0; i < remainingSteps.length; i++) {
+                const newOrder = i + 1; // 1-based ordering
+                const stepId = remainingSteps[i].Id;
+
+                if (remainingSteps[i].Order !== newOrder) {
+                  console.log(
+                    `Updating step ${stepId} order from ${
+                      remainingSteps[i].Order
+                    } to ${newOrder}`,
+                  );
+
+                  const { error: updateError } = await supabaseClient
+                    .from("MigrationStep")
+                    .update({ Order: newOrder })
+                    .eq("Id", stepId);
+
+                  if (updateError) {
+                    console.error(
+                      `Error updating order for step ${stepId}:`,
+                      updateError.message,
+                    );
+                  }
+                }
+              }
+            }
+
+            // Add the deleted step to the results
+            results.push({ id: step.id, deleted: true });
+            continue; // Skip to the next step
           } catch (error) {
+            console.error(
+              `Error in deletion process for step ${step.id}:`,
+              error,
+            );
             throw error;
           }
-
-          // This code is now handled in the try-catch block above
         } catch (error) {
+          console.error(
+            `Error in deletion verification for step ${step.id}:`,
+            error,
+          );
           throw error;
         }
-
-        continue; // Skip to the next step
       }
 
       // For non-deletion requests, validate the step data
@@ -249,7 +320,9 @@ export async function handleMigrationSteps(
       const stepData = {
         UserId: userId,
         CountryId: step.countryId,
+        CountryName: step.countryName, // CRITICAL: Preserve the country name
         VisaId: visaIdValue,
+        VisaName: step.visaName, // CRITICAL: Preserve the visa name
         IsCurrent: isCurrentValue,
         IsTarget: isTargetValue,
         ArrivedAt: arrivedAt,

@@ -10,6 +10,27 @@ class MigrationStepsRepositoryImpl implements MigrationStepsRepository {
   final MigrationStepsEdgeFunctionDataSource _dataSource;
   final LoggerService _logger;
 
+  // Common country mappings to ensure we always have a name
+  final Map<int, String> _countryMapping = {
+    // Add common countries used in the app
+    1: 'United States',
+    2: 'Canada',
+    3: 'United Kingdom',
+    4: 'Australia',
+    5: 'Brazil',
+    6: 'Germany',
+    7: 'France',
+    8: 'Japan',
+    9: 'China',
+    10: 'India',
+    // Add more as needed
+  };
+  
+  /// Helper method to get country name by ID
+  String _getCountryNameById(int countryId) {
+    return _countryMapping[countryId] ?? 'Unknown Country';
+  }
+
   // Track the last saved steps to prevent redundant API calls
   static List<MigrationStep>? _lastSavedSteps;
   static DateTime _lastSaveTime = DateTime(2000); // Initialize with old date
@@ -28,9 +49,31 @@ class MigrationStepsRepositoryImpl implements MigrationStepsRepository {
         // Extract the required fields from the step data
         final int? id = stepData['Id'];
         final int countryId = stepData['CountryId'] ?? 0;
-        final String countryName = stepData['CountryName'] ?? '';
+        
+        // CRITICAL: Ensure country name is properly extracted and never empty
+        String countryName = '';
+        if (stepData['CountryName'] != null && stepData['CountryName'].toString().isNotEmpty) {
+          countryName = stepData['CountryName'].toString();
+        } else if (stepData['Country'] != null && stepData['Country']['Name'] != null) {
+          // Try to get from nested Country object
+          countryName = stepData['Country']['Name'].toString();
+        } else {
+          // If still empty, try to look up from a country mapping
+          countryName = _getCountryNameById(countryId);
+        }
+        
+        // Log country information for debugging
+        debugPrint('Step ID: $id, CountryId: $countryId, CountryName: "$countryName"');
+        
+        // Handle visa information
         final int? visaId = stepData['VisaId'];
-        final String visaName = stepData['VisaName'] ?? '';
+        String visaName = '';
+        if (stepData['VisaName'] != null && stepData['VisaName'].toString().isNotEmpty) {
+          visaName = stepData['VisaName'].toString();
+        } else if (stepData['Visa'] != null && stepData['Visa']['VisaName'] != null) {
+          // Try to get from nested Visa object
+          visaName = stepData['Visa']['VisaName'].toString();
+        }
         
         // Parse dates
         DateTime? arrivedDate;
@@ -121,11 +164,14 @@ class MigrationStepsRepositoryImpl implements MigrationStepsRepository {
   }
 
   @override
-  Future<bool> saveMigrationSteps(List<MigrationStep> steps) async {
+  Future<bool> saveMigrationSteps(List<MigrationStep> steps, {List<MigrationStep>? deletedSteps}) async {
     try {
       final timestamp = DateTime.now().toIso8601String();
       debugPrint('[$timestamp] 🚀 REPOSITORY: MigrationStepsRepository.saveMigrationSteps called with ${steps.length} steps');
-      _logger.debug('MigrationSteps', 'Starting save operation for ${steps.length} migration steps');
+      if (deletedSteps != null && deletedSteps.isNotEmpty) {
+        debugPrint('[$timestamp] 🗑️ Also processing ${deletedSteps.length} deleted steps');
+      }
+      _logger.debug('MigrationSteps', 'Starting save operation for ${steps.length} steps');
       
       // Validate steps before saving
       for (int i = 0; i < steps.length; i++) {
@@ -172,13 +218,36 @@ class MigrationStepsRepositoryImpl implements MigrationStepsRepository {
         debugPrint('[$timestamp] 🔄 Forcing save due to time elapsed or step count change');
       }
       
+      // Sort steps by arrival date if not already sorted
+      steps.sort((a, b) {
+        if (a.arrivedDate == null && b.arrivedDate == null) return 0;
+        if (a.arrivedDate == null) return 1; // Null dates go at the end
+        if (b.arrivedDate == null) return -1;
+        return a.arrivedDate!.compareTo(b.arrivedDate!);
+      });
+      
+      // Update order field based on sorted position
+      for (int i = 0; i < steps.length; i++) {
+        steps[i] = steps[i].copyWith(order: i + 1); // 1-based ordering
+        debugPrint('[$timestamp] 🔢 Updated step ${i+1}: ${steps[i].countryName} with order=${i+1}');
+      }
+      
       // Convert steps to JSON
       final stepsJson = steps.map((step) => step.toJson()).toList();
       debugPrint('[$timestamp] 📝 Converted ${stepsJson.length} steps to JSON');
       
+      // Convert deleted steps to JSON if any
+      final deletedStepsJson = deletedSteps?.map((step) => step.toJson()).toList() ?? [];
+      if (deletedStepsJson.isNotEmpty) {
+        debugPrint('[$timestamp] 🗑️ Converted ${deletedStepsJson.length} deleted steps to JSON');
+      }
+      
       // Save the steps via the data source
       debugPrint('[$timestamp] 🚀 REPOSITORY: Calling data source to save steps with action="save"');
-      final result = await _dataSource.saveMigrationSteps(steps: stepsJson);
+      final result = await _dataSource.saveMigrationSteps(
+        steps: stepsJson,
+        deletedSteps: deletedStepsJson,
+      );
       debugPrint('[$timestamp] 🚀 REPOSITORY: Data source save result: ${result['success']}');
       
       // Update the last saved steps and timestamp after successful save

@@ -6,6 +6,10 @@ abstract class MigrationStepsRepository {
   Future<List<MigrationStep>> getMigrationSteps();
   
   /// Save a list of migration steps
+  /// 
+  /// [steps] - The list of migration steps to save
+  /// [deletedSteps] - Optional list of steps to be deleted
+  /// 
   /// Returns true if the save was successful
-  Future<bool> saveMigrationSteps(List<MigrationStep> steps);
+  Future<bool> saveMigrationSteps(List<MigrationStep> steps, {List<MigrationStep>? deletedSteps});
 }

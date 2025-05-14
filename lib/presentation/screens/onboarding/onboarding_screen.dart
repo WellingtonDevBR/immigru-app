@@ -19,7 +19,7 @@ import 'package:immigru/presentation/screens/onboarding/widgets/profile/bio_step
 import 'package:immigru/presentation/screens/onboarding/widgets/profile/display_name_step.dart';
 // Location step has been removed
 // Photo step has been integrated into BasicInfoStep
-import 'package:immigru/presentation/screens/onboarding/widgets/profile/privacy_step.dart';
+// Privacy step has been removed
 import 'package:immigru/presentation/screens/onboarding/widgets/immi_groves_step.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
@@ -461,28 +461,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                       
                       // Profile Photo step has been integrated into BasicInfoStep
                       
-                      // Profile Privacy step with animations
-                      AnimatedBuilder(
-                        animation: _contentAnimationController,
-                        builder: (context, child) {
-                          return FadeTransition(
-                            opacity: _contentAnimationController,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: _contentAnimationController,
-                                curve: Curves.easeOutCubic,
-                              )),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: PrivacyStep(
-                          isPrivate: state.data.isPrivate,
-                        ),
-                      ),
+                      // Profile Privacy step has been removed
                       
                       // ImmiGroves step with animations
                       AnimatedBuilder(
@@ -522,7 +501,6 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           state.currentStep == OnboardingStep.profileBasicInfo ||
                           state.currentStep == OnboardingStep.profileDisplayName ||
                           state.currentStep == OnboardingStep.profileBio ||
-                          state.currentStep == OnboardingStep.profilePrivacy ||
                           state.currentStep == OnboardingStep.immiGroves)
                         TextButton(
                           onPressed: () {
@@ -575,9 +553,9 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                               borderRadius: BorderRadius.circular(30.0),
                             ),
                           ),
-                          child: const Text(
-                            'Next',
-                            style: TextStyle(
+                          child: Text(
+                            state.currentStep == OnboardingStep.immiGroves ? 'Finish' : 'Next',
+                            style: const TextStyle(
                               fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),

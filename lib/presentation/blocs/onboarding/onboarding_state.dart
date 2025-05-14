@@ -12,8 +12,6 @@ enum OnboardingStep {
   profileBasicInfo,
   profileDisplayName,
   profileBio,
-  // profileLocation has been removed
-  profilePrivacy,
   immiGroves,
   completed,
 }
@@ -82,9 +80,7 @@ class OnboardingState extends Equatable {
         // Bio is optional, so always valid
         return true;
       // profileLocation step has been removed
-      case OnboardingStep.profilePrivacy:
-        // Privacy setting is always valid (default is private)
-        return true;
+      // profilePrivacy step has been removed
       case OnboardingStep.immiGroves:
         // ImmiGroves selection is optional, so always valid
         return true;

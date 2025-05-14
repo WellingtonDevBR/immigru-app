@@ -37,19 +37,19 @@ class ImmiGroveModel extends ImmiGrove {
   /// Create a model from a JSON map
   factory ImmiGroveModel.fromJson(Map<String, dynamic> json) {
     return ImmiGroveModel(
-      id: json['Id'],
-      name: json['Name'],
-      slug: json['Slug'],
+      id: json['Id'] ?? '',
+      name: json['Name'] ?? 'Unknown Community',
+      slug: json['Slug'] ?? '',
       description: json['Description'],
       type: json['Type'],
       countryId: json['CountryId'],
       visaId: json['VisaId'],
       languageId: json['LanguageId'],
       isPublic: json['IsPublic'] ?? true,
-      createdBy: json['CreatedBy'],
+      createdBy: json['CreatedBy'] ?? '',
       coverImageUrl: json['CoverImageUrl'],
-      createdAt: DateTime.parse(json['CreatedAt']),
-      updatedAt: DateTime.parse(json['UpdatedAt']),
+      createdAt: json['CreatedAt'] != null ? DateTime.parse(json['CreatedAt']) : DateTime.now(),
+      updatedAt: json['UpdatedAt'] != null ? DateTime.parse(json['UpdatedAt']) : DateTime.now(),
       memberCount: json['MemberCount'],
     );
   }

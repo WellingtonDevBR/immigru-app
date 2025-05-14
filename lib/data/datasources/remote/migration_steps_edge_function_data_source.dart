@@ -18,6 +18,7 @@ class MigrationStepsEdgeFunctionDataSource {
   /// Save migration steps data
   Future<Map<String, dynamic>> saveMigrationSteps({
     required List<Map<String, dynamic>> steps,
+    List<Map<String, dynamic>>? deletedSteps,
   }) async {
     final timestamp = DateTime.now().toIso8601String();
     try {
@@ -26,6 +27,20 @@ class MigrationStepsEdgeFunctionDataSource {
       
       // CRITICAL: Create a deep copy of steps to avoid modifying the original data
       final processedSteps = steps.map((step) => Map<String, dynamic>.from(step)).toList();
+      
+      // Add deleted steps if provided
+      final deletedStepsList = <Map<String, dynamic>>[];
+      if (deletedSteps != null && deletedSteps.isNotEmpty) {
+        debugPrint('[$timestamp] 🗑️ Processing ${deletedSteps.length} deleted steps');
+        for (var deletedStep in deletedSteps) {
+          if (deletedStep['id'] != null) {
+            final processedDeletedStep = Map<String, dynamic>.from(deletedStep);
+            processedDeletedStep['isDeleted'] = true;
+            deletedStepsList.add(processedDeletedStep);
+            debugPrint('[$timestamp] 🗑️ Marked step ${processedDeletedStep['id']} for deletion');
+          }
+        }
+      }
       debugPrint('[$timestamp] 📝 Created deep copy of steps data');
       
       // Process steps to match the format expected by the edge function
@@ -66,8 +81,16 @@ class MigrationStepsEdgeFunctionDataSource {
       // CRITICAL: Explicitly set action to 'save' to ensure we're not using 'get'
       final requestBody = {
         'action': 'save',  // EXPLICITLY set to 'save'
-        'data': processedSteps,
+        'data': [...processedSteps, ...deletedStepsList],
       };
+      
+      // Log if we're sending any deleted steps
+      if (deletedStepsList.isNotEmpty) {
+        debugPrint('[$timestamp] 🗑️ Sending ${deletedStepsList.length} deleted steps to backend');
+        for (var i = 0; i < deletedStepsList.length; i++) {
+          debugPrint('[$timestamp] 🗑️ Deleted step $i: id=${deletedStepsList[i]['id']}');
+        }
+      }
       
       // Log the request details for debugging
       debugPrint('[$timestamp] 🚀 DATA SOURCE: Preparing request with ACTION="save" and ${processedSteps.length} steps');

@@ -174,8 +174,9 @@ class _ImmiGrovesStepState extends State<ImmiGrovesStep> {
     final state = context.read<OnboardingBloc>().state;
     _selectedImmiGroves = Set<String>.from(state.data.selectedImmiGroves);
     
-    // Load recommended ImmiGroves
-    _immiGroveBloc.add(const LoadRecommendedImmiGroves(limit: 6));
+    // Load both recommended and joined ImmiGroves to properly handle the case
+    // where the user has already joined all available communities
+    _immiGroveBloc.add(const RefreshImmiGroves());
   }
 
   @override
@@ -192,6 +193,11 @@ class _ImmiGrovesStepState extends State<ImmiGrovesStep> {
       } else {
         _selectedImmiGroves.add(id);
         _immiGroveBloc.add(JoinImmiGrove(id));
+        
+        // Refresh the recommended list after joining
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _immiGroveBloc.add(const RefreshImmiGroves());
+        });
       }
       
       // Dispatch event to update the onboarding bloc
@@ -249,17 +255,40 @@ class _ImmiGrovesStepState extends State<ImmiGrovesStep> {
                           child: Padding(
                             padding: const EdgeInsets.all(24.0),
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  'Failed to load recommended communities',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                  textAlign: TextAlign.center,
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
                                 const SizedBox(height: 16.0),
+                                Text(
+                                  'Failed to load recommended communities',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  'Please check your connection and try again',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white70
+                                        : Colors.black54,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24.0),
                                 ElevatedButton(
                                   onPressed: () {
-                                    _immiGroveBloc.add(const LoadRecommendedImmiGroves());
+                                    _immiGroveBloc.add(const RefreshImmiGroves());
                                   },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                  ),
                                   child: const Text('Try Again'),
                                 ),
                               ],
@@ -271,10 +300,28 @@ class _ImmiGrovesStepState extends State<ImmiGrovesStep> {
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.all(24.0),
-                            child: Text(
-                              'No recommended communities found. You can join communities later from your profile.',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                              textAlign: TextAlign.center,
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline,
+                                  size: 48,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'You\'ve joined all available communities!',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'You can manage your communities or discover more from your profile page after onboarding.',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
                           ),
                         )

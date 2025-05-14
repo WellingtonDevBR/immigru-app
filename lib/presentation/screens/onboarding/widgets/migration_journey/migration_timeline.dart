@@ -26,6 +26,8 @@ class MigrationTimeline extends StatefulWidget {
 
 class _MigrationTimelineState extends State<MigrationTimeline>
     with SingleTickerProviderStateMixin {
+  // Track if steps have been removed to handle animations
+  bool _stepsWereRemoved = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -41,6 +43,36 @@ class _MigrationTimelineState extends State<MigrationTimeline>
       curve: Curves.easeInOut,
     );
     _animationController.forward();
+  }
+  
+  @override
+  void didUpdateWidget(MigrationTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Check if steps have been removed
+    final stepsRemoved = widget.migrationSteps.length < oldWidget.migrationSteps.length;
+    _stepsWereRemoved = stepsRemoved;
+    
+    // Check if steps have changed in any way
+    final hasChanges = widget.migrationSteps.length != oldWidget.migrationSteps.length;
+    
+    if (hasChanges) {
+      debugPrint('Migration steps changed from ${oldWidget.migrationSteps.length} to ${widget.migrationSteps.length}');
+      
+      // If steps were removed, restart the animation with a slight delay
+      if (widget.migrationSteps.length < oldWidget.migrationSteps.length) {
+        _animationController.reset();
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() {}); // Force rebuild
+            _animationController.forward();
+          }
+        });
+      }
+      
+      // Remember that steps were removed for the next build cycle
+      _stepsWereRemoved = stepsRemoved;
+    }
   }
 
   @override
@@ -88,6 +120,12 @@ class _MigrationTimelineState extends State<MigrationTimeline>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    
+    // If steps were removed, we might need to force a rebuild
+    if (_stepsWereRemoved) {
+      // Reset the flag for next time
+      _stepsWereRemoved = false;
+    }
 
     return AnimatedBuilder(
       animation: _animation,
@@ -98,18 +136,6 @@ class _MigrationTimelineState extends State<MigrationTimeline>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0, vertical: 16.0),
-                child: Text(
-                  'Your Travel History Timeline',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-
               // Timeline container
               Stack(
                 alignment: Alignment.topCenter,
@@ -129,7 +155,15 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                           itemCount: widget.migrationSteps.length,
                           itemBuilder: (context, index) {
                             final step = widget.migrationSteps[index];
+                            // Create a unique key for each step that includes all relevant properties
+                            // This ensures Flutter can properly track and rebuild each item
+                            // CRITICAL: Include countryName in the key to ensure it's preserved during reordering
+                            final uniqueId = '${step.id ?? "new"}_${step.countryId}_${step.countryName}_${step.visaName}_${step.arrivedDate?.millisecondsSinceEpoch ?? 0}';
+                            debugPrint('Building step with key: $uniqueId, countryName: ${step.countryName}');
+                            final stepKey = ValueKey(uniqueId);
+                            
                             return FadeTransition(
+                              key: stepKey,
                               opacity: _animation,
                               child: SlideTransition(
                                 position: Tween<Offset>(
@@ -165,7 +199,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
 
     return Container(
       margin: const EdgeInsets.only(
-          left: 24.0, right: 24.0, top: 4.0, bottom: 12.0),
+          left: 0.0, right: 0.0, top: 8.0, bottom: 16.0),
       child: FadeTransition(
         opacity: _animation,
         child: SlideTransition(
@@ -178,9 +212,9 @@ class _MigrationTimelineState extends State<MigrationTimeline>
             children: [
               // Timeline icon with dot
               Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 24,
-                height: 24,
+                margin: const EdgeInsets.only(top: 12),
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.15),
                   shape: BoxShape.circle,
@@ -200,12 +234,12 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                   child: Icon(
                     Icons.home,
                     color: iconColor,
-                    size: 14,
+                    size: 16,
                   ),
                 ),
               ),
 
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
 
               // Content - modern card with glass effect
               Expanded(
@@ -230,7 +264,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                       child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -240,6 +274,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                 // Convert country code to full name if needed
                                 _getCountryDisplayName(widget.birthCountry),
                                 style: theme.textTheme.titleMedium?.copyWith(
+                                  fontSize: 16.0,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.onSurface,
                                   letterSpacing: -0.3,
@@ -252,7 +287,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                             // Birth country label
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0, vertical: 4.0),
+                                  horizontal: 10.0, vertical: 5.0),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
@@ -260,6 +295,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                               child: Text(
                                 'Birth Country',
                                 style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12.0,
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -342,15 +378,15 @@ class _MigrationTimelineState extends State<MigrationTimeline>
 
     return Container(
       margin: const EdgeInsets.only(
-          left: 24.0, right: 24.0, top: 4.0, bottom: 12.0),
+          left: 0.0, right: 0.0, top: 8.0, bottom: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Timeline icon with dot
           Container(
-            margin: const EdgeInsets.only(top: 8),
-            width: 24,
-            height: 24,
+            margin: const EdgeInsets.only(top: 12),
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.15),
               shape: BoxShape.circle,
@@ -370,12 +406,12 @@ class _MigrationTimelineState extends State<MigrationTimeline>
               child: Icon(
                 icon,
                 color: iconColor,
-                size: 14,
+                size: 16,
               ),
             ),
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
 
           // Content - modern card with glass effect
           Expanded(
@@ -400,7 +436,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -413,6 +449,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                               child: Text(
                                 step.countryName,
                                 style: theme.textTheme.titleMedium?.copyWith(
+                                  fontSize: 16.0,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.onSurface,
                                   letterSpacing: -0.3,
@@ -426,7 +463,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                             if (dateText.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 4.0),
+                                    horizontal: 10.0, vertical: 5.0),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.surface.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(12),
@@ -434,6 +471,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                 child: Text(
                                   dateText,
                                   style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 12.0,
                                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -444,19 +482,20 @@ class _MigrationTimelineState extends State<MigrationTimeline>
 
                         // Visa information
                         if (step.visaName.isNotEmpty) ...[  
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               Icon(
                                 Icons.verified_user_outlined,
-                                size: 14,
+                                size: 16,
                                 color: iconColor,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   step.visaName,
                                   style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontSize: 14.0,
                                     color: iconColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -470,10 +509,10 @@ class _MigrationTimelineState extends State<MigrationTimeline>
 
                         // Status chips in a row
                         if (step.isCurrentLocation || step.isTargetDestination || !step.wasSuccessful) ...[  
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               if (step.isCurrentLocation)
                                 _buildStatusChip(
@@ -501,7 +540,7 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                         ],
 
                         // Bottom row with migration reason and action buttons
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -513,14 +552,15 @@ class _MigrationTimelineState extends State<MigrationTimeline>
                                   children: [
                                     Icon(
                                       reasonIcon,
-                                      size: 14,
+                                      size: 16,
                                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         reasonText,
                                         style: theme.textTheme.bodySmall?.copyWith(
+                                          fontSize: 13.0,
                                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                                         ),
                                         maxLines: 1,
