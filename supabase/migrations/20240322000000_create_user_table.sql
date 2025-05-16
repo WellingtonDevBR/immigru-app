@@ -1,7 +1,7 @@
 create table public."User" (
   "Id" uuid not null default gen_random_uuid (),
-  "Email" character varying(255) not null,
-  "PasswordHash" character varying(255) not null,
+  "Email" character varying(255) null,
+  "PasswordHash" character varying(255) null,
   "PhoneNumber" character varying(20) null,
   "AuthProvider" public.AuthProvider null default 'email'::"AuthProvider",
   "Role" public.Role null default 'user'::"Role",
@@ -20,6 +20,7 @@ create table public."User" (
   "ReferredBy" uuid null,
   "UpdatedAt" timestamp with time zone null default CURRENT_TIMESTAMP,
   "CreatedAt" timestamp with time zone null default CURRENT_TIMESTAMP,
+  "HasCompletedOnboarding" boolean not null default false,
   constraint User_pkey primary key ("Id"),
   constraint User_Email_key unique ("Email"),
   constraint User_ReferralCode_key unique ("ReferralCode"),

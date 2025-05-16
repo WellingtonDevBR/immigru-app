@@ -8,7 +8,7 @@ import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_state.dart';
 import 'package:immigru/presentation/screens/home/home_screen.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/birth_country_step.dart';
-import 'package:immigru/presentation/screens/onboarding/widgets/current_status_step.dart';
+import 'package:immigru/features/onboarding/presentation/widgets/current_status/current_status_step_widget.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/interest_step.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/language_step.dart';
 import 'package:immigru/presentation/screens/onboarding/widgets/migration_journey/migration_journey_step_widget.dart';
@@ -254,8 +254,8 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                             ),
                           );
                         },
-                        child: CurrentStatusStep(
-                          selectedStatus: state.data.currentStatus,
+                        child: CurrentStatusStepWidget(
+                          selectedStatusId: state.data.currentStatus,
                           onStatusSelected: (status) {
                             context.read<OnboardingBloc>().add(
                                   CurrentStatusUpdated(status),

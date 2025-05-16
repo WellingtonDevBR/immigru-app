@@ -54,6 +54,7 @@ dependencies:
   sign_in_with_apple: ^7.0.1
   sign_in_with_apple_platform_interface: ^2.0.0
   sign_in_with_apple_web: ^3.0.0
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +76,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/fonts/
 
   fonts:
     - family: Poppins

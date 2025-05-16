@@ -12,3 +12,5 @@ trigger: always_on
 - make sure to add context when it is common in industry practices for some features
 - if you duplicate code to fix or to adapt or anything, remove the old code from the code base.
 - never alter or create migrations, only supabase functions, if required.
+- new architecture is on new_core, features, shared.
+- do not change information on the old architecture.

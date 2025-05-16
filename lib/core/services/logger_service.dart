@@ -59,20 +59,6 @@ class LoggerService {
     if (!_loggingEnabled || level.index < _minLogLevel.index) {
       return;
     }
-    
-    final timestamp = DateTime.now().toIso8601String();
-    final levelStr = '${_getLevelEmoji(level)} ${level.toString().split('.').last.toUpperCase()}';
-    final categoryStr = '[${category.toString().split('.').last.toUpperCase()}]';
-    
-    ;
-    
-    if (error != null) {
-      ;
-    }
-    
-    if (stackTrace != null && level.index >= LogLevel.error.index) {
-      ;
-    }
   }
   
   /// Log a verbose message

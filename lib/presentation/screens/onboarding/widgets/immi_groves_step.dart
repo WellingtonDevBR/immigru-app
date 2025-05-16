@@ -46,7 +46,7 @@ class ImmiGroveCard extends StatelessWidget {
           boxShadow: [
             if (!isDarkMode)
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha:0.05),
                 blurRadius: 8.0,
                 offset: const Offset(0, 2),
               ),
