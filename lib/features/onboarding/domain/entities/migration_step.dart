@@ -32,6 +32,9 @@ class MigrationStep extends Equatable {
   /// Whether this is the user's target destination country
   final bool isTargetCountry;
 
+  /// Whether this is the user's birth country
+  final bool isBirthCountry;
+
   /// Order of this step in the migration journey
   final int order;
 
@@ -47,10 +50,11 @@ class MigrationStep extends Equatable {
     this.endDate,
     this.isCurrentLocation = false,
     this.isTargetCountry = false,
+    this.isBirthCountry = false,
     required this.order,
   });
 
-  /// Create a copy of this step with updated fields
+  /// Create a copy of this step with updated values
   MigrationStep copyWith({
     String? id,
     int? countryId,
@@ -62,9 +66,13 @@ class MigrationStep extends Equatable {
     DateTime? endDate,
     bool? isCurrentLocation,
     bool? isTargetCountry,
+    bool? isBirthCountry,
     int? order,
   }) {
-    return MigrationStep(
+    // CRITICAL: Log the target country flag to debug preservation issues
+    print('MigrationStep.copyWith: Original isTargetCountry=$isTargetCountry, this.isTargetCountry=${this.isTargetCountry}');
+    
+    final result = MigrationStep(
       id: id ?? this.id,
       countryId: countryId ?? this.countryId,
       countryCode: countryCode ?? this.countryCode,
@@ -72,11 +80,20 @@ class MigrationStep extends Equatable {
       visaTypeId: visaTypeId ?? this.visaTypeId,
       visaTypeName: visaTypeName ?? this.visaTypeName,
       startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      // CRITICAL: For endDate, we need to handle null explicitly
+      // If endDate is explicitly set to null, use null, otherwise use the provided value or the current value
+      endDate: endDate, // This allows setting endDate to null
       isCurrentLocation: isCurrentLocation ?? this.isCurrentLocation,
+      // CRITICAL: Preserve the target country flag
       isTargetCountry: isTargetCountry ?? this.isTargetCountry,
+      isBirthCountry: isBirthCountry ?? this.isBirthCountry,
       order: order ?? this.order,
     );
+    
+    // Log the result for debugging
+    print('MigrationStep.copyWith: Result isTargetCountry=${result.isTargetCountry}');
+    
+    return result;
   }
 
   /// Create an empty migration step
@@ -90,6 +107,7 @@ class MigrationStep extends Equatable {
       visaTypeName: '',
       isCurrentLocation: false,
       isTargetCountry: false,
+      isBirthCountry: false,
       order: 0,
     );
   }
@@ -106,6 +124,7 @@ class MigrationStep extends Equatable {
         endDate,
         isCurrentLocation,
         isTargetCountry,
+        isBirthCountry,
         order,
       ];
 }

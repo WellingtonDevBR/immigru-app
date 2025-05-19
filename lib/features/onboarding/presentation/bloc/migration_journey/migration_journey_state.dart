@@ -15,6 +15,9 @@ class MigrationJourneyState extends Equatable {
   /// Error message, if any
   final String? errorMessage;
   
+  /// Success message, if any
+  final String? successMessage;
+  
   /// Whether there are unsaved changes
   final bool hasChanges;
 
@@ -24,6 +27,7 @@ class MigrationJourneyState extends Equatable {
     required this.isLoading,
     required this.isSaving,
     this.errorMessage,
+    this.successMessage,
     required this.hasChanges,
   });
 
@@ -34,6 +38,7 @@ class MigrationJourneyState extends Equatable {
       isLoading: true,
       isSaving: false,
       errorMessage: null,
+      successMessage: null,
       hasChanges: false,
     );
   }
@@ -44,7 +49,9 @@ class MigrationJourneyState extends Equatable {
     bool? isLoading,
     bool? isSaving,
     String? errorMessage,
+    String? successMessage,
     bool clearError = false,
+    bool clearSuccess = false,
     bool? hasChanges,
   }) {
     return MigrationJourneyState(
@@ -52,6 +59,7 @@ class MigrationJourneyState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
       hasChanges: hasChanges ?? this.hasChanges,
     );
   }
@@ -62,6 +70,7 @@ class MigrationJourneyState extends Equatable {
         isLoading,
         isSaving,
         errorMessage,
+        successMessage,
         hasChanges,
       ];
 }

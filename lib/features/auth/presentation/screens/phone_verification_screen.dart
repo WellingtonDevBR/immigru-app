@@ -22,9 +22,9 @@ class PhoneVerificationScreen extends StatefulWidget {
 
   /// Constructor
   const PhoneVerificationScreen({
-    Key? key,
+    super.key,
     required this.phoneNumber,
-  }) : super(key: key);
+  });
 
   @override
   State<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
@@ -169,7 +169,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

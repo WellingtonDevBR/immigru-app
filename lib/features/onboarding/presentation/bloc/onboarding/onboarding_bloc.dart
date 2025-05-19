@@ -212,7 +212,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         ));
       } else {
         // Complete onboarding if we've reached the end
-        this.add(const OnboardingCompleted());
+        add(const OnboardingCompleted());
       }
     }
   }
@@ -308,7 +308,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       }
       
       // Save migration steps if available
-      if (state.migrationSteps != null && state.migrationSteps.isNotEmpty) {
+      if (state.migrationSteps.isNotEmpty) {
         _logger.i('Saving ${state.migrationSteps.length} migration steps', tag: 'Onboarding');
         // Migration steps are saved directly from the MigrationJourneyBloc
       }

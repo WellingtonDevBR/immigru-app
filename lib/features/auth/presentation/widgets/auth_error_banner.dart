@@ -14,11 +14,11 @@ class AuthErrorBanner extends StatelessWidget {
 
   /// Constructor
   const AuthErrorBanner({
-    Key? key,
+    super.key,
     required this.message,
     this.errorCode,
     this.onClose,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

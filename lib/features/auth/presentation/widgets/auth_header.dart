@@ -15,11 +15,11 @@ class AuthHeader extends StatelessWidget {
 
   /// Constructor
   const AuthHeader({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.primaryColor,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

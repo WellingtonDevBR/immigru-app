@@ -187,7 +187,7 @@ class MigrationStepsRepositoryImpl implements MigrationStepsRepository {
         
         // Validate required fields
         final countryId = step.countryId;
-        if (countryId == null || countryId.toString().trim().isEmpty) {
+        if (countryId.toString().trim().isEmpty) {
           debugPrint('[$timestamp] ❌ Error: Step $i is missing countryId');
           _logger.error('MigrationSteps', 'Step $i is missing countryId');
           return false;

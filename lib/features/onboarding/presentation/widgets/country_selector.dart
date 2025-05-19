@@ -60,7 +60,7 @@ class _CountrySelectorState extends State<CountrySelector> {
   
   // ISO codes of popular countries
   final List<String> _popularCountryCodes = [
-    'US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IT', 'ES', 'BR', 'IN'
+    'US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IT', 'ES', 'BR', 'IN', 'JP'
   ];
 
   @override

@@ -14,32 +14,28 @@ class MigrationStepModel extends MigrationStep {
     super.endDate,
     super.isCurrentLocation = false,
     super.isTargetCountry = false,
+    super.isBirthCountry = false,
     required super.order,
   });
 
   /// Create from JSON
   factory MigrationStepModel.fromJson(Map<String, dynamic> json) {
     // Log the incoming JSON for debugging
-    print('Creating MigrationStepModel from JSON: $json');
     
-    // Handle different ID formats from the server
-    String id = '';
-    if (json.containsKey('Id')) {
-      // Server-side ID format
-      id = json['Id']?.toString() ?? '';
-    } else if (json.containsKey('id')) {
-      // Client-side ID format
-      id = json['id']?.toString() ?? '';
-    }
+    // Extract the ID, handling both string and integer IDs
+    final id = json['Id']?.toString() ?? json['id']?.toString() ?? '';
     
     // Handle different country ID formats
-    int countryId = 0;
+    String countryId = '';
     if (json.containsKey('CountryId')) {
       // Server-side format
-      countryId = int.tryParse(json['CountryId']?.toString() ?? '0') ?? 0;
+      countryId = json['CountryId']?.toString() ?? '';
     } else if (json.containsKey('countryId')) {
       // Client-side format
-      countryId = int.tryParse(json['countryId']?.toString() ?? '0') ?? 0;
+      countryId = json['countryId']?.toString() ?? '';
+    } else if (json.containsKey('Country') && json['Country'] is Map) {
+      // Handle nested country data
+      countryId = json['Country']['Id']?.toString() ?? '';
     }
     
     // Handle different visa ID formats
@@ -76,50 +72,97 @@ class MigrationStepModel extends MigrationStep {
       visaName = json['Visa']['VisaName'] ?? '';
     }
     
-    // Handle date fields
+    // Get country code - CRITICAL for proper country selection when editing
+    String countryCode = '';
+    if (json.containsKey('countryCode') && json['countryCode'] != null) {
+      countryCode = json['countryCode'];
+    } else if (json.containsKey('CountryCode') && json['CountryCode'] != null) {
+      countryCode = json['CountryCode'];
+    } else if (json.containsKey('Country') && json['Country'] is Map && json['Country']['IsoCode'] != null) {
+      // Extract from nested country object
+      countryCode = json['Country']['IsoCode'];
+    } else {
+      // Try to find the country code by looking up the country by ID or name
+      // This is a fallback for when the country code is not directly available
+      print('Country code not found in JSON, attempting to find by country name: ${countryName}');
+      
+      // For Australia, we know the code is AU
+      if (countryName.toLowerCase() == 'australia') {
+        countryCode = 'AU';
+      }
+      // For Japan, we know the code is JP
+      else if (countryName.toLowerCase() == 'japan') {
+        countryCode = 'JP';
+      }
+      // For other common countries
+      else if (countryName.toLowerCase() == 'united states') {
+        countryCode = 'US';
+      }
+      else if (countryName.toLowerCase() == 'canada') {
+        countryCode = 'CA';
+      }
+      else if (countryName.toLowerCase() == 'united kingdom') {
+        countryCode = 'GB';
+      }
+      else if (countryName.toLowerCase() == 'brazil') {
+        countryCode = 'BR';
+      }
+    }
+    
+    print('Extracted country code: "$countryCode" for country: "$countryName"');
+    
+    // Extract dates
     DateTime? startDate;
-    if (json['startDate'] != null) {
-      try {
-        startDate = DateTime.parse(json['startDate']);
-      } catch (e) {
-        print('Error parsing startDate: ${json['startDate']}');
-      }
-    } else if (json['ArrivedAt'] != null) {
-      try {
-        startDate = DateTime.parse(json['ArrivedAt']);
-      } catch (e) {
-        print('Error parsing ArrivedAt: ${json['ArrivedAt']}');
-      }
+    if (json.containsKey('ArrivedAt') && json['ArrivedAt'] != null) {
+      startDate = DateTime.parse(json['ArrivedAt']);
+    } else if (json.containsKey('arrivedDate') && json['arrivedDate'] != null) {
+      startDate = DateTime.parse(json['arrivedDate']);
     }
     
     DateTime? endDate;
-    if (json['endDate'] != null) {
-      try {
-        endDate = DateTime.parse(json['endDate']);
-      } catch (e) {
-        print('Error parsing endDate: ${json['endDate']}');
-      }
-    } else if (json['LeftAt'] != null) {
-      try {
-        endDate = DateTime.parse(json['LeftAt']);
-      } catch (e) {
-        print('Error parsing LeftAt: ${json['LeftAt']}');
-      }
+    if (json.containsKey('LeftAt') && json['LeftAt'] != null) {
+      endDate = DateTime.parse(json['LeftAt']);
+    } else if (json.containsKey('leftDate') && json['leftDate'] != null) {
+      endDate = DateTime.parse(json['leftDate']);
     }
     
-    // Handle boolean flags
+    // Extract boolean flags
     bool isCurrentLocation = false;
-    if (json.containsKey('isCurrentLocation')) {
-      isCurrentLocation = json['isCurrentLocation'] == true;
-    } else if (json.containsKey('IsCurrent')) {
+    if (json.containsKey('IsCurrent')) {
       isCurrentLocation = json['IsCurrent'] == true;
+    } else if (json.containsKey('isCurrentLocation')) {
+      isCurrentLocation = json['isCurrentLocation'] == true;
+    } else if (json.containsKey('isCurrent')) {
+      isCurrentLocation = json['isCurrent'] == true;
     }
     
+    // CRITICAL: Check all possible field names for target country flag
     bool isTargetCountry = false;
+    // Debug: Log all possible target flags in the JSON
+    print('Target flags in JSON - IsTarget: ${json['IsTarget']}, isTargetCountry: ${json['isTargetCountry']}, isTarget: ${json['isTarget']}, isTargetDestination: ${json['isTargetDestination']}');
+    
     if (json.containsKey('isTargetCountry')) {
       isTargetCountry = json['isTargetCountry'] == true;
     } else if (json.containsKey('IsTarget')) {
       isTargetCountry = json['IsTarget'] == true;
+    } else if (json.containsKey('isTarget')) {
+      isTargetCountry = json['isTarget'] == true;
+    } else if (json.containsKey('isTargetDestination')) {
+      isTargetCountry = json['isTargetDestination'] == true;
+    }
+    
+    // Debug: Log the extracted target flag
+    print('Extracted isTargetCountry = $isTargetCountry');
+    
+    // Check for birth country flag
+    bool isBirthCountry = false;
+    if (json.containsKey('IsBirthCountry')) {
+      isBirthCountry = json['IsBirthCountry'] == true;
+    } else if (json.containsKey('isBirthCountry')) {
+      isBirthCountry = json['isBirthCountry'] == true;
+    } else {
+      // Check if ID starts with 'birth_' as a fallback
+      isBirthCountry = id.startsWith('birth_');
     }
     
     // Handle order field
@@ -130,12 +173,9 @@ class MigrationStepModel extends MigrationStep {
       order = int.tryParse(json['Order'].toString()) ?? 0;
     }
     
-    // Get country code
-    String countryCode = json['countryCode'] ?? json['CountryCode'] ?? '';
-    
     return MigrationStepModel(
       id: id,
-      countryId: countryId,
+      countryId: int.tryParse(countryId) ?? 0, // Convert String to int for countryId
       countryCode: countryCode,
       countryName: countryName,
       visaTypeId: visaTypeId,
@@ -144,6 +184,7 @@ class MigrationStepModel extends MigrationStep {
       endDate: endDate,
       isCurrentLocation: isCurrentLocation,
       isTargetCountry: isTargetCountry,
+      isBirthCountry: isBirthCountry, // Use the isBirthCountry flag
       order: order,
     );
   }
@@ -185,10 +226,16 @@ class MigrationStepModel extends MigrationStep {
       'LeftAt': endDate?.toIso8601String(),
       'leftDate': endDate?.toIso8601String(), // Include both formats for compatibility
       // Map boolean flags to the expected format
+      // CRITICAL: Include all possible variations of the current and target flags
       'IsCurrent': isCurrentLocation,
-      'isCurrentLocation': isCurrentLocation, // Include both formats for compatibility
+      'isCurrentLocation': isCurrentLocation,
+      'isCurrent': isCurrentLocation,
+      
+      // CRITICAL: Ensure target country flag is sent in all possible formats
       'IsTarget': isTargetCountry,
-      'isTargetCountry': isTargetCountry, // Include both formats for compatibility
+      'isTargetCountry': isTargetCountry,
+      'isTarget': isTargetCountry,
+      'isTargetDestination': isTargetCountry,
       // Include order field
       'Order': order,
       'order': order, // Include both formats for compatibility

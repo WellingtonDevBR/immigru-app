@@ -217,7 +217,6 @@ class EmailLoginForm extends StatelessWidget {
         if (onGoogleSignInPressed != null) {
           onGoogleSignInPressed!();
         } else {
-          ;
         }
       },
       isDarkMode: isDarkMode,

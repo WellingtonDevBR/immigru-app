@@ -202,7 +202,6 @@ class SupabaseAuthService implements AuthService {
   Future<AuthResponse> _nativeGoogleSignIn() async {
     try {
       logger.i('Starting Google Sign-In process', category: LogCategory.auth);
-      ;
 
       // Get client IDs from config
       final webClientId = GoogleAuthConfig.webClientId;
@@ -225,27 +224,22 @@ class SupabaseAuthService implements AuthService {
       // Log the current configuration for debugging
       logger.i(
           'Google Sign-In configured with:'
-                  '\nWeb Client ID: ${webClientId.substring(0, 10)}...' +
-              '\niOS Client ID: ${iosClientId.substring(0, 10)}...',
+                  '\nWeb Client ID: ${webClientId.substring(0, 10)}...' '\niOS Client ID: ${iosClientId.substring(0, 10)}...',
           category: LogCategory.auth);
 
       // Check if user is already signed in
       try {
         final isSignedIn = await googleSignIn.isSignedIn();
-        ;
 
         // Try to silently sign in if possible
         if (isSignedIn) {
-          ;
           final googleUser = await googleSignIn.signInSilently();
           if (googleUser != null) {
-            ;
             final googleAuth = await googleUser.authentication;
             final idToken = googleAuth.idToken;
             final accessToken = googleAuth.accessToken;
 
             if (idToken != null) {
-              ;
               return await _signInToSupabaseWithGoogleTokens(
                   idToken, accessToken);
             }
@@ -253,7 +247,6 @@ class SupabaseAuthService implements AuthService {
         }
       } catch (e) {
         // Ignore errors during silent sign-in check
-        ;
         logger.i('Error checking Google session: $e',
             category: LogCategory.auth);
       }
@@ -261,19 +254,16 @@ class SupabaseAuthService implements AuthService {
       // Perform interactive sign-in
       logger.i('Initiating interactive Google sign-in',
           category: LogCategory.auth);
-      ;
 
       final googleUser = await googleSignIn.signIn();
 
       // Handle user cancellation
       if (googleUser == null) {
-        ;
         logger.w('Google sign-in was canceled by user',
             category: LogCategory.auth);
         throw Exception('Google sign-in was canceled');
       }
 
-      ;
       logger.i('Google sign-in successful for user: ${googleUser.email}',
           category: LogCategory.auth);
 
@@ -293,7 +283,6 @@ class SupabaseAuthService implements AuthService {
 
       // Validate tokens
       if (idToken == null) {
-        ;
         logger.e('No ID Token received from Google',
             category: LogCategory.auth);
         throw Exception('Authentication failed: Missing ID token');
@@ -303,7 +292,6 @@ class SupabaseAuthService implements AuthService {
     } catch (e) {
       // Provide more user-friendly error messages
       logger.logSignInFailure('Google', e);
-      ;
 
       if (e.toString().contains('network_error')) {
         throw Exception(
@@ -326,7 +314,6 @@ class SupabaseAuthService implements AuthService {
   /// Helper method to sign in to Supabase with Google tokens
   Future<AuthResponse> _signInToSupabaseWithGoogleTokens(
       String idToken, String? accessToken) async {
-    ;
     logger.i('Signing in to Supabase with Google tokens',
         category: LogCategory.auth);
 
@@ -338,21 +325,18 @@ class SupabaseAuthService implements AuthService {
       );
 
       if (response.user != null) {
-        ;
         logger.logSignInSuccess(
           'Google',
           response.user!.id,
           email: response.user!.email,
         );
       } else {
-        ;
         logger.w('Google sign-in successful but no user returned from Supabase',
             category: LogCategory.auth);
       }
 
       return response;
     } catch (supabaseError) {
-      ;
       logger.e('Error signing in to Supabase with Google tokens',
           category: LogCategory.auth, error: supabaseError);
       throw Exception('Failed to authenticate with Supabase: $supabaseError');
@@ -373,7 +357,6 @@ class SupabaseAuthService implements AuthService {
     try {
       await _supabaseService.client.auth.signOut();
     } catch (e) {
-      ;
       rethrow;
     }
   }

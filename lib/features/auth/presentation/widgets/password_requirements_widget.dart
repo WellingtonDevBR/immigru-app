@@ -12,10 +12,10 @@ class PasswordRequirementsWidget extends StatelessWidget {
   
   /// Constructor
   const PasswordRequirementsWidget({
-    Key? key,
+    super.key,
     required this.password,
     this.visible = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -23,7 +23,7 @@ class ThemeService {
       final theme = prefs.getString(_themeKey) ?? system;
       
       return theme;
-    } catch (e, stackTrace) {
+    } catch (e) {
 
       return system;
     }
@@ -36,7 +36,7 @@ class ThemeService {
       await prefs.setString(_themeKey, mode);
       
       return true;
-    } catch (e, stackTrace) {
+    } catch (e) {
 
       return false;
     }

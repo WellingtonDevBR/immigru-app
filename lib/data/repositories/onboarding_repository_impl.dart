@@ -306,7 +306,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           // even if one step fails
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -334,7 +334,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       );
 
       
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Don't rethrow, we want to continue with other operations
     }
   }
@@ -359,7 +359,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         isCompleted: false,
       );
       
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Don't rethrow, we want to continue with other operations
     }
   }
@@ -553,7 +553,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       // Return the server status as the source of truth
       return hasCompletedOnServer;
-    } catch (e, stackTrace) {
+    } catch (e) {
       return false;
     }
   }
@@ -577,7 +577,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       // Also save to local storage for faster access
       await _onboardingService.markOnboardingCompleted();
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }

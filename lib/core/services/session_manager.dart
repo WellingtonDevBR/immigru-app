@@ -127,7 +127,6 @@ class SessionManager extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      ;
       return null;
     }
   }

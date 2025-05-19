@@ -24,9 +24,10 @@ class MigrationTimelineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sort steps by order
-    final sortedSteps = List<MigrationStep>.from(steps)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    // We don't need to sort here as the steps should already be sorted by the BLoC
+    // The backend sorts steps with birth country at the bottom, current location at the top,
+    // target country next, and then by date (most recent first)
+    final sortedSteps = List<MigrationStep>.from(steps);
     
     return ListView.builder(
       itemCount: sortedSteps.length,
@@ -63,12 +64,36 @@ class MigrationTimelineWidget extends StatelessWidget {
     
     // Format dates (only for non-birth country steps)
     final dateFormat = DateFormat('MMM yyyy');
-    final startDateText = !isBirthCountryStep && step.startDate != null 
-        ? dateFormat.format(step.startDate!)
-        : 'Unknown';
-    final endDateText = !isBirthCountryStep && step.endDate != null 
-        ? dateFormat.format(step.endDate!)
-        : 'Present';
+    
+    // Handle different date display scenarios
+    String startDateText;
+    String endDateText;
+    
+    if (isBirthCountryStep) {
+      // Birth country doesn't need dates
+      startDateText = '';
+      endDateText = '';
+    } else if (step.isTargetCountry) {
+      // Target countries are future destinations
+      startDateText = step.startDate != null 
+          ? 'Planning to arrive: ${dateFormat.format(step.startDate!)}'
+          : 'Future destination';
+      endDateText = '';
+    } else if (step.isCurrentLocation) {
+      // Current location shows arrival date to present
+      startDateText = step.startDate != null 
+          ? dateFormat.format(step.startDate!)
+          : 'Unknown';
+      endDateText = 'Present';
+    } else {
+      // Past countries show both start and end dates
+      startDateText = step.startDate != null 
+          ? dateFormat.format(step.startDate!)
+          : 'Unknown';
+      endDateText = step.endDate != null 
+          ? dateFormat.format(step.endDate!)
+          : 'Unknown';
+    }
     
     return IntrinsicHeight(
       child: Row(
@@ -178,17 +203,19 @@ class MigrationTimelineWidget extends StatelessWidget {
                           ),
                         ),
                         
-                        // Current location indicator
-                        if (step.isCurrentLocation)
+                        // Status indicator (Current or Target)
+                        if (step.isCurrentLocation || step.isTargetCountry)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryColor,
+                              color: step.isCurrentLocation 
+                                ? AppColors.primaryColor 
+                                : Colors.orange,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text(
-                              'Current',
-                              style: TextStyle(
+                            child: Text(
+                              step.isCurrentLocation ? 'Current' : 'Target',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -277,16 +304,28 @@ class MigrationTimelineWidget extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                Icons.calendar_today,
+                                step.isTargetCountry ? Icons.flight_takeoff : Icons.calendar_today,
                                 size: 16,
                                 color: isDarkMode ? Colors.white70 : Colors.grey[600],
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                '$startDateText - $endDateText',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                                ),
+                              Expanded(
+                                child: step.isTargetCountry
+                                  ? Text(
+                                      startDateText,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    )
+                                  : Text(
+                                      endDateText.isEmpty
+                                        ? startDateText
+                                        : '$startDateText - $endDateText',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                                      ),
+                                    ),
                               ),
                             ],
                           ),

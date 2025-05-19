@@ -15,11 +15,11 @@ class SocialLoginButton extends StatelessWidget {
   
   /// Constructor
   const SocialLoginButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.icon,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -88,7 +88,7 @@ class _CountrySelectorState extends State<CountrySelector> {
     'NZ',
     'SG',
     'AE',
-    'IE',
+    'IE'
   ];
 
   @override

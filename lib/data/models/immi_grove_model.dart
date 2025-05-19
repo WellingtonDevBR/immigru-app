@@ -3,36 +3,21 @@ import 'package:immigru/domain/entities/immi_grove.dart';
 /// Model class for ImmiGrove data from Supabase
 class ImmiGroveModel extends ImmiGrove {
   const ImmiGroveModel({
-    required String id,
-    required String name,
-    required String slug,
-    String? description,
-    String? type,
-    int? countryId,
-    int? visaId,
-    int? languageId,
-    required bool isPublic,
-    required String createdBy,
-    String? coverImageUrl,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    int? memberCount,
-  }) : super(
-          id: id,
-          name: name,
-          slug: slug,
-          description: description,
-          type: type,
-          countryId: countryId,
-          visaId: visaId,
-          languageId: languageId,
-          isPublic: isPublic,
-          createdBy: createdBy,
-          coverImageUrl: coverImageUrl,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-          memberCount: memberCount,
-        );
+    required super.id,
+    required super.name,
+    required super.slug,
+    super.description,
+    super.type,
+    super.countryId,
+    super.visaId,
+    super.languageId,
+    required super.isPublic,
+    required super.createdBy,
+    super.coverImageUrl,
+    required super.createdAt,
+    required super.updatedAt,
+    super.memberCount,
+  });
 
   /// Create a model from a JSON map
   factory ImmiGroveModel.fromJson(Map<String, dynamic> json) {

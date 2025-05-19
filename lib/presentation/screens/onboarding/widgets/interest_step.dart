@@ -118,8 +118,6 @@ class _InterestStepState extends State<InterestStep>
           }
         }
       }
-    } catch (e) {
-      
     } finally {
       // Ensure the widget is still mounted
       if (mounted) {

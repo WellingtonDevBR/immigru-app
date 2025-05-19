@@ -4,22 +4,14 @@ import 'package:immigru/features/auth/domain/entities/user.dart';
 class UserModel extends User {
   /// Constructor
   UserModel({
-    required String id,
-    String? email,
-    String? phone,
-    String? displayName,
-    String? photoUrl,
-    bool emailVerified = false,
-    bool hasCompletedOnboarding = false,
-  }) : super(
-          id: id,
-          email: email,
-          phone: phone,
-          displayName: displayName,
-          photoUrl: photoUrl,
-          emailVerified: emailVerified,
-          hasCompletedOnboarding: hasCompletedOnboarding,
-        );
+    required super.id,
+    super.email,
+    super.phone,
+    super.displayName,
+    super.photoUrl,
+    super.emailVerified,
+    super.hasCompletedOnboarding,
+  });
 
   /// Create a UserModel from a JSON map
   factory UserModel.fromJson(Map<String, dynamic> json) {

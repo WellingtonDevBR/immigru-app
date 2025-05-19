@@ -524,7 +524,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       
       // Log success with minimal information
       
-    } catch (e, stackTrace) {
+    } catch (e) {
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to save progress',

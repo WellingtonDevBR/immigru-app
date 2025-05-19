@@ -105,22 +105,86 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
         return true;
       }
       
-      // CRITICAL: Create a deep copy of steps to avoid modifying the original data
-      final processedSteps = steps.map((step) => {
-        'id': int.tryParse(step.id) != null ? int.parse(step.id) : null,
-        'countryId': step.countryId,
-        'countryName': step.countryName,
-        'visaId': step.visaTypeId,
-        'visaName': step.visaTypeName,
-        'order': step.order,
-        // Map to the field names expected by the server
-        'IsCurrent': step.isCurrentLocation,
-        'IsTarget': step.isTargetCountry,
-        // Map date fields to the expected format
-        'arrivedDate': step.startDate?.toIso8601String(),
-        'leftDate': step.endDate?.toIso8601String(),
-        // Add additional fields required by the server
-        'wasSuccessful': true, // Default to true
+      // CRITICAL: Check if there's a birth country step in the current steps
+      MigrationStep? birthCountryStep;
+      try {
+        birthCountryStep = steps.firstWhere(
+          (step) => step.id.startsWith('birth_'),
+        );
+        _logger.i('Found birth country step in current steps: ${birthCountryStep.countryName}', 
+          tag: 'MigrationJourneyRepository');
+      } catch (_) {
+        // No birth country step found in current steps
+        birthCountryStep = null;
+      }
+      
+      // If no birth country step is found in the current steps, check the last saved steps
+      if (birthCountryStep == null && _lastSavedSteps != null) {
+        try {
+          final savedBirthCountryStep = _lastSavedSteps!.firstWhere(
+            (step) => step.id.startsWith('birth_'),
+          );
+          
+          // If found in last saved steps, add it to the current steps
+          steps = [...steps, savedBirthCountryStep];
+          birthCountryStep = savedBirthCountryStep;
+          _logger.w('Added birth country step back from cache: ${savedBirthCountryStep.countryName}', 
+            tag: 'MigrationJourneyRepository');
+        } catch (_) {
+          // No birth country step found in last saved steps either
+          _logger.w('No birth country step found in current or cached steps', 
+            tag: 'MigrationJourneyRepository');
+        }
+      }
+      
+      // Map steps to the format expected by the edge function
+      final processedSteps = steps.map((step) {
+        // Check if this is a birth country step
+        final isBirthCountry = step.id.startsWith('birth_');
+        
+        // Create the base step data
+        final stepData = <String, dynamic>{
+          // For birth country steps, preserve the string ID to maintain the 'birth_' prefix
+          'id': isBirthCountry ? step.id : (int.tryParse(step.id) != null ? int.parse(step.id) : step.id),
+          'countryId': step.countryId,
+          'countryName': step.countryName,
+          'visaId': step.visaTypeId,
+          'visaName': step.visaTypeName,
+          'order': step.order,
+          
+          // CRITICAL: Send all possible variations of the flags to ensure compatibility
+          // Current location flags
+          'IsCurrent': step.isCurrentLocation,
+          'isCurrent': step.isCurrentLocation,
+          'isCurrentLocation': step.isCurrentLocation,
+          
+          // Target country flags - CRITICAL for fixing the issue
+          'IsTarget': step.isTargetCountry,
+          'isTarget': step.isTargetCountry,
+          'isTargetCountry': step.isTargetCountry,
+          'isTargetDestination': step.isTargetCountry,
+          
+          // Map date fields to the expected format
+          'arrivedDate': step.startDate?.toIso8601String(),
+          'leftDate': step.endDate?.toIso8601String(),
+          // Add additional fields required by the server
+          'wasSuccessful': true, // Default to true
+        };
+        
+        // Debug: Log the processed step data
+        _logger.i(
+          'Processed step data for ${step.countryName}: IsTarget=${stepData['IsTarget']}, isTargetCountry=${stepData['isTargetCountry']}',
+          tag: 'MigrationJourneyRepository'
+        );
+        
+        // Add a special flag for birth country steps
+        if (isBirthCountry) {
+          stepData['isBirthCountry'] = true;
+          stepData['IsBirthCountry'] = true; // Add both formats for compatibility
+          _logger.i('Flagged birth country step for ${step.countryName}', tag: 'MigrationJourneyRepository');
+        }
+        
+        return stepData;
       }).toList();
       
       // Add deleted steps if provided
@@ -130,6 +194,15 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
         _logger.w('[$timestamp] 🗑️ Processing ${deletedSteps.length} deleted steps', tag: 'MigrationJourneyRepository');
         
         for (var deletedStep in deletedSteps) {
+          // CRITICAL: Skip if this is a birth country step - never delete birth country steps
+          if (deletedStep.id.startsWith('birth_')) {
+            _logger.w(
+              '[$timestamp] ⚠️ Attempted to delete birth country step ${deletedStep.id} (${deletedStep.countryName}), skipping',
+              tag: 'MigrationJourneyRepository',
+            );
+            continue; // Skip this step
+          }
+          
           if (deletedStep.id.isNotEmpty) {
             // Simplify the deletion format to focus on the essential fields
             // The edge function primarily needs the ID and isDeleted flag
@@ -427,11 +500,49 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
       // Get current steps
       final currentSteps = await getMigrationSteps();
       
+      // CRITICAL: Check if the step to be deleted is a birth country step
+      if (id.startsWith('birth_')) {
+        _logger.w(
+          'Attempted to delete birth country step $id - operation blocked',
+          tag: 'MigrationJourneyRepository',
+        );
+        // Return current steps without deleting anything
+        return currentSteps;
+      }
+      
+      // Check if the step exists in the current steps
+      final stepExists = currentSteps.any((step) => step.id == id);
+      
+      if (!stepExists) {
+        // If the step doesn't exist in the backend, it might be a temporary step
+        // that was only in the UI but never saved to the backend
+        _logger.w(
+          'Step with ID $id not found in current steps, might be a temporary step',
+          tag: 'MigrationJourneyRepository',
+        );
+        
+        // Return current steps without any changes
+        return currentSteps;
+      }
+      
       // Find the step to be deleted
       final stepToDelete = currentSteps.firstWhere(
         (step) => step.id == id,
-        orElse: () => throw Exception('Step with ID $id not found'),
       );
+      
+      // CRITICAL: Ensure we preserve the birth country step
+      MigrationStep? birthCountryStep;
+      try {
+        birthCountryStep = currentSteps.firstWhere(
+          (step) => step.id.startsWith('birth_'),
+        );
+        _logger.i('Found birth country step: ${birthCountryStep.countryName}', 
+          tag: 'MigrationJourneyRepository');
+      } catch (_) {
+        birthCountryStep = null;
+        _logger.w('No birth country step found in current steps', 
+          tag: 'MigrationJourneyRepository');
+      }
       
       // Create a list of steps without the deleted one
       final updatedSteps = currentSteps.where((step) => step.id != id).toList();
@@ -448,8 +559,24 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
       // Save updated steps and explicitly pass the deleted step
       await saveMigrationSteps(updatedSteps, deletedSteps: deletedSteps);
       
+      // Get the updated steps after saving to ensure birth country is preserved
+      final finalSteps = await getMigrationSteps();
+      
+      // Double-check that birth country step is still present
+      if (birthCountryStep != null && !finalSteps.any((step) => step.id.startsWith('birth_'))) {
+        _logger.w(
+          'Birth country step missing after deletion, adding it back',
+          tag: 'MigrationJourneyRepository',
+        );
+        
+        // Add birth country step back and save again
+        final stepsWithBirthCountry = [...finalSteps, birthCountryStep];
+        await saveMigrationSteps(stepsWithBirthCountry);
+        return stepsWithBirthCountry;
+      }
+      
       // Return updated steps
-      return updatedSteps;
+      return finalSteps;
     } catch (e, stackTrace) {
       _logger.e(
         'Error removing migration step',

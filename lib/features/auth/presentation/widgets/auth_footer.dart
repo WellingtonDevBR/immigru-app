@@ -20,13 +20,13 @@ class AuthFooter extends StatelessWidget {
 
   /// Constructor
   const AuthFooter({
-    Key? key,
+    super.key,
     required this.promptText,
     required this.actionText,
     required this.onPressed,
     required this.isDarkMode,
     required this.primaryColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

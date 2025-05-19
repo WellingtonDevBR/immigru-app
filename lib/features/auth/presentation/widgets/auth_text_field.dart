@@ -33,7 +33,7 @@ class AuthTextField extends StatelessWidget {
 
   /// Constructor
   const AuthTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.label,
     required this.hint,
@@ -43,7 +43,7 @@ class AuthTextField extends StatelessWidget {
     this.suffixIcon,
     this.onSuffixIconTap,
     this.validator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -68,7 +68,19 @@ export async function handleMigrationSteps(
             );
           }
 
-          // Delete the step
+          // CRITICAL: Check if this is a birth country step - never delete it
+          // First, check if the step ID starts with 'birth_'
+          if (typeof step.id === 'string' && step.id.toString().startsWith('birth_')) {
+            console.warn(
+              `Attempted to delete birth country step ${step.id}, operation blocked`,
+            );
+            
+            // Add to results but mark as not deleted
+            results.push({ id: step.id, deleted: false, message: "Birth country step cannot be deleted" });
+            continue; // Skip to the next step
+          }
+
+          // Delete the step if it's not a birth country step
           try {
             const { data: deletedStep, error: deleteError } =
               await supabaseClient
@@ -92,12 +104,13 @@ export async function handleMigrationSteps(
             }
 
             // Get all remaining steps for this user to update their order
+            // CRITICAL: We need to properly manage the Order column
             const { data: remainingSteps, error: remainingError } =
               await supabaseClient
                 .from("MigrationStep")
-                .select("Id, Order, ArrivedAt")
+                .select("Id, Order, ArrivedAt, CountryId, Country(Name), IsCurrent, IsTarget")
                 .eq("UserId", userId)
-                .order("ArrivedAt", { ascending: true });
+                .order("Order", { ascending: true }); // Sort by existing order first
 
             if (remainingError) {
               console.error(
@@ -108,16 +121,28 @@ export async function handleMigrationSteps(
               console.log(
                 `Found ${remainingSteps.length} remaining steps, updating their order`,
               );
-
+              
+              // First, sort the steps by our business rules
+              const sortedSteps = sortMigrationSteps(remainingSteps);
+              
+              console.log(`Steps after sorting: ${JSON.stringify(sortedSteps.map(s => ({ 
+                Id: s.Id, 
+                Country: s.Country?.Name, 
+                IsCurrent: s.IsCurrent, 
+                IsTarget: s.IsTarget,
+                ArrivedAt: s.ArrivedAt,
+                Order: s.Order
+              })))}`);
+              
               // Update the order of each remaining step
-              for (let i = 0; i < remainingSteps.length; i++) {
+              for (let i = 0; i < sortedSteps.length; i++) {
                 const newOrder = i + 1; // 1-based ordering
-                const stepId = remainingSteps[i].Id;
+                const stepId = sortedSteps[i].Id;
 
-                if (remainingSteps[i].Order !== newOrder) {
+                if (sortedSteps[i].Order !== newOrder) {
                   console.log(
                     `Updating step ${stepId} order from ${
-                      remainingSteps[i].Order
+                      sortedSteps[i].Order
                     } to ${newOrder}`,
                   );
 
@@ -286,8 +311,15 @@ export async function handleMigrationSteps(
       }
 
       // Process boolean values
-      const isCurrentValue = processBoolean(step.isCurrentLocation);
-      const isTargetValue = processBoolean(step.isTargetDestination);
+      // CRITICAL: Check all possible field names for current location flag
+      const isCurrentValue = processBoolean(step.isCurrentLocation) || processBoolean(step.IsCurrent);
+      
+      // CRITICAL: Check all possible field names for target country flag
+      // Log the target flag values for debugging
+      console.log(`Target flag values - isTargetCountry: ${step.isTargetCountry}, IsTarget: ${step.IsTarget}`);
+      const isTargetValue = processBoolean(step.isTargetCountry) || processBoolean(step.IsTarget);
+      console.log(`Processed target flag value: ${isTargetValue}`);
+      
       const wasSuccessfulValue = processBoolean(step.wasSuccessful, true); // Default to true
 
       // Sanitize notes
@@ -316,13 +348,24 @@ export async function handleMigrationSteps(
         }
       }
 
-      // Final step data to insert or update
+      // Check if this is a birth country step based on the ID
+      const isBirthCountry = (typeof step.id === 'string' && step.id.startsWith('birth_'));
+      
+      if (isBirthCountry) {
+        console.log(`Processing birth country step for user ${userId}`);
+        // For birth country steps, ensure they always have order=1 and no visa
+        stepOrder = 1;
+        visaIdValue = null;
+        // Birth country steps should not have arrival/departure dates
+        arrivedAt = null;
+        leftAt = null;
+      }
+      
+      // Final step data to insert or update - only include fields that exist in the database schema
       const stepData = {
         UserId: userId,
         CountryId: step.countryId,
-        CountryName: step.countryName, // CRITICAL: Preserve the country name
         VisaId: visaIdValue,
-        VisaName: step.visaName, // CRITICAL: Preserve the visa name
         IsCurrent: isCurrentValue,
         IsTarget: isTargetValue,
         ArrivedAt: arrivedAt,
@@ -333,6 +376,13 @@ export async function handleMigrationSteps(
         Order: stepOrder,
         UpdatedAt: new Date().toISOString(),
       };
+      
+      // CRITICAL: Log the step data being saved for debugging
+      console.log(`Saving step data for country ${step.countryId || step.CountryId}:`);
+      console.log(`IsTarget: ${isTargetValue}, IsCurrent: ${isCurrentValue}`);
+      console.log(`Original target flags - isTargetCountry: ${step.isTargetCountry}, IsTarget: ${step.IsTarget}`);
+      console.log(`Step data: ${JSON.stringify(stepData)}`);
+      
 
       let result;
 
@@ -376,10 +426,64 @@ export async function handleMigrationSteps(
   return { success: true, data: results };
 }
 
+/**
+ * Sort migration steps according to business rules:
+ * 1. Birth country steps always at the bottom
+ * 2. Current location at the top
+ * 3. Target country next
+ * 4. Other steps sorted by arrival date (most recent first)
+ */
+function sortMigrationSteps(steps: any[]): any[] {
+  // First, separate birth country steps from regular steps
+  const birthCountrySteps: any[] = [];
+  const regularSteps: any[] = [];
+  
+  for (const step of steps) {
+    if (typeof step.Id === 'string' && step.Id.toString().startsWith('birth_')) {
+      console.log(`Found birth country step during sorting: ${step.Id}`);
+      birthCountrySteps.push(step);
+    } else {
+      regularSteps.push(step);
+    }
+  }
+  
+  // Sort regular steps by our business rules
+  regularSteps.sort((a: any, b: any) => {
+    // Priority 1: Target countries at the top
+    if (a.IsTarget && !b.IsTarget) return -1;
+    if (!a.IsTarget && b.IsTarget) return 1;
+    
+    // Priority 2: Current location next
+    if (a.IsCurrent && !b.IsCurrent) return -1;
+    if (!a.IsCurrent && b.IsCurrent) return 1;
+    
+    // Priority 3: Sort by arrival date (most recent first)
+    const aDate = a.ArrivedAt ? new Date(a.ArrivedAt) : new Date(1900, 0, 1);
+    const bDate = b.ArrivedAt ? new Date(b.ArrivedAt) : new Date(1900, 0, 1);
+    return bDate.getTime() - aDate.getTime();
+  });
+  
+  // Log the sorted steps for debugging
+  console.log(`Sorted steps: ${JSON.stringify(regularSteps.map(s => ({ 
+    Id: s.Id, 
+    Country: s.Country?.Name, 
+    IsCurrent: s.IsCurrent, 
+    IsTarget: s.IsTarget,
+    ArrivedAt: s.ArrivedAt,
+    Order: s.Order
+  })))}`);
+  
+  // Combine the lists with birth country steps at the bottom
+  return [...regularSteps, ...birthCountrySteps];
+}
+
 export async function getMigrationSteps(
   supabaseClient: SupabaseClient,
   userId: string,
 ): Promise<MigrationStep[]> {
+  console.log(`Getting migration steps for user ${userId}`);
+  
+  // First get all steps for this user
   const { data, error } = await supabaseClient
     .from("MigrationStep")
     .select(`
@@ -401,11 +505,72 @@ export async function getMigrationSteps(
       UpdatedAt
     `)
     .eq("UserId", userId)
-    .order("Order");
+    .order("Order", { ascending: true }); // Sort by Order first
 
   if (error) {
+    console.error(`Error fetching migration steps: ${error.message}`);
     return [];
   }
-
-  return data || [];
+  
+  if (!data || data.length === 0) {
+    console.log(`No migration steps found for user ${userId}`);
+    return [];
+  }
+  
+  console.log(`Found ${data.length} migration steps for user ${userId}`);
+  
+  // Sort steps according to our business rules
+  const sortedSteps = sortMigrationSteps(data);
+  
+  // Check if the Order column needs to be updated
+  let orderNeedsUpdate = false;
+  for (let i = 0; i < sortedSteps.length; i++) {
+    const expectedOrder = i + 1; // 1-based ordering
+    if (sortedSteps[i].Order !== expectedOrder) {
+      orderNeedsUpdate = true;
+      break;
+    }
+  }
+  
+  // If the order needs to be updated, update it in the database
+  if (orderNeedsUpdate) {
+    console.log(`Order column needs to be updated for user ${userId}`);
+    
+    // Update the Order column for each step
+    for (let i = 0; i < sortedSteps.length; i++) {
+      const newOrder = i + 1; // 1-based ordering
+      const stepId = sortedSteps[i].Id;
+      
+      if (sortedSteps[i].Order !== newOrder) {
+        console.log(`Updating step ${stepId} order from ${sortedSteps[i].Order} to ${newOrder}`);
+        
+        try {
+          // CRITICAL: Only update the Order column, preserve all other fields
+          // especially IsTarget and IsCurrent
+          const { error: updateError } = await supabaseClient
+            .from("MigrationStep")
+            .update({ 
+              Order: newOrder,
+              // Explicitly preserve the IsTarget and IsCurrent flags
+              IsTarget: sortedSteps[i].IsTarget,
+              IsCurrent: sortedSteps[i].IsCurrent
+            })
+            .eq("Id", stepId);
+          
+          if (updateError) {
+            console.error(`Error updating order for step ${stepId}: ${updateError.message}`);
+          } else {
+            // Update the Order in our local copy
+            sortedSteps[i].Order = newOrder;
+            console.log(`Successfully updated step ${stepId} - IsTarget: ${sortedSteps[i].IsTarget}, IsCurrent: ${sortedSteps[i].IsCurrent}`);
+          }
+        } catch (e) {
+          console.error(`Exception updating order for step ${stepId}: ${e}`);
+        }
+      }
+    }
+  }
+  
+  console.log(`Returning ${sortedSteps.length} sorted steps`);
+  return sortedSteps;
 }

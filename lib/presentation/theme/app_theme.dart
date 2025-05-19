@@ -27,7 +27,7 @@ class AppThemeProvider extends ChangeNotifier {
       _themeMode = ThemeService.getThemeModeEnum(themeString);
       
       notifyListeners();
-    } catch (e, stackTrace) {
+    } catch (e) {
 
       // Already initialized with ThemeMode.system as default
     }

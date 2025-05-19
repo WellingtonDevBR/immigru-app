@@ -37,7 +37,7 @@ class ImmiGroveEdgeFunctionDataSource {
       }
 
       return response.data as Map<String, dynamic>;
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -63,7 +63,7 @@ class ImmiGroveEdgeFunctionDataSource {
           .single();
 
       // Response validation handled by Supabase client
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -92,7 +92,7 @@ class ImmiGroveEdgeFunctionDataSource {
       if (response.isEmpty) {
         throw Exception('Failed to leave ImmiGrove: No matching record found');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -114,7 +114,7 @@ class ImmiGroveEdgeFunctionDataSource {
           .order('JoinedAt', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }

@@ -86,7 +86,7 @@ class SecureInputField extends StatefulWidget {
   
   /// Constructor
   const SecureInputField({
-    Key? key,
+    super.key,
     required this.controller,
     this.focusNode,
     required this.labelText,
@@ -106,7 +106,7 @@ class SecureInputField extends StatefulWidget {
     this.enabled = true,
     this.autoValidate = false,
     this.showClearButton = true,
-  }) : super(key: key);
+  });
 
   @override
   State<SecureInputField> createState() => _SecureInputFieldState();

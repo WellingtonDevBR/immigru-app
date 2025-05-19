@@ -194,22 +194,20 @@ class MigrationStep extends Equatable {
   Map<String, dynamic> toJson() {
     // Ensure countryId is a number
     dynamic countryIdValue;
-    if (countryId != null) {
-      if (countryId is int) {
-        countryIdValue = countryId;
-      } else if (countryId is String) {
-        try {
-          countryIdValue = countryId.toString();
-        } catch (e) {
-          // Log error but continue
-          print('Error parsing countryId: $e');
-          countryIdValue = countryId; // Keep original value as fallback
-        }
-      } else {
+    if (countryId is int) {
+      countryIdValue = countryId;
+    } else if (countryId is String) {
+      try {
+        countryIdValue = countryId.toString();
+      } catch (e) {
+        // Log error but continue
+        print('Error parsing countryId: $e');
         countryIdValue = countryId; // Keep original value as fallback
       }
+    } else {
+      countryIdValue = countryId; // Keep original value as fallback
     }
-    
+      
     // Ensure visaId is a number if present
     dynamic visaIdValue;
     if (visaId != null) {

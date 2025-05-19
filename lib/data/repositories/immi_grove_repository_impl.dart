@@ -29,7 +29,7 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
       return immigrovesData.map((immigroveJson) {
         return ImmiGroveModel.fromJson(immigroveJson as Map<String, dynamic>);
       }).toList();
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -38,7 +38,7 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
   Future<void> joinImmiGrove(String immiGroveId) async {
     try {
       await _edgeFunctionDataSource.joinImmiGrove(immiGroveId);
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -47,7 +47,7 @@ class ImmiGroveRepositoryImpl implements ImmiGroveRepository {
   Future<void> leaveImmiGrove(String immiGroveId) async {
     try {
       await _edgeFunctionDataSource.leaveImmiGrove(immiGroveId);
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow;
     }
   }

@@ -24,10 +24,10 @@ class AppLogger extends BaseLogger {
   /// Remote logging endpoint URL
   String? _remoteLoggingUrl;
 
-  bool _loggingEnabled = true;
+  final bool _loggingEnabled = true;
   
   /// Minimum log level
-  LogLevel _minLogLevel = LogLevel.info;
+  final LogLevel _minLogLevel = LogLevel.info;
   
   /// Enable structured logging (JSON format)
   void enableStructuredLogging(bool enabled) {

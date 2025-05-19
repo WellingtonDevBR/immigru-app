@@ -120,8 +120,7 @@ class BirthCountryBloc extends Bloc<BirthCountryEvent, BirthCountryState> {
       if (countries.isNotEmpty) {
         final sampleCountry = countries.first;
         _logger.i(
-          'Sample country: ${sampleCountry.name} (${sampleCountry.isoCode}), ' +
-          'Flag URL: ${sampleCountry.flagUrl.isNotEmpty ? "Valid" : "Empty"}',
+          'Sample country: ${sampleCountry.name} (${sampleCountry.isoCode}), ' 'Flag URL: ${sampleCountry.flagUrl.isNotEmpty ? "Valid" : "Empty"}',
           tag: 'BirthCountry',
         );
       }

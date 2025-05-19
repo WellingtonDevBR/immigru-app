@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/core/services/edge_function_logger.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';

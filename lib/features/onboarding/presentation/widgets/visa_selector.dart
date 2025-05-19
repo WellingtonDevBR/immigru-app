@@ -165,7 +165,7 @@ class _VisaSelectorState extends State<VisaSelector> {
       setState(() {
         _filteredVisas = _visas.where((visa) => 
           visa.visaName.toLowerCase().contains(searchQuery) ||
-          (visa.description != null && visa.description.toLowerCase().contains(searchQuery))
+          (visa.description.toLowerCase().contains(searchQuery))
         ).toList();
       });
     }
@@ -492,15 +492,14 @@ class _VisaSelectorState extends State<VisaSelector> {
                       color: isDarkMode ? Colors.white : Colors.black87,
                     ),
                   ),
-                  if (_selectedVisa!.description != null)
-                    Text(
-                      _selectedVisa!.description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    _selectedVisa!.description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -652,17 +651,16 @@ class _VisaSelectorState extends State<VisaSelector> {
                         : isDarkMode ? Colors.white : Colors.black87,
                     ),
                   ),
-                  if (visa.description != null)
-                    Text(
-                      visa.description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isSelected
-                          ? AppColors.primaryColor.withOpacity(0.8)
-                          : isDarkMode ? Colors.white70 : Colors.grey[700],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    visa.description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isSelected
+                        ? AppColors.primaryColor.withOpacity(0.8)
+                        : isDarkMode ? Colors.white70 : Colors.grey[700],
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

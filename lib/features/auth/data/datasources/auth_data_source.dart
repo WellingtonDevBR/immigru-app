@@ -769,7 +769,7 @@ class AuthDataSource {
   /// Check if the user is authenticated
   Future<bool> isAuthenticated() async {
     try {
-      final session = await _client.auth.currentSession;
+      final session = _client.auth.currentSession;
       return session != null;
     } catch (e) {
       return false;
