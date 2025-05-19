@@ -108,7 +108,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
     
     // Check if birth country is provided
     if (widget.birthCountryId.isNotEmpty && widget.birthCountryName.isNotEmpty) {
-      print('Birth country data: {birthCountryId: ${widget.birthCountryId}, birthCountryName: ${widget.birthCountryName}}');
+
       
       // Check if we already have a birth country step
       final hasBirthCountryStep = state.steps.any((step) => 
@@ -117,10 +117,10 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
       
       // If we don't have a birth country step, add it
       if (!hasBirthCountryStep) {
-        print('No birth country step found, adding it now');
+
         _addBirthCountryStep();
       } else {
-        print('Birth country step already exists');
+
         
         // Check if the birth country step has the correct data
         MigrationStep? birthStep;
@@ -137,12 +137,12 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
         if (birthStep != null && 
             (birthStep.countryName != widget.birthCountryName || 
              birthStep.countryId.toString() != widget.birthCountryId)) {
-          print('Birth country step has incorrect data, updating it');
+
           _addBirthCountryStep(); // This will update the existing step
         }
       }
     } else {
-      print('No birth country data provided');
+
     }
   }
 
@@ -207,9 +207,9 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primaryColor.withOpacity(0.1),
+        color: AppColors.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -455,10 +455,10 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
               // Use the bloc captured from the parent context
               migrationJourneyBloc.add(MigrationStepRemoved(step.id));
             },
-            child: const Text('Remove'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
+            child: const Text('Remove'),
           ),
         ],
       ),

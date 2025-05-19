@@ -14,9 +14,9 @@ class LoggingInterceptor implements NetworkInterceptor {
     final headers = request.headers;
     
     if (kDebugMode) {
-      print('🌐 Request: $method $url');
-      print('Headers: ${_sanitizeHeaders(headers)}');
-      print('Body: ${_truncateBody(request.body)}');
+
+
+
     }
     
     return null; // Return null to use the original request
@@ -30,12 +30,12 @@ class LoggingInterceptor implements NetworkInterceptor {
     
     if (kDebugMode) {
       if (statusCode >= 400) {
-        print('❌ Response: $statusCode $url');
+
       } else {
-        print('✅ Response: $statusCode $url');
+
       }
-      print('Headers: ${_sanitizeHeaders(headers)}');
-      print('Body: ${_truncateBody(response.body)}');
+
+
     }
     
     return null; // Return null to use the original response
@@ -44,8 +44,8 @@ class LoggingInterceptor implements NetworkInterceptor {
   @override
   Future<void> onError(Object error, StackTrace stackTrace) async {
     if (kDebugMode) {
-      print('❌ Network Error: $error');
-      print('Stack trace: $stackTrace');
+
+
     }
   }
   

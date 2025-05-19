@@ -99,9 +99,9 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
     _isTargetCountry = step.isTargetCountry;
     
     // Log the step data for debugging
-    print('Editing step with ID: ${step.id}');
-    print('Country ID: ${step.countryId}, Country Name: ${step.countryName}, Code: ${step.countryCode}');
-    print('Visa ID: ${step.visaTypeId}, Visa Name: ${step.visaTypeName}');
+
+
+
   }
   
 
@@ -222,10 +222,10 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
   Widget _buildCountrySelector(ThemeData theme, bool isDarkMode) {
     // Debug log for country selection
     if (widget.isEditing && widget.step != null) {
-      print('COUNTRY SELECTOR DEBUG:');
-      print('Editing step with country code: ${widget.step!.countryCode}');
-      print('Country name from step: ${widget.step!.countryName}');
-      print('Country ID from step: ${widget.step!.countryId}');
+
+
+
+
       
       // CRITICAL: For countries with missing codes, set a default code based on the country name
       String countryCode = widget.step!.countryCode;
@@ -244,14 +244,14 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         } else if (countryName == 'brazil') {
           countryCode = 'BR';
         }
-        print('Country code was empty, using derived code: $countryCode for $countryName');
+
       }
       
       return CountrySelector(
         // Pass the derived country code to the selector when editing
         selectedCountryCode: countryCode.isNotEmpty ? countryCode : null,
         onCountrySelected: (country) {
-          print('Country selected: ${country.name} (${country.isoCode})');
+
           setState(() {
             _selectedCountry = country;
           });
@@ -262,7 +262,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
     // For new steps, just show the regular selector
     return CountrySelector(
       onCountrySelected: (country) {
-        print('Country selected: ${country.name} (${country.isoCode})');
+
         setState(() {
           _selectedCountry = country;
         });
@@ -274,15 +274,15 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
   Widget _buildVisaTypeSelector(ThemeData theme, bool isDarkMode) {
     // Debug log for visa selection
     if (widget.isEditing && widget.step != null) {
-      print('VISA SELECTOR DEBUG:');
-      print('Editing step with visa ID: ${widget.step!.visaTypeId}');
-      print('Visa name from step: ${widget.step!.visaTypeName}');
+
+
+
       
       // CRITICAL: For Australia, we know the visa IDs
       // This is a special case to handle Australia's Student Visa
       if (widget.step!.countryName.toLowerCase() == 'australia' && 
           widget.step!.visaTypeName.toLowerCase() == 'student visa') {
-        print('Special case: Australia Student Visa detected');
+
         
         // For Australia, Student Visa has ID 102
         int visaId = 102;
@@ -291,7 +291,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
           countryId: widget.step!.countryId,
           selectedVisaId: visaId,
           onVisaSelected: (visa) {
-            print('Visa selected: ${visa.visaName} (ID: ${visa.id})');
+
             setState(() {
               _selectedVisa = visa;
             });
@@ -304,8 +304,8 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
     if (_selectedCountry == null) {
       // If we're editing, try to use the country ID from the step
       if (widget.isEditing && widget.step != null) {
-        print('No country selected yet, but we have a step to edit');
-        print('Using country ID from step: ${widget.step!.countryId}');
+
+
         
         // CRITICAL: For Australia, we know the visa IDs
         int visaId = widget.step!.visaTypeId;
@@ -320,7 +320,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
           countryId: widget.step!.countryId,
           selectedVisaId: visaId,
           onVisaSelected: (visa) {
-            print('Visa selected: ${visa.visaName} (ID: ${visa.id})');
+
             setState(() {
               _selectedVisa = visa;
             });
@@ -376,7 +376,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       // Pass the visa ID directly when editing
       selectedVisaId: visaId > 0 ? visaId : null,
       onVisaSelected: (visa) {
-        print('Visa selected: ${visa.visaName} (ID: ${visa.id})');
+
         setState(() {
           _selectedVisa = visa;
         });
@@ -488,7 +488,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
                     _endDate = null;
                     _endDateController.clear();
                     
-                    print('Set as target country: $_isTargetCountry');
+
                   }
                 });
               },
@@ -557,8 +557,8 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
     }
     
     // Log date selection parameters
-    print('Selecting date: isStartDate=$isStartDate, isTargetCountry=$_isTargetCountry');
-    print('initialDate=$initialDate, firstDate=$firstDate, lastDate=$lastDate');
+
+
     
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -640,11 +640,11 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       }
       
       // Log the data being saved
-      print('Saving step with ID: $stepId');
-      print('Country: ${_selectedCountry!.name} (${_selectedCountry!.isoCode})');
-      print('Visa: ${_selectedVisa!.visaName}');
-      print('Dates: ${finalStartDate?.toString()} to ${finalEndDate?.toString()}');
-      print('Current location: $isCurrent, Target country: $_isTargetCountry');
+
+
+
+
+
       
       // Create the step with all the required data
       final step = MigrationStep(
@@ -663,7 +663,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       );
       
       // Log the final step object
-      print('Final step object: $step');
+
       
       // Save the step
       widget.onSave(step);

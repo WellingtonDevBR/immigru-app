@@ -42,7 +42,7 @@ class AuthDataSource {
       );
     } catch (e) {
       if (kDebugMode) {
-        print('Error getting current user: $e');
+
       }
       return null;
     }
@@ -53,7 +53,7 @@ class AuthDataSource {
       String email, String password) async {
     try {
       if (kDebugMode) {
-        print('Attempting to sign in with email: $email');
+
       }
 
       final response = await _client.auth.signInWithPassword(
@@ -64,7 +64,7 @@ class AuthDataSource {
       final user = response.user;
       if (user == null) {
         if (kDebugMode) {
-          print('No user returned from signInWithPassword');
+
         }
         throw AuthError.userNotFound();
       }
@@ -93,7 +93,7 @@ class AuthDataSource {
       } catch (profileError) {
         // If we can't fetch the profile, create one and return a basic user model
         if (kDebugMode) {
-          print('Error fetching user profile after login: $profileError');
+
         }
 
         // Try to create a profile for this user
@@ -102,7 +102,7 @@ class AuthDataSource {
         } catch (createError) {
           // Ignore profile creation errors during login
           if (kDebugMode) {
-            print('Error creating profile during login: $createError');
+
           }
         }
 
@@ -118,7 +118,7 @@ class AuthDataSource {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Login error: ${e.runtimeType} - ${e.toString()}');
+
       }
 
       if (e is AuthError) {
@@ -153,7 +153,7 @@ class AuthDataSource {
   Future<void> signInWithPhone(String phoneNumber) async {
     try {
       if (kDebugMode) {
-        print('Sending OTP to phone number: $phoneNumber');
+
       }
       await _client.auth.signInWithOtp(
         phone: phoneNumber,
@@ -162,11 +162,11 @@ class AuthDataSource {
       );
 
       if (kDebugMode) {
-        print('OTP sent successfully to: $phoneNumber');
+
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to send OTP: ${e.toString()}');
+
       }
       throw Exception('Failed to start phone authentication: ${e.toString()}');
     }
@@ -176,7 +176,7 @@ class AuthDataSource {
   Future<UserModel> verifyPhoneCode(String phoneNumber, String code) async {
     try {
       if (kDebugMode) {
-        print('Verifying OTP for phone number: $phoneNumber with code: $code');
+
       }
       
       final response = await _client.auth.verifyOTP(
@@ -191,7 +191,7 @@ class AuthDataSource {
       }
 
       if (kDebugMode) {
-        print('OTP verified successfully for user: ${user.id}');
+
       }
 
       // Save user data to the User table using upsert
@@ -213,11 +213,11 @@ class AuthDataSource {
         );
 
         if (kDebugMode) {
-          print('Upserted user in User table after OTP verification: $phoneNumber');
+
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Error managing user in User table: $e');
+
         }
         // Continue even if this fails, as the auth part worked
       }
@@ -228,7 +228,7 @@ class AuthDataSource {
       if (!profileExists) {
         await _createUserProfile(user.id);
       } else if (kDebugMode) {
-        print('User profile already exists, skipping creation');
+
       }
 
       // Fetch user data from the User table to check HasCompletedOnboarding
@@ -244,11 +244,11 @@ class AuthDataSource {
           hasCompletedOnboarding = userRecords[0]['HasCompletedOnboarding'] as bool? ?? false;
           
           if (kDebugMode) {
-            print('User HasCompletedOnboarding: $hasCompletedOnboarding');
+
           }
         } else {
           if (kDebugMode) {
-            print('No User record found for ID: ${user.id}');
+
           }
         }
         
@@ -271,7 +271,7 @@ class AuthDataSource {
         );
       } catch (e) {
         if (kDebugMode) {
-          print('Error getting user data: $e');
+
         }
         
         // Return basic user model if data fetch fails
@@ -294,7 +294,7 @@ class AuthDataSource {
   Future<UserModel> signInWithGoogle() async {
     try {
       if (kDebugMode) {
-        print('Starting Google sign-in flow.');
+
       }
 
       // Create a completer to handle the async auth flow
@@ -320,7 +320,7 @@ class AuthDataSource {
           );
 
           if (kDebugMode) {
-            print('Initiating interactive Google sign-in');
+
           }
 
           // Perform interactive sign-in
@@ -329,13 +329,13 @@ class AuthDataSource {
           // Handle user cancellation
           if (googleUser == null) {
             if (kDebugMode) {
-              print('Google sign-in was canceled by user');
+
             }
             throw Exception('Google sign-in was canceled');
           }
 
           if (kDebugMode) {
-            print('Google sign-in successful for user: ${googleUser.email}');
+
           }
 
           // Get auth details from Google
@@ -346,7 +346,7 @@ class AuthDataSource {
           // Validate tokens
           if (idToken == null) {
             if (kDebugMode) {
-              print('No ID Token received from Google');
+
             }
             throw Exception('Authentication failed: Missing ID token');
           }
@@ -388,7 +388,7 @@ class AuthDataSource {
               });
 
               if (kDebugMode) {
-                print('Created user in User table with Google auth');
+
               }
             } else {
               // Update existing user with Google auth info
@@ -400,12 +400,12 @@ class AuthDataSource {
               }).eq('Id', authUser.id);
 
               if (kDebugMode) {
-                print('Updated user in User table with Google auth info');
+
               }
             }
           } catch (e) {
             if (kDebugMode) {
-              print('Error saving Google user to User table: $e');
+
             }
             // Continue even if this fails, as the auth part worked
           }
@@ -440,7 +440,7 @@ class AuthDataSource {
             return user;
           } catch (e) {
             if (kDebugMode) {
-              print('Error fetching user profile: $e');
+
             }
 
             // If we can't fetch the profile, still return a basic user model
@@ -458,7 +458,7 @@ class AuthDataSource {
           }
         } catch (e) {
           if (kDebugMode) {
-            print('Google sign in error: $e');
+
           }
           throw Exception('Failed to sign in with Google. Please try again.');
         }
@@ -470,7 +470,7 @@ class AuthDataSource {
           final authUser = data.session?.user;
           if (authUser != null && !completer.isCompleted) {
             if (kDebugMode) {
-              print('Auth state changed, user authenticated: ${authUser.id}');
+
             }
 
             // Check if profile exists, create if it doesn't
@@ -503,7 +503,7 @@ class AuthDataSource {
               completer.complete(user);
             } catch (e) {
               if (kDebugMode) {
-                print('Error fetching user profile: $e');
+
               }
 
               // If we can't fetch the profile, still return a basic user model
@@ -544,7 +544,7 @@ class AuthDataSource {
         );
 
         if (kDebugMode) {
-          print('Web OAuth response: $response');
+
         }
 
         if (!response) {
@@ -556,7 +556,7 @@ class AuthDataSource {
       return completer.future;
     } catch (e) {
       if (kDebugMode) {
-        print('Google sign-in error: $e');
+
       }
       throw Exception('Failed to sign in with Google: ${e.toString()}');
     }
@@ -594,11 +594,11 @@ class AuthDataSource {
         });
 
         if (kDebugMode) {
-          print('Created user in User table with email signup');
+
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Error saving email user to User table: $e');
+
         }
         // Continue even if this fails, as the auth part worked
       }
@@ -633,7 +633,7 @@ class AuthDataSource {
       } catch (profileError) {
         // If we can't fetch the profile, return a basic user model
         if (kDebugMode) {
-          print('Error fetching user profile after signup: $profileError');
+
         }
 
         return UserModel(
@@ -722,7 +722,7 @@ class AuthDataSource {
       });
     } catch (e) {
       if (kDebugMode) {
-        print('Error creating comprehensive user profile: $e');
+
       }
       // Try a simpler profile creation as fallback
       await _createUserProfile(userId);
@@ -752,17 +752,8 @@ class AuthDataSource {
 
       // Note: For security reasons, Supabase doesn't indicate whether the email exists
       // This is intentional to prevent email enumeration attacks
-      if (kDebugMode) {
-        print(
-            'Reset password email sent (or would have been sent if email exists)');
-      }
     } catch (e) {
-      // Log the error but don't expose it to the user
-      if (kDebugMode) {
-        print('Error in reset password flow: ${e.toString()}');
-      }
-      // We intentionally don't throw an exception here to prevent revealing if an email exists
-      // Just silently return as if it succeeded
+      debugPrint(e.toString());
     }
   }
 
@@ -860,16 +851,16 @@ class AuthDataSource {
         await _client.from('UserProfile').insert(profileData);
         
         if (kDebugMode) {
-          print('Created new user profile for user: $userId');
+
         }
       } else {
         if (kDebugMode) {
-          print('User profile already exists for user: $userId');
+
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error creating user profile: $e');
+
       }
       // Don't throw here, as this is a background operation
     }

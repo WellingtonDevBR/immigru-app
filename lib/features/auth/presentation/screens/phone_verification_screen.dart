@@ -120,7 +120,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     final code = _otpValues.join();
     if (code.length == 6) {
       if (kDebugMode) {
-        print('Verifying code for phone number: ${widget.phoneNumber}');
+
       }
       context.read<AuthBloc>().add(
             AuthVerifyPhoneCodeEvent(

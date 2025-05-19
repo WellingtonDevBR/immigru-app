@@ -73,14 +73,14 @@ class _VisaSelectorState extends State<VisaSelector> {
       // Try to get VisaRepository from the new architecture
       _visaRepository = ServiceLocator.instance<VisaRepository>();
     } catch (e) {
-      print('Error getting VisaRepository: $e');
+
       // Try to get from the old architecture with fallback
       try {
         _visaRepository = ServiceLocator.instance<VisaRepository>(
           instanceName: 'domain_visa_repository',
         );
       } catch (e) {
-        print('Error getting fallback VisaRepository: $e');
+
         _isLoading = false;
         _errorMessage = 'Repository not available';
         return;
@@ -100,7 +100,7 @@ class _VisaSelectorState extends State<VisaSelector> {
   /// Find a visa by its ID and select it
   void _findAndSelectVisaById(int visaId) {
     if (_visas.isEmpty) {
-      print('Cannot find visa by ID $visaId: visa list is empty. Will retry when visas are loaded.');
+
       // We'll retry when visas are loaded
       return;
     }
@@ -111,7 +111,7 @@ class _VisaSelectorState extends State<VisaSelector> {
       
       if (matchingVisas.isNotEmpty) {
         final visa = matchingVisas.first;
-        print('Found visa by ID $visaId: ${visa.visaName}');
+
         
         // Use Future.microtask to avoid setState during build
         Future.microtask(() {
@@ -133,7 +133,7 @@ class _VisaSelectorState extends State<VisaSelector> {
         if (_visas.isNotEmpty) {
           // Use the first visa as a fallback
           final visa = _visas.first;
-          print('Using first visa as fallback: ${visa.visaName}');
+
           
           // Use Future.microtask to avoid setState during build
           Future.microtask(() {
@@ -150,7 +150,7 @@ class _VisaSelectorState extends State<VisaSelector> {
         }
       }
     } catch (e) {
-      print('Error finding visa by ID $visaId: $e');
+
     }
   }
   
@@ -205,7 +205,7 @@ class _VisaSelectorState extends State<VisaSelector> {
     });
     
     try {
-      print('Loading visas for country ID: ${widget.countryId}');
+
       
       // Special handling for Australia (country ID 14)
       List<Visa> visas;
@@ -288,7 +288,7 @@ class _VisaSelectorState extends State<VisaSelector> {
         visas = await _visaRepository.getVisasForCountry(widget.countryId);
       }
       
-      print('Loaded ${visas.length} visas for country ID: ${widget.countryId}');
+
       
       if (mounted) {
         setState(() {
@@ -298,42 +298,42 @@ class _VisaSelectorState extends State<VisaSelector> {
           
           // Priority 1: Use the selectedVisaId parameter if provided
           if (widget.selectedVisaId != null) {
-            print('Using provided selectedVisaId: ${widget.selectedVisaId}');
+
             _findAndSelectVisaById(widget.selectedVisaId!);
           }
           // Priority 2: Use the selectedVisa parameter if provided
           else if (widget.selectedVisa != null) {
-            print('Using provided selectedVisa: ${widget.selectedVisa!.visaName}');
+
             final stillValid = _visas.any((visa) => visa.id == widget.selectedVisa!.id);
             if (stillValid) {
               _selectedVisa = widget.selectedVisa;
               // No need to call onVisaSelected as it was already selected
             } else if (_visas.isNotEmpty) {
-              print('Selected visa is no longer valid, using first visa');
+
               _selectedVisa = _visas.first;
               widget.onVisaSelected(_visas.first);
             }
           }
           // Priority 3: Check if current _selectedVisa is still valid
           else if (_selectedVisa != null) {
-            print('Checking if current selected visa is still valid: ${_selectedVisa!.visaName}');
+
             final stillValid = _visas.any((visa) => visa.id == _selectedVisa!.id);
             if (!stillValid && _visas.isNotEmpty) {
-              print('Current selected visa is no longer valid, using first visa');
+
               _selectedVisa = _visas.first;
               widget.onVisaSelected(_visas.first);
             }
           }
           // Priority 4: Default to first visa if nothing else is selected
           else if (_visas.isNotEmpty) {
-            print('No visa selected, using first visa: ${_visas.first.visaName}');
+
             _selectedVisa = _visas.first;
             widget.onVisaSelected(_visas.first);
           }
         });
       }
     } catch (e) {
-      print('Error loading visas: $e');
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -469,7 +469,7 @@ class _VisaSelectorState extends State<VisaSelector> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.2),
+                color: AppColors.primaryColor.withValues(alpha:0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -606,7 +606,7 @@ class _VisaSelectorState extends State<VisaSelector> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected 
-            ? AppColors.primaryColor.withOpacity(0.1) 
+            ? AppColors.primaryColor.withValues(alpha:0.1) 
             : Colors.transparent,
           border: Border(
             bottom: BorderSide(
@@ -623,7 +623,7 @@ class _VisaSelectorState extends State<VisaSelector> {
               height: 40,
               decoration: BoxDecoration(
                 color: isSelected
-                  ? AppColors.primaryColor.withOpacity(0.2)
+                  ? AppColors.primaryColor.withValues(alpha:0.2)
                   : isDarkMode ? Colors.grey[800] : Colors.grey[200],
                 shape: BoxShape.circle,
               ),
@@ -655,7 +655,7 @@ class _VisaSelectorState extends State<VisaSelector> {
                     visa.description,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isSelected
-                        ? AppColors.primaryColor.withOpacity(0.8)
+                        ? AppColors.primaryColor.withValues(alpha:0.8)
                         : isDarkMode ? Colors.white70 : Colors.grey[700],
                     ),
                     maxLines: 2,

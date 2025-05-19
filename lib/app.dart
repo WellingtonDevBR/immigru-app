@@ -45,7 +45,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   @override
   void initState() {
     super.initState();
-    print('DEBUG: _ImmigruAppContentState initialized');
+
   }
 
   @override
@@ -63,27 +63,27 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   }
 
   Widget _buildHomeScreen() {
-    print('DEBUG: Building home screen in old architecture');
+
     // PRODUCTION MODE NAVIGATION
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        print('DEBUG: Auth state - isLoading: ${state.isLoading}, isAuthenticated: ${state.isAuthenticated}, user: ${state.user != null ? 'exists' : 'null'}');
+
         if (state.isLoading) {
-          print('DEBUG: Showing loading screen');
+
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
           );
         } else if (state.isAuthenticated && state.user != null) {
-          print('DEBUG: User is authenticated');
+
 
           return FutureBuilder<bool>(
             future: sl<OnboardingRepository>().hasCompletedOnboarding(),
             builder: (context, snapshot) {
-              print('DEBUG: Onboarding check - connectionState: ${snapshot.connectionState}');
+
               if (snapshot.connectionState == ConnectionState.waiting) {
-                print('DEBUG: Waiting for onboarding check');
+
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -92,25 +92,25 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
               }
               
               final hasCompletedOnboarding = snapshot.data ?? false;
-              print('DEBUG: hasCompletedOnboarding: $hasCompletedOnboarding');
+
               
               if (hasCompletedOnboarding) {
-                print('DEBUG: Navigating to HomeScreen');
+
                 return HomeScreen(user: state.user);
               } else {
-                print('DEBUG: Navigating to OnboardingScreen');
+
                 return OnboardingScreen(user: state.user);
               }
             },
           );
         } else {
-          print('DEBUG: User is not authenticated');
+
           return FutureBuilder<bool>(
             future: sl<OnboardingService>().hasSeenWelcomeScreen(),
             builder: (context, snapshot) {
-              print('DEBUG: Welcome screen check - connectionState: ${snapshot.connectionState}');
+
               if (snapshot.connectionState == ConnectionState.waiting) {
-                print('DEBUG: Waiting for welcome screen check');
+
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -119,13 +119,13 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
               }
               
               final hasSeenWelcomeScreen = snapshot.data ?? false;
-              print('DEBUG: hasSeenWelcomeScreen: $hasSeenWelcomeScreen');
+
               
               if (hasSeenWelcomeScreen) {
-                print('DEBUG: Navigating to LoginScreen');
+
                 return const LoginScreen();
               } else {
-                print('DEBUG: Navigating to WelcomeScreen');
+
                 return const WelcomeScreen();
               }
             },

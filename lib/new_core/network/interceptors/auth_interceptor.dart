@@ -41,7 +41,7 @@ class AuthInterceptor implements NetworkInterceptor {
     if (kDebugMode) {
       if (error.toString().contains('401') || 
           error.toString().contains('unauthorized')) {
-        print('⚠️ Authentication error: $error');
+
       }
     }
   }

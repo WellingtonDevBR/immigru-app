@@ -201,7 +201,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primaryColor.withOpacity(0.7),
+                            AppColors.primaryColor.withValues(alpha:0.7),
                             AppColors.primaryColor,
                           ],
                           begin: Alignment.topLeft,
@@ -210,7 +210,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryColor.withOpacity(0.3),
+                            color: AppColors.primaryColor.withValues(alpha:0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -235,7 +235,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                                 Text(
                                   'Select your current immigration stage',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha:0.9),
                                   ),
                                 ),
                               ],
@@ -254,7 +254,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha:0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -364,7 +364,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primaryColor.withOpacity(isDarkMode ? 0.3 : 0.1)
+            ? AppColors.primaryColor.withValues(alpha:isDarkMode ? 0.3 : 0.1)
             : isDarkMode
                 ? Colors.grey[850]
                 : Colors.white,
@@ -380,14 +380,14 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: AppColors.primaryColor.withOpacity(0.3),
+                  color: AppColors.primaryColor.withValues(alpha:0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha:0.03),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -436,7 +436,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha:0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       )

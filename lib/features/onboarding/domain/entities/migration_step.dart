@@ -70,7 +70,7 @@ class MigrationStep extends Equatable {
     int? order,
   }) {
     // CRITICAL: Log the target country flag to debug preservation issues
-    print('MigrationStep.copyWith: Original isTargetCountry=$isTargetCountry, this.isTargetCountry=${this.isTargetCountry}');
+
     
     final result = MigrationStep(
       id: id ?? this.id,
@@ -91,7 +91,7 @@ class MigrationStep extends Equatable {
     );
     
     // Log the result for debugging
-    print('MigrationStep.copyWith: Result isTargetCountry=${result.isTargetCountry}');
+
     
     return result;
   }

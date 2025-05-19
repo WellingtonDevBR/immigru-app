@@ -150,7 +150,7 @@ class _CountrySelectorState extends State<CountrySelector> {
       final getCountriesUseCase = ServiceLocator.instance<GetCountriesUseCase>();
       final countries = await getCountriesUseCase();
       
-      print('Loaded ${countries.length} countries in CountrySelector');
+
       
       // Separate popular countries
       final popular = <Country>[];
@@ -191,7 +191,7 @@ class _CountrySelectorState extends State<CountrySelector> {
   /// Find a country by its ISO code and select it
   void _findAndSelectCountryByCode(String isoCode) {
     if (_countries.isEmpty) {
-      print('Cannot find country by code $isoCode: countries list is empty');
+
       return;
     }
     
@@ -203,7 +203,7 @@ class _CountrySelectorState extends State<CountrySelector> {
       
       if (exactMatches.isNotEmpty) {
         final country = exactMatches.first;
-        print('Found country by exact code match $isoCode: ${country.name}');
+
         _selectCountry(country);
         return;
       }
@@ -216,7 +216,7 @@ class _CountrySelectorState extends State<CountrySelector> {
       
       if (partialMatches.isNotEmpty) {
         final country = partialMatches.first;
-        print('Found country by partial code match $isoCode: ${country.name}');
+
         _selectCountry(country);
         return;
       }
@@ -229,17 +229,17 @@ class _CountrySelectorState extends State<CountrySelector> {
         
         if (idMatches.isNotEmpty) {
           final country = idMatches.first;
-          print('Found country by ID match $isoCode: ${country.name}');
+
           _selectCountry(country);
           return;
         }
       }
       
       // If all else fails, use the first country
-      print('Could not find country with code $isoCode, using first country: ${_countries.first.name}');
+
       _selectCountry(_countries.first);
     } catch (e) {
-      print('Error finding country by code $isoCode: $e');
+
       if (_countries.isNotEmpty) {
         _selectCountry(_countries.first);
       }
@@ -506,7 +506,7 @@ class _CountrySelectorState extends State<CountrySelector> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected 
-            ? AppColors.primaryColor.withOpacity(0.1) 
+            ? AppColors.primaryColor.withValues(alpha:0.1) 
             : Colors.transparent,
         ),
         child: Row(
@@ -551,7 +551,7 @@ class _CountrySelectorState extends State<CountrySelector> {
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha:0.1),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),

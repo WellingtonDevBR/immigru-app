@@ -85,7 +85,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Auth status check error: ${e.toString()}');
+
       }
       emit(state.error('Unable to verify authentication status. Please try again.'));
     }
@@ -101,19 +101,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.authenticated(user));
     } catch (e) {
       if (kDebugMode) {
-        print('Sign in error: ${e.toString()}');
+
       }
       
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
         if (kDebugMode) {
-          print('Emitting error state: ${errorState.errorMessage} with code: ${errorState.errorCode}');
+
         }
         emit(errorState);
       } else {
         final errorMessage = 'Failed to sign in. Please check your credentials and try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       }
@@ -130,19 +130,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.codeSent(event.phoneNumber));
     } catch (e) {
       if (kDebugMode) {
-        print('Phone auth start error: ${e.toString()}');
+
       }
       
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
         if (kDebugMode) {
-          print('Emitting error state: ${errorState.errorMessage} with code: ${errorState.errorCode}');
+
         }
         emit(errorState);
       } else {
         final errorMessage = 'Failed to send verification code. Please check your phone number and try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       }
@@ -162,25 +162,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.authenticated(user));
     } catch (e) {
       if (kDebugMode) {
-        print('Phone code verification error: ${e.toString()}');
+
       }
       
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
         if (kDebugMode) {
-          print('Emitting error state: ${errorState.errorMessage} with code: ${errorState.errorCode}');
+
         }
         emit(errorState);
       } else if (e.toString().contains('invalid')) {
         final errorMessage = 'Invalid verification code. Please try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else {
         final errorMessage = 'Failed to verify code. Please try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       }
@@ -197,31 +197,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.authenticated(user));
     } catch (e) {
       if (kDebugMode) {
-        print('Google sign in error: ${e.toString()}');
+
       }
       
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
         if (kDebugMode) {
-          print('Emitting error state: ${errorState.errorMessage} with code: ${errorState.errorCode}');
+
         }
         emit(errorState);
       } else if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
         final errorMessage = 'Google sign-in was cancelled.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else if (e.toString().contains('network')) {
         final errorMessage = 'Network error. Please check your connection and try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else {
         final errorMessage = 'Failed to sign in with Google. Please try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       }
@@ -238,37 +238,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.authenticated(user));
     } catch (e) {
       if (kDebugMode) {
-        print('Sign up error: ${e.toString()}');
+
       }
       
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
         if (kDebugMode) {
-          print('Emitting error state: ${errorState.errorMessage} with code: ${errorState.errorCode}');
+
         }
         emit(errorState);
       } else if (e.toString().contains('already') || e.toString().contains('exists')) {
         final errorMessage = 'This email is already registered. Please try logging in instead.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else if (e.toString().toLowerCase().contains('password')) {
         final errorMessage = 'Password is too weak. Please use a stronger password.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else if (e.toString().contains('network')) {
         final errorMessage = 'Network error. Please check your connection and try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       } else {
         final errorMessage = 'Failed to create account. Please try again.';
         if (kDebugMode) {
-          print('Emitting generic error: $errorMessage');
+
         }
         emit(state.error(errorMessage));
       }
@@ -285,7 +285,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.unauthenticated());
     } catch (e) {
       if (kDebugMode) {
-        print('Sign out error: ${e.toString()}');
+
       }
       
       // Even if sign out fails, we still want to show the user as signed out in the UI
@@ -311,13 +311,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
       
       if (kDebugMode) {
-        print('Password reset email sent or would have been sent if account exists');
+
       }
     } catch (e) {
       // For security reasons, don't reveal specific errors
       // Just log them for debugging purposes
       if (kDebugMode) {
-        print('Error in reset password flow: ${e.toString()}');
+
       }
       
       // Still show success to the user to prevent email enumeration

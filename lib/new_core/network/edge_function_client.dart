@@ -20,12 +20,12 @@ class EdgeFunctionClient {
     try {
       // Log the request in debug mode
       if (kDebugMode) {
-        print('🔄 Edge Function Request: $functionName');
-        print('Body: $body');
+
+
         if (params != null) {
-          print('Query Params: $params');
+
         }
-        print('User ID: ${_client.auth.currentUser?.id}');
+
       }
       
       // Build the URL with query parameters if provided
@@ -49,8 +49,8 @@ class EdgeFunctionClient {
       
       // Log the response in debug mode
       if (kDebugMode) {
-        print('✅ Edge Function Response: $functionName');
-        print('Data: $responseData');
+
+
       }
       
       // Check if the response contains an error
@@ -70,9 +70,9 @@ class EdgeFunctionClient {
     } catch (error, stackTrace) {
       // Log the error in debug mode
       if (kDebugMode) {
-        print('❌ Edge Function Error: $functionName');
-        print('Error: $error');
-        print('Stack trace: $stackTrace');
+
+
+
       }
       
       // Return error response
@@ -132,7 +132,7 @@ class EdgeFunctionClient {
       return value as T?;
     } catch (e) {
       if (kDebugMode) {
-        print('Type conversion error: Could not convert ${value.runtimeType} to $T');
+
       }
       return null;
     }

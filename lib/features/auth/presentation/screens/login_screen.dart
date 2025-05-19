@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading saved email: $e');
+
       }
     }
   }
@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString(_emailKey, email);
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving email: $e');
+
       }
     }
   }
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Only allow explicit user-triggered tab switching
   void _toggleTab(bool isEmailTab) {
     if (kDebugMode) {
-      print('Tab switched to: ${isEmailTab ? "Email" : "Phone"}');
+
     }
     setState(() {
       _isEmailTab = isEmailTab;
@@ -117,12 +117,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final phoneDigits = _phoneController.text.trim();
     
     if (kDebugMode) {
-      print('Phone login attempt - Country Code: $countryCode, Phone: $phoneDigits');
+
     }
     
     if (phoneDigits.isEmpty) {
       if (kDebugMode) {
-        print('Phone validation error: Empty phone number');
+
       }
       context.read<AuthBloc>().add(AuthSetErrorEvent(
         message: 'Please enter your phone number',
@@ -135,13 +135,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final fullPhoneNumber = countryCode + phoneDigits;
     
     if (kDebugMode) {
-      print('Full phone number: $fullPhoneNumber');
+
     }
     
     // Validate phone number format (E.164 format required by Supabase)
     if (!RegExp(r'^\+[0-9]{1,4}[0-9]{6,12}$').hasMatch(fullPhoneNumber)) {
       if (kDebugMode) {
-        print('Phone validation error: Invalid format - $fullPhoneNumber');
+
       }
       context.read<AuthBloc>().add(AuthSetErrorEvent(
         message: 'Please enter a valid phone number',
@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     
     if (kDebugMode) {
-      print('Dispatching phone auth event with number: $fullPhoneNumber');
+
     }
     
     // Store the full phone number in a variable that will be accessible to the BlocConsumer
@@ -193,12 +193,12 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (kDebugMode) {
-            print('AuthState changed: isAuthenticated=${state.isAuthenticated}, isCodeSent=${state.isCodeSent}, isLoading=${state.isLoading}');
+
           }
           
           if (state.isAuthenticated) {
             if (kDebugMode) {
-              print('User authenticated, navigating to onboarding');
+
             }
             Navigator.of(context).pushReplacementNamed('/onboarding');
           }
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final fullPhoneNumber = countryCode + phoneDigits;
             
             if (kDebugMode) {
-              print('OTP code sent, navigating to verification screen with phone: $fullPhoneNumber');
+
             }
             
             // Navigate to phone verification screen with the full phone number
@@ -225,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // and displayed in the UI via the ErrorMessageWidget
           if (state.errorMessage != null && !state.isLoading) {
             if (kDebugMode) {
-              print('Error from BLoC: ${state.errorMessage} with code: ${state.errorCode}');
+
             }
             // IMPORTANT: Do not reset the tab state on error
           }

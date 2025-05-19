@@ -140,7 +140,7 @@ class AppLogger extends BaseLogger {
     // using HTTP or another transport mechanism.
     // For now, we'll just print a message indicating that we would send the log.
     if (kDebugMode) {
-      print('Would send log to remote service: $_remoteLoggingUrl');
+
     }
   }
   

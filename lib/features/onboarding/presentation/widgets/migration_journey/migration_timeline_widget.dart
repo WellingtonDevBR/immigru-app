@@ -110,7 +110,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                     flex: 1,
                     child: Container(
                       width: 2,
-                      color: AppColors.primaryColor.withOpacity(0.5),
+                      color: AppColors.primaryColor.withValues(alpha:0.5),
                     ),
                   ),
                 
@@ -121,7 +121,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: step.isCurrentLocation 
                         ? AppColors.primaryColor 
-                        : AppColors.primaryColor.withOpacity(0.5),
+                        : AppColors.primaryColor.withValues(alpha:0.5),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: Colors.white,
@@ -129,7 +129,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha:0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -143,7 +143,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                     flex: 1,
                     child: Container(
                       width: 2,
-                      color: AppColors.primaryColor.withOpacity(0.5),
+                      color: AppColors.primaryColor.withValues(alpha:0.5),
                     ),
                   ),
               ],
@@ -167,7 +167,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha:0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -181,7 +181,7 @@ class MigrationTimelineWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: step.isCurrentLocation
-                          ? AppColors.primaryColor.withOpacity(0.1)
+                          ? AppColors.primaryColor.withValues(alpha:0.1)
                           : isDarkMode
                               ? Colors.grey[800]
                               : Colors.grey[50],

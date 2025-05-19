@@ -95,8 +95,8 @@ class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
             Container(
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.grey.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.05),
+                    ? Colors.grey.withValues(alpha:0.1)
+                    : Colors.grey.withValues(alpha:0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDarkMode ? Colors.white30 : Colors.black12,
@@ -123,7 +123,7 @@ class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
                   onChanged: (value) {
                     if (value != null) {
                       if (kDebugMode) {
-                        print('Country code changed to: $value');
+
                       }
                       setState(() {
                         _countryCode = value;
@@ -154,8 +154,8 @@ class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
                   ),
                   filled: true,
                   fillColor: isDarkMode
-                      ? Colors.grey.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.05),
+                      ? Colors.grey.withValues(alpha:0.1)
+                      : Colors.grey.withValues(alpha:0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
@@ -181,7 +181,7 @@ class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
                 ),
                 onChanged: (value) {
                   if (kDebugMode) {
-                    print('Phone number changed: $value');
+
                   }
                 },
                 inputFormatters: [
@@ -262,8 +262,8 @@ class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDarkMode 
-                ? Colors.grey.withOpacity(0.1) 
-                : Colors.grey.withOpacity(0.05),
+                ? Colors.grey.withValues(alpha:0.1) 
+                : Colors.grey.withValues(alpha:0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? Colors.white12 : Colors.black12,

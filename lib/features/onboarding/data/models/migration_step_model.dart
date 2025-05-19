@@ -84,7 +84,7 @@ class MigrationStepModel extends MigrationStep {
     } else {
       // Try to find the country code by looking up the country by ID or name
       // This is a fallback for when the country code is not directly available
-      print('Country code not found in JSON, attempting to find by country name: ${countryName}');
+
       
       // For Australia, we know the code is AU
       if (countryName.toLowerCase() == 'australia') {
@@ -109,7 +109,7 @@ class MigrationStepModel extends MigrationStep {
       }
     }
     
-    print('Extracted country code: "$countryCode" for country: "$countryName"');
+
     
     // Extract dates
     DateTime? startDate;
@@ -139,7 +139,7 @@ class MigrationStepModel extends MigrationStep {
     // CRITICAL: Check all possible field names for target country flag
     bool isTargetCountry = false;
     // Debug: Log all possible target flags in the JSON
-    print('Target flags in JSON - IsTarget: ${json['IsTarget']}, isTargetCountry: ${json['isTargetCountry']}, isTarget: ${json['isTarget']}, isTargetDestination: ${json['isTargetDestination']}');
+
     
     if (json.containsKey('isTargetCountry')) {
       isTargetCountry = json['isTargetCountry'] == true;
@@ -152,7 +152,7 @@ class MigrationStepModel extends MigrationStep {
     }
     
     // Debug: Log the extracted target flag
-    print('Extracted isTargetCountry = $isTargetCountry');
+
     
     // Check for birth country flag
     bool isBirthCountry = false;

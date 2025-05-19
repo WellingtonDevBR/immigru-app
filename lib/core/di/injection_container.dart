@@ -52,7 +52,7 @@ import 'package:immigru/presentation/blocs/immi_grove/immi_grove_bloc.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  print('DEBUG: Initializing old architecture dependency injection');
+
   
   // Skip initializing the new service locator when using the old architecture
   // This prevents potential circular dependencies

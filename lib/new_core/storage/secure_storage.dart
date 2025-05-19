@@ -16,7 +16,7 @@ class SecureStorage {
       return await _storage.read(key: key);
     } catch (e) {
       if (kDebugMode) {
-        print('Error reading from secure storage: $e');
+
       }
       return null;
     }
@@ -28,7 +28,7 @@ class SecureStorage {
       await _storage.write(key: key, value: value);
     } catch (e) {
       if (kDebugMode) {
-        print('Error writing to secure storage: $e');
+
       }
     }
   }
@@ -39,7 +39,7 @@ class SecureStorage {
       return await _storage.containsKey(key: key);
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking secure storage: $e');
+
       }
       return false;
     }
@@ -50,7 +50,7 @@ class SecureStorage {
     try {
       await _storage.delete(key: key);
     } catch (e) {
-      print('Error deleting from secure storage: $e');
+
     }
   }
   
@@ -59,7 +59,7 @@ class SecureStorage {
     try {
       await _storage.deleteAll();
     } catch (e) {
-      print('Error clearing secure storage: $e');
+
     }
   }
   
@@ -68,7 +68,7 @@ class SecureStorage {
     try {
       return await _storage.readAll();
     } catch (e) {
-      print('Error reading all from secure storage: $e');
+
       return {};
     }
   }
