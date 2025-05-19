@@ -47,6 +47,14 @@ class _MigrationJourneyStepWidgetState
 
   // BLoCs
   late final MigrationStepsBloc _migrationStepsBloc;
+  late OnboardingBloc _onboardingBloc;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safely capture the bloc reference when dependencies change
+    _onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
+  }
 
   // Data
   List<CountryModel> _countries = [];
@@ -439,20 +447,29 @@ class _MigrationJourneyStepWidgetState
       debugPrint('[$timestamp] 🔄 Adding MigrationStepsForceChanged event');
       _migrationStepsBloc.add(migration_steps.MigrationStepsForceChanged());
 
+      // Use the stored bloc reference and get current data
+      final currentMigrationSteps = _migrationStepsBloc.state.steps;
+      final onboardingData = _onboardingBloc.state.data;
+
       // First update the onboarding data with the latest migration steps
-      final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
-      final updatedOnboardingData = onboardingBloc.state.data.copyWith(
-        migrationSteps: _migrationStepsBloc.state.steps,
+      final updatedOnboardingData = onboardingData.copyWith(
+        migrationSteps: currentMigrationSteps,
       );
 
       // Update the onboarding data
       debugPrint(
           '[$timestamp] 📝 Updating onboarding data with latest migration steps');
-      onboardingBloc.add(OnboardingDataChanged(updatedOnboardingData));
+      _onboardingBloc.add(OnboardingDataChanged(updatedOnboardingData));
 
       // Wait a moment for the onboarding data to update
       debugPrint('[$timestamp] ⏳ Waiting for onboarding data to update');
       await Future.delayed(const Duration(milliseconds: 100));
+      
+      // Check if widget is still mounted before proceeding
+      if (!mounted) {
+        debugPrint('[$timestamp] ⚠️ Widget no longer mounted, aborting save');
+        return;
+      }
 
       // Now save the migration steps directly
       debugPrint('[$timestamp] 💾 Adding MigrationStepsSaved event');
@@ -460,35 +477,39 @@ class _MigrationJourneyStepWidgetState
 
       // Also trigger the onboarding save to ensure both are saved
       debugPrint('[$timestamp] 💾 Adding OnboardingSaved event');
-      onboardingBloc.add(const OnboardingSaved());
+      _onboardingBloc.add(const OnboardingSaved());
 
       debugPrint('[$timestamp] ✅ Migration steps save process completed');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Migration steps saved successfully',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                ),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Migration steps saved successfully',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                  ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
           ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     } catch (e) {
       debugPrint('[$timestamp] ❌ Error in _triggerSaveData: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error saving migration steps: $e',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                ),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error saving migration steps: $e',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                  ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+        );
+      }
     }
   }
 

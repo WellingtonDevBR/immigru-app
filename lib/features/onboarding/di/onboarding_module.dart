@@ -27,8 +27,8 @@ import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboard
 import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart' as new_arch;
 import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/new_core/logging/logger_provider.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
 
 /// Onboarding module for dependency injection
 /// Registers all onboarding feature dependencies

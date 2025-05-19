@@ -1,12 +1,9 @@
-import 'package:flutter/foundation.dart';
-import 'package:immigru/new_core/logging/app_logger.dart';
-import 'package:immigru/new_core/logging/edge_function_logger.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/unified_logger.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
-/// Provider class for creating and configuring different types of loggers
-/// This follows the factory pattern to create appropriate logger instances
+/// Simple provider for logger instances
 class LoggerProvider {
-  /// The singleton instance
+  /// Singleton instance
   static final LoggerProvider _instance = LoggerProvider._internal();
   
   /// Factory constructor to return the singleton instance
@@ -15,52 +12,21 @@ class LoggerProvider {
   /// Internal constructor
   LoggerProvider._internal();
   
-  /// The main application logger instance
-  final AppLogger _appLogger = AppLogger();
+  /// The unified logger instance
+  final UnifiedLogger _logger = UnifiedLogger();
   
-  /// Initialize the logger with appropriate configuration
-  void initialize({
-    bool useStructuredLogging = false,
-    bool useRemoteLogging = false,
-    String? remoteLoggingEndpoint,
-    LogLevel minLogLevel = LogLevel.info,
-  }) {
-    // Configure the app logger
-    _appLogger.setMinLogLevel(kDebugMode ? LogLevel.verbose : minLogLevel);
-    _appLogger.enableStructuredLogging(useStructuredLogging);
-    _appLogger.configureRemoteLogging(
-      enabled: useRemoteLogging,
-      endpoint: remoteLoggingEndpoint,
-    );
-  }
+  /// Get the default logger
+  LoggerInterface getLogger() => _logger;
   
-  /// Get the main application logger
-  AppLogger getAppLogger() => _appLogger;
-  
-  /// Create a new edge function logger
-  EdgeFunctionLogger createEdgeFunctionLogger() {
-    return EdgeFunctionLogger(_appLogger);
-  }
-  
-  /// Create a category-specific logger that logs with a specific tag
-  LoggerInterface createTaggedLogger(String tag) {
-    return _TaggedLogger(_appLogger, tag);
-  }
-  
-  /// Create a logger for a specific feature
+  /// Create a logger with a specific tag for a feature
   LoggerInterface createFeatureLogger(String featureName) {
-    return _TaggedLogger(_appLogger, 'Feature:$featureName');
-  }
-  
-  /// Create a logger for a specific class
-  LoggerInterface createClassLogger(Type classType) {
-    return _TaggedLogger(_appLogger, classType.toString());
+    return _TaggedLogger(_logger, featureName);
   }
 }
 
-/// A logger that adds a specific tag to all log messages
+/// A logger that adds a tag to all log messages
 class _TaggedLogger implements LoggerInterface {
-  final AppLogger _logger;
+  final LoggerInterface _logger;
   final String _tag;
   
   _TaggedLogger(this._logger, this._tag);
@@ -96,6 +62,16 @@ class _TaggedLogger implements LoggerInterface {
   }
   
   @override
+  void network(String message, {LogLevel level = LogLevel.info, String? tag, Object? error, StackTrace? stackTrace}) {
+    _logger.network(message, level: level, tag: tag ?? _tag, error: error, stackTrace: stackTrace);
+  }
+  
+  @override
+  void logEvent(String eventName, {Map<String, dynamic>? parameters, LogLevel level = LogLevel.info}) {
+    _logger.logEvent(eventName, parameters: parameters, level: level);
+  }
+  
+  @override
   void setMinLogLevel(LogLevel level) {
     _logger.setMinLogLevel(level);
   }
@@ -103,5 +79,20 @@ class _TaggedLogger implements LoggerInterface {
   @override
   void setLoggingEnabled(bool enabled) {
     _logger.setLoggingEnabled(enabled);
+  }
+  
+  @override
+  void configureRemoteLogging({required bool enabled, String? endpoint}) {
+    _logger.configureRemoteLogging(enabled: enabled, endpoint: endpoint);
+  }
+  
+  @override
+  void setUserId(String? userId) {
+    _logger.setUserId(userId);
+  }
+  
+  @override
+  void addGlobalProperty(String key, dynamic value) {
+    _logger.addGlobalProperty(key, value);
   }
 }

@@ -1,6 +1,6 @@
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Use case for adding a migration step
 class AddMigrationStepUseCase {

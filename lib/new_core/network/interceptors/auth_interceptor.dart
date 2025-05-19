@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:immigru/new_core/network/interceptors/network_interceptor.dart';
+import 'package:immigru/new_core/logging/log_util.dart';
 
 /// Interceptor that adds authentication headers to requests
 class AuthInterceptor implements NetworkInterceptor {
@@ -31,19 +31,19 @@ class AuthInterceptor implements NetworkInterceptor {
   
   @override
   Future<http.Response?> onResponse(http.Response response) async {
-    // No modifications needed for responses
+    // We don't need to modify the response
     return null;
   }
-  
+
   @override
   Future<void> onError(Object error, StackTrace stackTrace) async {
-    // Handle authentication errors if needed
-    if (kDebugMode) {
-      if (error.toString().contains('401') || 
-          error.toString().contains('unauthorized')) {
-
-      }
-    }
+    // Log authentication errors
+    LogUtil.e(
+      'Authentication Error',
+      tag: 'Auth',
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
   
   /// Determine if authentication should be skipped for this request

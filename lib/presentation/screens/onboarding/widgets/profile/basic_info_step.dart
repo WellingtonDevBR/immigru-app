@@ -416,6 +416,12 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
           .from('avatars')
           .getPublicUrl('public/$fileName');
 
+      // Check if widget is still mounted before accessing context
+      if (!mounted) {
+        debugPrint('Widget no longer mounted, aborting profile update');
+        return;
+      }
+      
       // Check which bloc is available and update accordingly
       if (context.read<OnboardingBloc?>() != null) {
         // Update the profile with the photo URL in OnboardingBloc

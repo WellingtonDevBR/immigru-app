@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show KeyEvent, KeyDownEvent, LogicalKeyboardKey, FilteringTextInputFormatter;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
@@ -155,8 +155,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     }
   }
 
-  void _onKeyEvent(int index, RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
+  void _onKeyEvent(int index, KeyEvent event) {
+    if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.backspace && 
           _controllers[index].text.isEmpty && 
           index > 0) {
@@ -267,9 +267,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         (index) => SizedBox(
           width: 45,
           height: 55,
-          child: RawKeyboardListener(
+          child: KeyboardListener(
             focusNode: FocusNode(),
-            onKey: (event) => _onKeyEvent(index, event),
+            onKeyEvent: (event) => _onKeyEvent(index, event),
             child: TextFormField(
               controller: _controllers[index],
               focusNode: _focusNodes[index],

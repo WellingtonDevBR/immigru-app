@@ -7,7 +7,7 @@ import 'package:immigru/features/onboarding/domain/usecases/save_migration_steps
 import 'package:immigru/features/onboarding/domain/usecases/update_migration_step_usecase.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_state.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing migration journey
 class MigrationJourneyBloc extends Bloc<MigrationJourneyEvent, MigrationJourneyState> {

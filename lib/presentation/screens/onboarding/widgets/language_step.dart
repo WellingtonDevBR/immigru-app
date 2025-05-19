@@ -40,6 +40,16 @@ class _LanguageStepState extends State<LanguageStep> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  // Store a reference to the onboarding bloc
+  late OnboardingBloc _onboardingBloc;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safely capture the bloc reference when dependencies change
+    _onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -186,9 +196,9 @@ class _LanguageStepState extends State<LanguageStep> {
       final success = await _saveUserLanguagesUseCase(languageIds);
 
       if (success) {
-        // If successful, trigger save in the onboarding bloc
-        if (context.mounted) {
-          BlocProvider.of<OnboardingBloc>(context).add(const OnboardingSaved());
+        // If successful, trigger save in the onboarding bloc using the stored reference
+        if (mounted) {
+          _onboardingBloc.add(const OnboardingSaved());
         }
       }
     } catch (e) {

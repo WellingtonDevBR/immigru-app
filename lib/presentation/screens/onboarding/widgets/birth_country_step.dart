@@ -158,10 +158,15 @@ class _BirthCountryStepState extends State<BirthCountryStep> {
                   );
                   
                   // Automatically trigger next step after a short delay
+                  // Store the bloc reference before the async operation
+                  final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
+                  
                   Future.delayed(const Duration(milliseconds: 1000), () {
-                    // Find the onboarding bloc and request next step
-                    final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
-                    onboardingBloc.add(const NextStepRequested());
+                    // Check if widget is still mounted before using the bloc
+                    if (mounted) {
+                      // Use the stored bloc reference
+                      onboardingBloc.add(const NextStepRequested());
+                    }
                   });
                 },
                 isLoading: _isLoading,

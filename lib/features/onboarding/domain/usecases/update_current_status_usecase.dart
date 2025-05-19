@@ -1,4 +1,4 @@
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 import 'package:immigru/domain/usecases/onboarding_usecases.dart';
 
 /// Use case for updating the user's current migration status

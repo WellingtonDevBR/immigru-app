@@ -1,7 +1,7 @@
 import 'package:immigru/domain/entities/onboarding_data.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Implementation of the OnboardingFeatureRepository for the new architecture
 class OnboardingRepositoryImpl implements OnboardingFeatureRepository {

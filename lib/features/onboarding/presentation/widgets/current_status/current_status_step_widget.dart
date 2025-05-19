@@ -6,6 +6,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/current_status/cur
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_state.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/new_core/logging/log_util.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 import 'dart:math' as math;
 
@@ -132,7 +133,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
             setState(() {
               _statusSelected = true;
             });
-            debugPrint('Returning to current status screen with existing selection - not auto-navigating');
+            LogUtil.d('Returning to current status screen with existing selection - not auto-navigating', tag: 'CurrentStatusStep');
           }
         }
       },
@@ -406,7 +407,7 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent> wi
                   _statusSelected = false; // Reset to allow navigation
                 });
                 
-                debugPrint('Manual selection detected - enabling navigation');
+                LogUtil.d('Manual selection detected - enabling navigation', tag: 'CurrentStatusStep');
               }
               
               // Select the status

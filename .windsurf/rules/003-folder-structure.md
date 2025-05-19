@@ -19,7 +19,6 @@ lib/
 │   │   └── logger_provider.dart
 │   ├── services
 │   │   ├── auth_logger.dart
-│   │   ├── edge_function_logger.dart
 │   │   ├── logger_service.dart
 │   │   ├── network_service.dart
 │   │   ├── onboarding_service.dart
@@ -145,45 +144,37 @@ lib/
 │   │   ├── data
 │   │   │   ├── datasources
 │   │   │   │   └── onboarding_data_source.dart
+│   │   │   ├── models
+│   │   │   │   └── migration_step_model.dart
 │   │   │   └── repositories
-│   │   │       └── onboarding_repository_adapter.dart
+│   │   │       ├── migration_journey_repository_impl.dart
+│   │   │       ├── onboarding_repository_adapter.dart
+│   │   │       ├── onboarding_repository_impl.dart
+│   │   │       └── visa_repository_impl.dart
 │   │   ├── di
 │   │   │   └── onboarding_module.dart
 │   │   ├── domain
 │   │   │   ├── entities
+│   │   │   │   ├── migration_status.dart
+│   │   │   │   ├── migration_step.dart
 │   │   │   │   └── onboarding_step.dart
 │   │   │   ├── repositories
-│   │   │   │   └── onboarding_repository.dart
+│   │   │   │   ├── migration_journey_repository.dart
+│   │   │   │   ├── onboarding_repository.dart
+│   │   │   │   └── visa_repository.dart
 │   │   │   └── usecases
-│   │   │       └── update_birth_country_usecase.dart
+│   │   │       ├── add_migration_step_usecase.dart
+│   │   │       ├── check_onboarding_status_usecase.dart
+│   │   │       ├── complete_onboarding_usecase.dart
+│   │   │       ├── get_migration_steps_usecase.dart
+│   │   │       ├── get_onboarding_data_usecase.dart
+│   │   │       ├── remove_migration_step_usecase.dart
+│   │   │       ├── save_migration_steps_usecase.dart
+│   │   │       ├── save_onboarding_data_usecase.dart
+│   │   │       ├── update_birth_country_usecase.dart
+│   │   │       ├── update_current_status_usecase.dart
+│   │   │       └── update_migration_step_usecase.dart
 │   │   ├── onboarding_feature.dart
 │   │   └── presentation
 │   │       ├── bloc
 │   │       │   ├── birth_country
-│   │       │   │   ├── birth_country_bloc.dart
-│   │       │   │   ├── birth_country_event.dart
-│   │       │   │   └── birth_country_state.dart
-│   │       │   └── onboarding
-│   │       │       ├── onboarding_bloc.dart
-│   │       │       ├── onboarding_event.dart
-│   │       │       └── onboarding_state.dart
-│   │       ├── data
-│   │       ├── domain
-│   │       ├── presentation
-│   │       ├── screens
-│   │       │   └── onboarding_screen.dart
-│   │       └── widgets
-│   │           └── birth_country
-│   │               └── birth_country_step_widget.dart
-│   ├── profile
-│   │   └── di
-│   └── welcome
-│       ├── di
-│       │   └── welcome_module.dart
-│       └── presentation
-│           ├── bloc
-│           │   ├── welcome_bloc.dart
-│           │   ├── welcome_event.dart
-│           │   └── welcome_state.dart
-│           └── screens
-│               └── welcome_screen.dart

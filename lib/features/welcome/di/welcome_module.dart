@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:immigru/new_core/logging/logger_provider.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Welcome module for dependency injection
 /// Registers all welcome feature dependencies

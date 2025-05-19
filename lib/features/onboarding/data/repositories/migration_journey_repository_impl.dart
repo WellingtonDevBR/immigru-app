@@ -2,8 +2,8 @@ import 'package:immigru/features/onboarding/data/models/migration_step_model.dar
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
-import 'package:flutter/foundation.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/new_core/logging/log_util.dart';
 
 /// Implementation of the MigrationJourneyRepository
 class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
@@ -228,8 +228,8 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
               tag: 'MigrationJourneyRepository'
             );
             
-            // Debug print for immediate console visibility
-            debugPrint('[$timestamp] 🗑️ DELETION: Step ${processedDeletedStep['id']} (${deletedStep.countryName})');
+            // Use LogUtil for consistent logging
+            LogUtil.w('[$timestamp] 🗑️ DELETION: Step ${processedDeletedStep['id']} (${deletedStep.countryName})', tag: 'MigrationJourneyRepository');
           }
         }
       }

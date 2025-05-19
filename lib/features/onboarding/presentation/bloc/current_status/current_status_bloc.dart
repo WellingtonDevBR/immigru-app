@@ -3,7 +3,7 @@ import 'package:immigru/features/onboarding/domain/entities/migration_status.dar
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_state.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing the current status step
 class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {

@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_event.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_state.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing welcome screen state
 class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {

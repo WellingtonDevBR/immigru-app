@@ -15,9 +15,6 @@ class SecureStorage {
     try {
       return await _storage.read(key: key);
     } catch (e) {
-      if (kDebugMode) {
-
-      }
       return null;
     }
   }
@@ -50,7 +47,7 @@ class SecureStorage {
     try {
       await _storage.delete(key: key);
     } catch (e) {
-
+      // Silently ignore errors when deleting from secure storage
     }
   }
   
@@ -59,7 +56,7 @@ class SecureStorage {
     try {
       await _storage.deleteAll();
     } catch (e) {
-
+      // Silently ignore errors when clearing secure storage
     }
   }
   
@@ -68,7 +65,7 @@ class SecureStorage {
     try {
       return await _storage.readAll();
     } catch (e) {
-
+      // Return empty map on error reading from secure storage
       return {};
     }
   }

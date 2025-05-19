@@ -61,7 +61,7 @@ class AuthDebugHelper {
         }
       }
     } catch (e) {
-
+      // Silently ignore errors in debug helper
     }
   }
   

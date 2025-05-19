@@ -184,20 +184,22 @@ class _MigrationStepModalState extends State<MigrationStepModal> {
           }
         });
       } catch (e) {
-        setState(() {
-          _isLoadingVisas = false;
-          // Use fallback visa options when API fails
-          _filteredVisas =
-              _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingVisas = false;
+            // Use fallback visa options when API fails
+            _filteredVisas =
+                _visaRepository.getFallbackVisaOptions(_selectedCountry!.id);
+          });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load visas: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load visas: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } else {
       setState(() {

@@ -7,8 +7,17 @@ import 'package:immigru/features/auth/presentation/widgets/social_login_button.d
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/shared/theme/app_text_styles.dart';
 
+/// Interface for accessing PhoneLoginWidget state methods
+abstract class PhoneLoginWidgetState extends State<PhoneLoginWidget> {
+  /// Get the currently selected country code
+  String getCountryCode();
+  
+  /// Access to the country code
+  String get countryCode;
+}
+
 // Global key to access the state of PhoneLoginWidget from outside
-final GlobalKey<_PhoneLoginWidgetState> phoneLoginWidgetKey = GlobalKey<_PhoneLoginWidgetState>();
+final GlobalKey<PhoneLoginWidgetState> phoneLoginWidgetKey = GlobalKey<PhoneLoginWidgetState>();
 
 /// Widget for phone login form with country selection
 class PhoneLoginWidget extends StatefulWidget {
@@ -30,7 +39,7 @@ class PhoneLoginWidget extends StatefulWidget {
   /// Get the currently selected country code
   String getCountryCode() {
     final state = phoneLoginWidgetKey.currentState;
-    return state != null ? state._countryCode : '+1';
+    return state != null ? state.countryCode : '+1';
   }
 
   /// Constructor
@@ -47,11 +56,14 @@ class PhoneLoginWidget extends StatefulWidget {
   State<PhoneLoginWidget> createState() => _PhoneLoginWidgetState();
 }
 
-class _PhoneLoginWidgetState extends State<PhoneLoginWidget> {
+class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
   final FocusNode _phoneFocusNode = FocusNode();
   String _countryCode = '+1'; // Default US country code
   
-  /// Get the currently selected country code
+  @override
+  String get countryCode => _countryCode;
+  
+  @override
   String getCountryCode() {
     return _countryCode;
   }

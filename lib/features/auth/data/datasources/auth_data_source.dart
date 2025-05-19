@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:immigru/new_core/logging/log_util.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:immigru/core/config/google_auth_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -752,7 +753,7 @@ class AuthDataSource {
       // Note: For security reasons, Supabase doesn't indicate whether the email exists
       // This is intentional to prevent email enumeration attacks
     } catch (e) {
-      debugPrint(e.toString());
+      LogUtil.e('Error resetting password', tag: 'AuthDataSource', error: e);
     }
   }
 

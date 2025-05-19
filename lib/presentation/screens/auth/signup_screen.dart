@@ -169,15 +169,18 @@ class _SignupScreenState extends State<SignupScreen>
                 ),
               );
               // Navigate back to login screen after showing message
-              void delayedNavigateToLogin(BuildContext ctx) async {
-                await Future.delayed(const Duration(seconds: 3));
-                if (!mounted) return;
-                Navigator.of(ctx).pushReplacement(
+              // Capture the navigation context before the async gap
+              final navigatorContext = Navigator.of(context);
+              
+              // Schedule the navigation after a delay
+              Future.delayed(const Duration(seconds: 3), () {
+                if (!mounted) return; // Check if widget is still mounted
+                
+                // Use the captured navigator context instead of accessing context directly
+                navigatorContext.pushReplacement(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
-              }
-
-              delayedNavigateToLogin(context);
+              });
             }
 
             // Navigate to home screen when authentication is successful

@@ -36,10 +36,20 @@ class _InterestStepState extends State<InterestStep>
   bool _isLoading = true;
   String? _errorMessage;
   bool _isSaving = false;
+  
+  // Store a reference to the onboarding bloc
+  late OnboardingBloc _onboardingBloc;
 
   // Keep this widget alive to prevent rebuilds
   @override
   bool get wantKeepAlive => true;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safely capture the bloc reference when dependencies change
+    _onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
+  }
 
   @override
   void initState() {
@@ -102,9 +112,9 @@ class _InterestStepState extends State<InterestStep>
           // Notify parent of the change
           widget.onInterestsSelected(_selectedInterests);
 
-          // Update the onboarding bloc with the selected interests
-          if (context.mounted) {
-            BlocProvider.of<OnboardingBloc>(context).add(
+          // Update the onboarding bloc with the selected interests using the stored reference
+          if (mounted) {
+            _onboardingBloc.add(
               InterestsUpdated(_selectedInterests),
             );
           }
@@ -176,9 +186,9 @@ class _InterestStepState extends State<InterestStep>
       final success = await _saveUserInterestsUseCase(interestIds);
 
       if (success) {
-        // If successful, trigger save in the onboarding bloc
-        if (context.mounted) {
-          BlocProvider.of<OnboardingBloc>(context).add(const OnboardingSaved());
+        // If successful, trigger save in the onboarding bloc using the stored reference
+        if (mounted) {
+          _onboardingBloc.add(const OnboardingSaved());
         }
       }
     } catch (e) {

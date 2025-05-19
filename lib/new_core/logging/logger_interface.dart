@@ -19,11 +19,26 @@ abstract class LoggerInterface {
   /// Log a "what a terrible failure" message
   void wtf(String message, {String? tag, Object? error, StackTrace? stackTrace});
   
+  /// Log a network-related message
+  void network(String message, {LogLevel level = LogLevel.info, String? tag, Object? error, StackTrace? stackTrace});
+  
+  /// Log a structured event with parameters
+  void logEvent(String eventName, {Map<String, dynamic>? parameters, LogLevel level = LogLevel.info});
+  
   /// Set the minimum log level
   void setMinLogLevel(LogLevel level);
   
   /// Enable or disable logging
   void setLoggingEnabled(bool enabled);
+  
+  /// Configure remote logging capabilities
+  void configureRemoteLogging({required bool enabled, String? endpoint});
+  
+  /// Set user context for logs
+  void setUserId(String? userId);
+  
+  /// Add a global property that will be included in all logs
+  void addGlobalProperty(String key, dynamic value);
 }
 
 /// Log level enum to categorize the severity of logs
@@ -34,15 +49,4 @@ enum LogLevel {
   warning,
   error,
   wtf, // What a Terrible Failure
-}
-
-/// Log category enum to categorize the type of logs
-enum LogCategory {
-  auth,
-  network,
-  database,
-  ui,
-  navigation,
-  performance,
-  general,
 }

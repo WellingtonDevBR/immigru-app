@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing the overall onboarding flow
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {

@@ -4,7 +4,7 @@ import 'package:immigru/features/onboarding/domain/usecases/update_birth_country
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_state.dart';
 import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing the birth country step in onboarding
 class BirthCountryBloc extends Bloc<BirthCountryEvent, BirthCountryState> {

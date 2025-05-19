@@ -49,6 +49,8 @@ dependencies:
   url_launcher: ^6.1.12
   path_provider: ^2.1.1
   image_picker: ^1.0.4
+  path: ^1.8.3
+  uuid: ^4.2.1
 
   # Apple Sign-In (updated versions)
   sign_in_with_apple: ^7.0.1

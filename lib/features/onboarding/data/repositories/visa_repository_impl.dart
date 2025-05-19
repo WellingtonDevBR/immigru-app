@@ -2,7 +2,7 @@ import 'package:immigru/data/models/visa_model.dart';
 import 'package:immigru/domain/entities/visa.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/shared/interfaces/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Implementation of the VisaRepository interface for the new architecture
 class VisaRepositoryImpl implements VisaRepository {
