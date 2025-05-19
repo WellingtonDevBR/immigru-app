@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/session_manager.dart';
 import 'package:immigru/domain/entities/user.dart';
 import 'package:immigru/domain/usecases/auth_usecases.dart';
@@ -10,7 +9,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SessionManager _sessionManager;
   final SendOtpToPhoneUseCase _sendOtpToPhoneUseCase;
   final VerifyPhoneOtpUseCase _verifyPhoneOtpUseCase;
-  final LoggerService _logger = LoggerService();
   
   AuthBloc({
     required SessionManager sessionManager,

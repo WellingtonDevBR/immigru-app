@@ -306,7 +306,6 @@ class AuthDataSource {
           // Get client IDs from config
           final webClientId = GoogleAuthConfig.webClientId;
           final iosClientId = GoogleAuthConfig.iosClientId;
-          final androidClientId = GoogleAuthConfig.androidClientId;
 
           // Initialize Google Sign-In with appropriate client IDs based on platform
           final GoogleSignIn googleSignIn = GoogleSignIn(

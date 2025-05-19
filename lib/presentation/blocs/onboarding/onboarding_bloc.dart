@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/entities/onboarding_data.dart';
 import 'package:immigru/domain/entities/user.dart';
 import 'package:immigru/domain/usecases/onboarding_usecases.dart';
@@ -12,7 +11,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final SaveOnboardingDataUseCase _saveOnboardingDataUseCase;
   final CompleteOnboardingUseCase _completeOnboardingUseCase;
   final CheckOnboardingStatusUseCase _checkOnboardingStatusUseCase;
-  final LoggerService _logger;
   final User? user;
 
   OnboardingBloc({
@@ -20,13 +18,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     required SaveOnboardingDataUseCase saveOnboardingDataUseCase,
     required CompleteOnboardingUseCase completeOnboardingUseCase,
     required CheckOnboardingStatusUseCase checkOnboardingStatusUseCase,
-    required LoggerService logger,
     this.user,
   })  : _getOnboardingDataUseCase = getOnboardingDataUseCase,
         _saveOnboardingDataUseCase = saveOnboardingDataUseCase,
         _completeOnboardingUseCase = completeOnboardingUseCase,
         _checkOnboardingStatusUseCase = checkOnboardingStatusUseCase,
-        _logger = logger,
         super(OnboardingState.initial()) {
     on<OnboardingInitialized>(_onInitialized);
     on<BirthCountryUpdated>(_onBirthCountryUpdated);
@@ -240,19 +236,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ProfileBioUpdated event,
     Emitter<OnboardingState> emit,
   ) {
-    
-    
-    
-    
-    // Check if the bio has actually changed
-    final hasChanged = state.data.bio != event.bio;
-    
-    
-    // For privacy reasons, don't log the full bio content, just the first few words
-    final bioPreview = event.bio.isNotEmpty 
-        ? '${event.bio.split(' ').take(5).join(' ')}${event.bio.split(' ').length > 5 ? '...' : ''}'
-        : '(empty)';
-    
     
     emit(state.copyWith(
       data: state.data.copyWith(
@@ -542,8 +525,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         data: event.data,
         isLoading: false,
       ));
-    } catch (e, stackTrace) {
-      _logger.error('OnboardingBloc', 'Error updating onboarding data', error: e, stackTrace: stackTrace);
+    } catch (e) {
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to update onboarding data',

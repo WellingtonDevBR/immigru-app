@@ -24,7 +24,7 @@ class CommunityFeedItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Card(
       margin: EdgeInsets.zero,
       elevation: 1,
@@ -47,7 +47,7 @@ class CommunityFeedItem extends StatelessWidget {
                 // Category avatar
                 _buildCategoryAvatar(context),
                 const SizedBox(width: 12),
-                
+
                 // Post metadata
                 Expanded(
                   child: Column(
@@ -58,13 +58,13 @@ class CommunityFeedItem extends StatelessWidget {
                         category,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode 
-                              ? AppColors.textPrimaryDark 
+                          color: isDarkMode
+                              ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      
+
                       // User info and time
                       Row(
                         children: [
@@ -72,8 +72,8 @@ class CommunityFeedItem extends StatelessWidget {
                             userName,
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDarkMode 
-                                  ? AppColors.textSecondaryDark 
+                              color: isDarkMode
+                                  ? AppColors.textSecondaryDark
                                   : AppColors.textSecondaryLight,
                             ),
                           ),
@@ -81,8 +81,8 @@ class CommunityFeedItem extends StatelessWidget {
                           Text(
                             '•',
                             style: TextStyle(
-                              color: isDarkMode 
-                                  ? AppColors.textSecondaryDark 
+                              color: isDarkMode
+                                  ? AppColors.textSecondaryDark
                                   : AppColors.textSecondaryLight,
                             ),
                           ),
@@ -91,42 +91,45 @@ class CommunityFeedItem extends StatelessWidget {
                             timeAgo,
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDarkMode 
-                                  ? AppColors.textSecondaryDark 
+                              color: isDarkMode
+                                  ? AppColors.textSecondaryDark
                                   : AppColors.textSecondaryLight,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      
+
                       // Location
                       Text(
                         location,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDarkMode 
-                              ? AppColors.textSecondaryDark 
+                          color: isDarkMode
+                              ? AppColors.textSecondaryDark
                               : AppColors.textSecondaryLight,
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 // Post type indicator
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? AppColors.surfaceDark : AppColors.surfaceLight,
+                    color: isDarkMode
+                        ? AppColors.surfaceDark
+                        : AppColors.surfaceLight,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'Update',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDarkMode 
-                          ? AppColors.textSecondaryDark 
+                      color: isDarkMode
+                          ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
                     ),
                   ),
@@ -134,7 +137,7 @@ class CommunityFeedItem extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Post content
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -142,13 +145,13 @@ class CommunityFeedItem extends StatelessWidget {
               content,
               style: TextStyle(
                 fontSize: 16,
-                color: isDarkMode 
-                    ? AppColors.textPrimaryDark 
+                color: isDarkMode
+                    ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
               ),
             ),
           ),
-          
+
           // Post image (if any)
           if (imageUrl != null)
             Container(
@@ -161,7 +164,7 @@ class CommunityFeedItem extends StatelessWidget {
                 ),
               ),
             ),
-          
+
           // Post actions
           Padding(
             padding: const EdgeInsets.all(8),
@@ -176,7 +179,7 @@ class CommunityFeedItem extends StatelessWidget {
                     // TODO: Handle like action
                   },
                 ),
-                
+
                 // Comment button
                 _buildActionButton(
                   context,
@@ -186,7 +189,7 @@ class CommunityFeedItem extends StatelessWidget {
                     // TODO: Handle comment action
                   },
                 ),
-                
+
                 // Share button
                 _buildActionButton(
                   context,
@@ -203,12 +206,13 @@ class CommunityFeedItem extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildCategoryAvatar(BuildContext context) {
     // Generate a color based on the category name
     final int hashCode = category.hashCode;
-    final color = Color((hashCode & 0xFFFFFF) | 0xFF000000).withValues(alpha: 0.8);
-    
+    final color =
+        Color((hashCode & 0xFFFFFF) | 0xFF000000).withValues(alpha: 0.8);
+
     return Hero(
       tag: 'category-$category',
       child: CircleAvatar(
@@ -224,7 +228,7 @@ class CommunityFeedItem extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildActionButton(
     BuildContext context,
     IconData icon,
@@ -232,7 +236,7 @@ class CommunityFeedItem extends StatelessWidget {
     required VoidCallback onPressed,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Expanded(
       child: TextButton.icon(
         onPressed: onPressed,
@@ -245,8 +249,8 @@ class CommunityFeedItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isDarkMode 
-                ? AppColors.textSecondaryDark 
+            color: isDarkMode
+                ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
           ),
         ),

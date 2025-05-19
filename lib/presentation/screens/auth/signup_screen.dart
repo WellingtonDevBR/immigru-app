@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/di/injection_container.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/presentation/blocs/auth/auth_bloc.dart';
 import 'package:immigru/presentation/blocs/auth/auth_event.dart';
 import 'package:immigru/presentation/blocs/auth/auth_state.dart';
@@ -29,7 +28,6 @@ class _SignupScreenState extends State<SignupScreen>
   final _formKey = GlobalKey<FormState>();
   late TabController _tabController;
   String? _errorMessage;
-  final _logger = LoggerService();
 
   @override
   void initState() {
@@ -96,8 +94,6 @@ class _SignupScreenState extends State<SignupScreen>
 
   // Helper method to sign up with Google
   void _signUpWithGoogle(BuildContext context) {
-    
-
     // Clear any existing error message
     setState(() {
       _errorMessage = null;
@@ -161,7 +157,6 @@ class _SignupScreenState extends State<SignupScreen>
 
             // Handle email verification needed state
             if (state.needsEmailVerification) {
-
               setState(() {
                 _errorMessage = null;
               });

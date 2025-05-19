@@ -20,7 +20,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     this._logger,
     this._onboardingService,
   ) : _edgeFunctionDataSource =
-            UserProfileEdgeFunctionDataSource(_supabaseService, _logger);
+            UserProfileEdgeFunctionDataSource(_supabaseService);
 
   // Track the last saved data to prevent redundant API calls
   static final Map<String, dynamic> _lastSavedData = {};

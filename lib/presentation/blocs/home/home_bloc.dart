@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/usecases/post_usecases.dart';
 import 'package:immigru/presentation/blocs/home/home_event.dart';
 import 'package:immigru/presentation/blocs/home/home_state.dart';
@@ -9,7 +8,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final CreatePostUseCase _createPostUseCase;
   final GetEventsUseCase _getEventsUseCase;
   final CreateEventUseCase _createEventUseCase;
-  final LoggerService _logger = LoggerService();
 
   // Sample data for fallback when backend is not ready
   final List<Map<String, dynamic>> _samplePosts = [

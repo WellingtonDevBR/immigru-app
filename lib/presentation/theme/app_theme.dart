@@ -1,56 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/theme_service.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
 
 /// Theme provider that manages theme state and persistence
 class AppThemeProvider extends ChangeNotifier {
-  final LoggerService _logger = LoggerService();
   final ThemeService _themeService = ThemeService();
   // Initialize with a default value to avoid LateInitializationError
   ThemeMode _themeMode = ThemeMode.system;
-  
+
   AppThemeProvider() {
     _loadTheme();
   }
-  
+
   /// Get the current theme mode
   ThemeMode get themeMode => _themeMode;
-  
+
   /// Check if dark mode is active
   bool get isDarkMode => _themeMode == ThemeMode.dark;
-  
+
   /// Load theme from persistent storage
   Future<void> _loadTheme() async {
     try {
       final themeString = await _themeService.getThemeMode();
       _themeMode = ThemeService.getThemeModeEnum(themeString);
-      
+
       notifyListeners();
     } catch (e) {
-
       // Already initialized with ThemeMode.system as default
     }
   }
-  
+
   /// Set the theme mode and persist it
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     notifyListeners();
-    
+
     final themeString = ThemeService.getThemeModeString(mode);
     final success = await _themeService.setThemeMode(themeString);
-    
-    if (!success) {
 
-    }
+    if (!success) {}
   }
-  
+
   /// Toggle between light and dark mode
   Future<void> toggleTheme() async {
-    final newMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final newMode =
+        _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     await setThemeMode(newMode);
-    
   }
 }
 

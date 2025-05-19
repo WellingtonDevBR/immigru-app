@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:immigru/core/di/injection_container.dart' as di;
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
@@ -32,25 +31,22 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
   final _formKey = GlobalKey<FormState>();
   File? _selectedImage;
   bool _isUploading = false;
-  final _logger = LoggerService();
   final _supabaseService = di.sl<SupabaseService>();
 
   @override
   void initState() {
     super.initState();
     _fullNameController = TextEditingController(text: widget.fullName ?? '');
-    
   }
 
   /// Check if the URL is a valid image URL
   bool _isValidImageUrl(String url) {
     if (url.isEmpty) return false;
-    
+
     try {
       final uri = Uri.parse(url);
       return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
     } catch (e) {
-
       return false;
     }
   }
@@ -81,10 +77,10 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withValues(alpha:0.1),
+                    color: AppColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.0),
                     border: Border.all(
-                      color: AppColors.primaryColor.withValues(alpha:0.3),
+                      color: AppColors.primaryColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -123,13 +119,13 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                   ),
                 ),
                 const SizedBox(height: 32.0),
-                
+
                 // Profile photo
                 Center(
                   child: _buildProfilePhoto(isDarkMode),
                 ),
                 const SizedBox(height: 16.0),
-                
+
                 // Photo upload buttons
                 Center(
                   child: Row(
@@ -137,7 +133,9 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                     children: [
                       // Camera button
                       ElevatedButton.icon(
-                        onPressed: _isUploading ? null : () => _pickImage(ImageSource.camera),
+                        onPressed: _isUploading
+                            ? null
+                            : () => _pickImage(ImageSource.camera),
                         icon: const Icon(Icons.camera_alt),
                         label: const Text('Camera'),
                         style: ElevatedButton.styleFrom(
@@ -150,10 +148,12 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                         ),
                       ),
                       const SizedBox(width: 16.0),
-                      
+
                       // Gallery button
                       OutlinedButton.icon(
-                        onPressed: _isUploading ? null : () => _pickImage(ImageSource.gallery),
+                        onPressed: _isUploading
+                            ? null
+                            : () => _pickImage(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library),
                         label: const Text('Gallery'),
                         style: OutlinedButton.styleFrom(
@@ -168,7 +168,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                     ],
                   ),
                 ),
-                if (_selectedImage != null) ...[  
+                if (_selectedImage != null) ...[
                   const SizedBox(height: 8.0),
                   Center(
                     child: TextButton(
@@ -183,7 +183,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
                   ),
                 ],
                 const SizedBox(height: 32.0),
-                
+
                 // Full name field
                 _buildTextField(
                   label: 'Full name',
@@ -280,7 +280,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha:0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -293,7 +293,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
         ],
       );
     }
-    
+
     // If there's a valid photo URL, show it
     if (widget.photoUrl.isNotEmpty && _isValidImageUrl(widget.photoUrl)) {
       return CircleAvatar(
@@ -301,7 +301,7 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
         backgroundImage: NetworkImage(widget.photoUrl),
       );
     }
-    
+
     // Otherwise, show a placeholder
     return CircleAvatar(
       radius: 60,
@@ -324,14 +324,14 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
         maxHeight: 800,
         imageQuality: 85,
       );
-      
+
       if (pickedImage != null) {
         // Set loading state and update selected image
         setState(() {
           _isUploading = true;
           _selectedImage = File(pickedImage.path);
         });
-        
+
         // Upload the image and get the URL
         await _uploadImage(pickedImage);
       }
@@ -354,19 +354,19 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
       _selectedImage = null;
       _isUploading = false;
     });
-    
+
     // Update the profile with empty photo URL
     if (context.read<OnboardingBloc?>() != null) {
       context.read<OnboardingBloc>().add(
-        const ProfilePhotoUpdated(''),
-      );
+            const ProfilePhotoUpdated(''),
+          );
     } else if (context.read<ProfileBloc?>() != null) {
       context.read<ProfileBloc>().add(
-        BasicInfoUpdated(
-          fullName: _fullNameController.text.trim(),
-          photoUrl: '',
-        ),
-      );
+            BasicInfoUpdated(
+              fullName: _fullNameController.text.trim(),
+              photoUrl: '',
+            ),
+          );
     }
   }
 
@@ -374,22 +374,20 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
   void _updateBasicInfo() {
     if (_formKey.currentState?.validate() ?? false) {
       final fullName = _fullNameController.text.trim();
-      
-      
-      
+
       // Only update when the user is done editing (when form is submitted)
       // This prevents re-renders with every keystroke
       // Check which bloc is available and update accordingly
       if (context.read<OnboardingBloc?>() != null) {
         // Update the profile with the full name in OnboardingBloc
         context.read<OnboardingBloc>().add(
-          ProfileBasicInfoUpdated(fullName: fullName),
-        );
+              ProfileBasicInfoUpdated(fullName: fullName),
+            );
       } else if (context.read<ProfileBloc?>() != null) {
         // Update the profile with the full name in ProfileBloc
         context.read<ProfileBloc>().add(
-          BasicInfoUpdated(fullName: fullName),
-        );
+              BasicInfoUpdated(fullName: fullName),
+            );
       }
     }
   }
@@ -397,49 +395,43 @@ class _BasicInfoStepState extends State<BasicInfoStep> {
   /// Upload the selected image to Supabase storage
   Future<void> _uploadImage(XFile image) async {
     try {
-      
-      
       // Convert XFile to File
       final File imageFile = File(image.path);
       final fileExt = image.path.split('.').last;
       final userId = _supabaseService.client.auth.currentUser?.id ?? 'unknown';
-      final fileName = 'profile_${userId}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-      
+      final fileName =
+          'profile_${userId}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
       // Upload the file to Supabase storage using the recommended method
-      final response = await _supabaseService.client.storage
+      await _supabaseService.client.storage
           .from('avatars') // Use 'avatars' bucket as per the example
           .upload(
             'public/$fileName',
             imageFile,
             fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
           );
-      
-      
-      
+
       // Get the public URL of the uploaded file
       final photoUrl = _supabaseService.client.storage
           .from('avatars')
           .getPublicUrl('public/$fileName');
-      
-      
-      
+
       // Check which bloc is available and update accordingly
       if (context.read<OnboardingBloc?>() != null) {
         // Update the profile with the photo URL in OnboardingBloc
         context.read<OnboardingBloc>().add(
-          ProfilePhotoUpdated(photoUrl),
-        );
+              ProfilePhotoUpdated(photoUrl),
+            );
       } else if (context.read<ProfileBloc?>() != null) {
         // Update the profile with the photo URL in ProfileBloc
         context.read<ProfileBloc>().add(
-          BasicInfoUpdated(
-            fullName: _fullNameController.text.trim(),
-            photoUrl: photoUrl,
-          ),
-        );
+              BasicInfoUpdated(
+                fullName: _fullNameController.text.trim(),
+                photoUrl: photoUrl,
+              ),
+            );
       }
     } catch (e) {
-
       // Show error snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

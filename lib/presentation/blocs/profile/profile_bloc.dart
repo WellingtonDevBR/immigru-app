@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/entities/profile.dart';
 import 'package:immigru/domain/usecases/profile_usecases.dart';
 import 'package:immigru/presentation/blocs/profile/profile_event.dart';
@@ -11,19 +10,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final SaveProfileUseCase _saveProfileUseCase;
   final UploadProfilePhotoUseCase _uploadProfilePhotoUseCase;
   final UpdatePrivacySettingsUseCase _updatePrivacySettingsUseCase;
-  final LoggerService _logger;
 
   ProfileBloc({
     required GetProfileUseCase getProfileUseCase,
     required SaveProfileUseCase saveProfileUseCase,
     required UploadProfilePhotoUseCase uploadProfilePhotoUseCase,
     required UpdatePrivacySettingsUseCase updatePrivacySettingsUseCase,
-    required LoggerService logger,
   })  : _getProfileUseCase = getProfileUseCase,
         _saveProfileUseCase = saveProfileUseCase,
         _uploadProfilePhotoUseCase = uploadProfilePhotoUseCase,
         _updatePrivacySettingsUseCase = updatePrivacySettingsUseCase,
-        _logger = logger,
         super(const ProfileState()) {
     on<ProfileLoaded>(_onProfileLoaded);
     on<BasicInfoUpdated>(_onBasicInfoUpdated);

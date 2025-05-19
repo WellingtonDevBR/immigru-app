@@ -1,4 +1,3 @@
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:immigru/data/models/language_model.dart';
 import 'package:immigru/domain/entities/language.dart';
@@ -8,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Implementation of the LanguageRepository interface
 class LanguageRepositoryImpl implements LanguageRepository {
   final SupabaseService _supabaseService;
-  final LoggerService _logger = LoggerService();
 
   LanguageRepositoryImpl(this._supabaseService);
 

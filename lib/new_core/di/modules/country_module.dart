@@ -1,12 +1,13 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/data/datasources/supabase_data_source.dart';
 import 'package:immigru/data/repositories/country_repository_impl.dart';
 import 'package:immigru/domain/repositories/country_repository.dart';
 import 'package:immigru/domain/usecases/country_usecases.dart';
-import 'package:immigru/new_core/country/data/repositories/country_repository_impl.dart' as new_arch;
+import 'package:immigru/new_core/country/data/repositories/country_repository_impl.dart'
+    as new_arch;
 import 'package:immigru/new_core/country/domain/repositories/country_repository.dart';
-import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart' as new_arch;
+import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart'
+    as new_arch;
 import 'package:immigru/new_core/logging/logger_provider.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
 import 'package:immigru/shared/interfaces/logger_interface.dart';
@@ -23,7 +24,7 @@ class CountryModule {
         instanceName: 'country_logger',
       );
     }
-    
+
     // Register new architecture repository
     if (!sl.isRegistered<CountryFeatureRepository>()) {
       sl.registerLazySingleton<CountryFeatureRepository>(
@@ -33,7 +34,7 @@ class CountryModule {
         ),
       );
     }
-    
+
     // Register new architecture use cases
     if (!sl.isRegistered<new_arch.GetCountriesUseCase>()) {
       sl.registerLazySingleton<new_arch.GetCountriesUseCase>(
@@ -42,15 +43,12 @@ class CountryModule {
         ),
       );
     }
-    
+
     // For backward compatibility, register old architecture components
     // Register country repository if not already registered
     if (!sl.isRegistered<CountryRepository>()) {
       sl.registerLazySingleton<CountryRepository>(
-        () => CountryRepositoryImpl(
-          dataSource: sl<SupabaseDataSource>(),
-          logger: sl<LoggerService>(),
-        ),
+        () => CountryRepositoryImpl(dataSource: sl<SupabaseDataSource>()),
       );
     }
 

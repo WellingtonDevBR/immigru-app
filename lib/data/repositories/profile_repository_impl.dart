@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:immigru/data/datasources/remote/user_profile_edge_function_data_source.dart';
@@ -13,13 +12,11 @@ import 'package:uuid/uuid.dart';
 /// Implementation of the ProfileRepository interface
 class ProfileRepositoryImpl implements ProfileRepository {
   final SupabaseService _supabaseService;
-  final LoggerService _logger;
   final UserProfileEdgeFunctionDataSource _edgeFunctionDataSource;
   final OnboardingService _onboardingService;
 
   ProfileRepositoryImpl(
     this._supabaseService, 
-    this._logger, 
     this._edgeFunctionDataSource,
     this._onboardingService,
   );

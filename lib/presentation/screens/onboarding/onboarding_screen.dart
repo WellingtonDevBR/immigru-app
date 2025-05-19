@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/di/injection_container.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/entities/user.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_event.dart';
@@ -35,8 +34,8 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<OnboardingBloc>()
-        ..add(const OnboardingInitialized()),
+      create: (context) =>
+          sl<OnboardingBloc>()..add(const OnboardingInitialized()),
       child: const OnboardingView(),
     );
   }
@@ -50,38 +49,38 @@ class OnboardingView extends StatefulWidget {
   State<OnboardingView> createState() => _OnboardingViewState();
 }
 
-class _OnboardingViewState extends State<OnboardingView> with TickerProviderStateMixin {
+class _OnboardingViewState extends State<OnboardingView>
+    with TickerProviderStateMixin {
   // Animation controllers for different aspects of the UI
   late final AnimationController _pageTransitionController;
   late final AnimationController _contentAnimationController;
   late final PageController _pageController;
-  final LoggerService _logger = sl<LoggerService>();
-  
+
   // Animation for the page indicator
   late final Animation<double> _pageIndicatorAnimation;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Controller for page transitions
     _pageTransitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    
+
     // Controller for content animations (buttons, fields, etc.)
     _contentAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     // Initialize page controller
     _pageController = PageController();
-    
+
     // Start content animation immediately for the first screen
     _contentAnimationController.forward();
-    
+
     // Animation for the progress indicator
     _pageIndicatorAnimation = CurvedAnimation(
       parent: _pageTransitionController,
@@ -101,30 +100,30 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     return BlocConsumer<OnboardingBloc, OnboardingState>(
-      listenWhen: (previousState, currentState) => 
+      listenWhen: (previousState, currentState) =>
           previousState.currentStep != currentState.currentStep ||
           previousState.errorMessage != currentState.errorMessage,
       listener: (context, state) {
         // Handle page changes when step changes
-        
+
         if (state.currentStep != OnboardingStep.completed) {
           // Only handle transitions between different steps
           // Prepare animations for page transition
           _contentAnimationController.reset();
           _pageTransitionController.reset();
-          
+
           // Get the page index based on the current step
           final pageIndex = OnboardingStep.values.indexOf(state.currentStep);
-          
+
           // Animate to the new page with a smooth transition
           _pageController.animateToPage(
             pageIndex,
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCubic,
           );
-          
+
           // Start animations in sequence for a polished effect
           _pageTransitionController.forward().then((_) {
             _contentAnimationController.forward();
@@ -133,7 +132,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
           // Special handling for completion
           _pageTransitionController.forward();
         }
-        
+
         // Handle errors
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -143,10 +142,9 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
             ),
           );
         }
-        
+
         // Navigate to home screen when onboarding is completed
         if (state.currentStep == OnboardingStep.completed) {
-          
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const HomeScreen(),
@@ -156,12 +154,15 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: isDarkMode ? AppColors.backgroundDark : AppColors.backgroundLight,
+          backgroundColor:
+              isDarkMode ? AppColors.backgroundDark : AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: Text(
-              state.currentStep == OnboardingStep.migrationJourney ? 'Your International Journey' : 'Your Immigration Journey',
+              state.currentStep == OnboardingStep.migrationJourney
+                  ? 'Your International Journey'
+                  : 'Your Immigration Journey',
               style: TextStyle(
                 color: isDarkMode ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.bold,
@@ -187,7 +188,8 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
               children: [
                 // Progress indicator
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
                   child: AnimatedBuilder(
                     animation: _pageIndicatorAnimation,
                     builder: (context, child) {
@@ -197,12 +199,13 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                     },
                   ),
                 ),
-                
+
                 // Main content
                 Expanded(
                   child: PageView(
                     controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(), // Disable swiping
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Disable swiping
                     onPageChanged: (index) {
                       // Animation will be handled by the listener
                     },
@@ -235,7 +238,6 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                         ),
                       ),
 
-                      
                       // Current status step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -263,7 +265,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           },
                         ),
                       ),
-                      
+
                       // Migration journey step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -302,7 +304,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           },
                         ),
                       ),
-                      
+
                       // Profession step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -330,7 +332,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           },
                         ),
                       ),
-                      
+
                       // Language step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -358,7 +360,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           },
                         ),
                       ),
-                      
+
                       // Interest step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -386,7 +388,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           },
                         ),
                       ),
-                      
+
                       // Profile Basic Info step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -410,7 +412,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           photoUrl: state.data.profilePhotoUrl ?? '',
                         ),
                       ),
-                      
+
                       // Profile Display Name step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -433,7 +435,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           displayName: state.data.displayName ?? '',
                         ),
                       ),
-                      
+
                       // Profile Bio step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -456,13 +458,13 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           bio: state.data.bio ?? '',
                         ),
                       ),
-                      
+
                       // Profile Location step has been removed
-                      
+
                       // Profile Photo step has been integrated into BasicInfoStep
-                      
+
                       // Profile Privacy step has been removed
-                      
+
                       // ImmiGroves step with animations
                       AnimatedBuilder(
                         animation: _contentAnimationController,
@@ -486,7 +488,7 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                     ],
                   ),
                 ),
-                
+
                 // Bottom buttons
                 Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -494,12 +496,15 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Skip button (only show for optional steps)
-                      if (state.currentStep == OnboardingStep.migrationJourney ||
+                      if (state.currentStep ==
+                              OnboardingStep.migrationJourney ||
                           state.currentStep == OnboardingStep.profession ||
                           state.currentStep == OnboardingStep.languages ||
                           state.currentStep == OnboardingStep.interests ||
-                          state.currentStep == OnboardingStep.profileBasicInfo ||
-                          state.currentStep == OnboardingStep.profileDisplayName ||
+                          state.currentStep ==
+                              OnboardingStep.profileBasicInfo ||
+                          state.currentStep ==
+                              OnboardingStep.profileDisplayName ||
                           state.currentStep == OnboardingStep.profileBio ||
                           state.currentStep == OnboardingStep.immiGroves)
                         TextButton(
@@ -511,34 +516,43 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           child: Text(
                             'Skip',
                             style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : Colors.black54,
+                              color:
+                                  isDarkMode ? Colors.white70 : Colors.black54,
                             ),
                           ),
                         )
                       else
                         const SizedBox(width: 80),
-                      
+
                       // Next button - only show for steps other than birth country and current status
-                      if (state.currentStep != OnboardingStep.birthCountry && 
+                      if (state.currentStep != OnboardingStep.birthCountry &&
                           state.currentStep != OnboardingStep.currentStatus)
                         ElevatedButton(
                           onPressed: state.isCurrentStepValid
                               ? () {
                                   // If we're on the display name step, save the data first
-                                  if (state.currentStep == OnboardingStep.profileDisplayName) {
+                                  if (state.currentStep ==
+                                      OnboardingStep.profileDisplayName) {
                                     // Save the display name data without logging
-                                    
+
                                     // First explicitly save the data
-                                    context.read<OnboardingBloc>().add(const OnboardingSaved());
-                                    
+                                    context
+                                        .read<OnboardingBloc>()
+                                        .add(const OnboardingSaved());
+
                                     // Add a small delay to ensure the save completes before moving to next step
-                                    Future.delayed(const Duration(milliseconds: 300), () {
+                                    Future.delayed(
+                                        const Duration(milliseconds: 300), () {
                                       if (mounted) {
-                                        context.read<OnboardingBloc>().add(const NextStepRequested());
+                                        context
+                                            .read<OnboardingBloc>()
+                                            .add(const NextStepRequested());
                                       }
                                     });
                                   } else {
-                                    context.read<OnboardingBloc>().add(const NextStepRequested());
+                                    context
+                                        .read<OnboardingBloc>()
+                                        .add(const NextStepRequested());
                                   }
                                 }
                               : null,
@@ -554,7 +568,9 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                             ),
                           ),
                           child: Text(
-                            state.currentStep == OnboardingStep.immiGroves ? 'Finish' : 'Next',
+                            state.currentStep == OnboardingStep.immiGroves
+                                ? 'Finish'
+                                : 'Next',
                             style: const TextStyle(
                               fontSize: 16.0,
                               fontWeight: FontWeight.bold,
@@ -562,7 +578,8 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
                           ),
                         )
                       else
-                        const SizedBox(width: 80), // Empty space when button is hidden
+                        const SizedBox(
+                            width: 80), // Empty space when button is hidden
                     ],
                   ),
                 ),

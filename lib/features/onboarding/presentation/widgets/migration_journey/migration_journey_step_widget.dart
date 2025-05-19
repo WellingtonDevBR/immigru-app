@@ -464,16 +464,4 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
       ),
     );
   }
-
-  /// Continue to the next step
-  void _continueToNextStep(BuildContext context, MigrationJourneyState state) {
-    // Get the bloc before continuing
-    final migrationJourneyBloc = BlocProvider.of<MigrationJourneyBloc>(context);
-    
-    // First save all steps
-    migrationJourneyBloc.add(const MigrationStepsSaved());
-
-    // Then notify parent that we're done
-    widget.onMigrationJourneyCompleted(state.steps);
-  }
 }

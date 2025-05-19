@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/di/injection_container.dart' as di;
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/domain/entities/interest.dart';
 import 'package:immigru/domain/usecases/interest_usecases.dart';
 import 'package:immigru/presentation/blocs/onboarding/onboarding_bloc.dart';
@@ -31,7 +30,6 @@ class _InterestStepState extends State<InterestStep>
       di.sl<SaveUserInterestsUseCase>();
   final GetUserInterestsUseCase _getUserInterestsUseCase =
       di.sl<GetUserInterestsUseCase>();
-  final LoggerService _logger = LoggerService();
   List<Interest> _interests = [];
   List<String> _selectedInterests = [];
   Map<String, int> _interestIdMap = {}; // Maps interest names to IDs
@@ -58,16 +56,13 @@ class _InterestStepState extends State<InterestStep>
     });
 
     try {
-      
       // First fetch all available interests
       final interests = await _interestsUseCase();
-      
 
       // Build a map of interest names to IDs for easier lookup
       final Map<String, int> idMap = {};
       for (var interest in interests) {
         idMap[interest.name] = interest.id;
-        
       }
 
       setState(() {
@@ -79,7 +74,6 @@ class _InterestStepState extends State<InterestStep>
       // Now fetch user's selected interests
       await _fetchUserInterests();
     } catch (e) {
-
       setState(() {
         _errorMessage = 'Failed to load interests. Please try again.';
         _isLoading = false;
@@ -90,9 +84,7 @@ class _InterestStepState extends State<InterestStep>
   /// Fetch user's previously selected interests
   Future<void> _fetchUserInterests() async {
     try {
-      
       final userInterests = await _getUserInterestsUseCase();
-      
 
       if (userInterests.isNotEmpty) {
         // Extract names of user interests

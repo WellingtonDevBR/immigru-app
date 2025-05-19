@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:immigru/core/services/edge_function_logger.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,10 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class MigrationStepsEdgeFunctionDataSource {
   final SupabaseService _supabaseService;
   final LoggerService _logger;
-  final EdgeFunctionLogger _edgeFunctionLogger;
 
-  MigrationStepsEdgeFunctionDataSource(this._supabaseService, this._logger)
-      : _edgeFunctionLogger = EdgeFunctionLogger(_logger);
+  MigrationStepsEdgeFunctionDataSource(this._supabaseService, this._logger);
 
   /// Save migration steps data
   Future<Map<String, dynamic>> saveMigrationSteps({
@@ -97,9 +94,12 @@ class MigrationStepsEdgeFunctionDataSource {
       debugPrint('[$timestamp] 📝 Full request body: ${jsonEncode(requestBody)}');
       
       // Log the request for debugging
-      _edgeFunctionLogger.logRequest(
-        functionName: 'migration-steps',
-        requestData: requestBody,
+      _logger.log(
+        '[$timestamp] 🚀 DATA SOURCE: Preparing request with ACTION="save" and ${processedSteps.length} steps',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
       );
       
       // Check if we have a valid auth token
@@ -122,19 +122,37 @@ class MigrationStepsEdgeFunctionDataSource {
       stopwatch.stop();
       
       // Log the response for debugging
-      debugPrint('[$timestamp] 🔍 Edge function response received in ${stopwatch.elapsedMilliseconds}ms');
-      _edgeFunctionLogger.logResponse(
-        functionName: 'migration-steps',
-        responseData: response.data,
+      _logger.log(
+        '[$timestamp] 🔍 Edge function response received in ${stopwatch.elapsedMilliseconds}ms',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
       );
-      
-      debugPrint('[$timestamp] 🔍 Response status: ${response.status}');
-      debugPrint('[$timestamp] 🔍 Response data: ${jsonEncode(response.data)}');
+      _logger.log(
+        '[$timestamp] 🔍 Response status: ${response.status}',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
+      );
+      _logger.log(
+        '[$timestamp] 🔍 Response data: ${jsonEncode(response.data)}',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
+      );
       
       // Check if the response is empty or null
       if (response.data == null) {
-        debugPrint('[$timestamp] ❌ Edge function returned null data');
-        _logger.error('MigrationSteps', 'Edge function returned null data');
+        _logger.log(
+          '[$timestamp] ❌ Edge function returned null data',
+          level: LogLevel.error,
+          category: LogCategory.network,
+          error: null,
+          stackTrace: null,
+        );
         throw Exception('Edge function returned null data');
       }
 
@@ -168,10 +186,12 @@ class MigrationStepsEdgeFunctionDataSource {
         'action': 'get',
       };
       
-      debugPrint('[$timestamp] 📝 Prepared request body with EXPLICIT action: "get"');
-      _edgeFunctionLogger.logRequest(
-        functionName: 'migration-steps',
-        requestData: requestBody,
+      _logger.log(
+        '[$timestamp] 📝 Prepared request body with EXPLICIT action: "get"',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
       );
 
       // Check if we have a valid auth token
@@ -193,29 +213,54 @@ class MigrationStepsEdgeFunctionDataSource {
       );
       stopwatch.stop();
       
-      debugPrint('[$timestamp] 🔍 Edge function response received in ${stopwatch.elapsedMilliseconds}ms');
-      _edgeFunctionLogger.logResponse(
-        functionName: 'migration-steps',
-        responseData: response.data,
+      _logger.log(
+        '[$timestamp] 🔍 Edge function response received in ${stopwatch.elapsedMilliseconds}ms',
+        level: LogLevel.info,
+        category: LogCategory.network,
+        error: null,
+        stackTrace: null,
       );
       
       if (response.data == null) {
-        debugPrint('[$timestamp] ⚠️ Edge function returned null data for GET request');
+        _logger.log(
+          '[$timestamp] ⚠️ Edge function returned null data for GET request',
+          level: LogLevel.warning,
+          category: LogCategory.network,
+          error: null,
+          stackTrace: null,
+        );
         return [];
       }
 
       final responseData = response.data as Map<String, dynamic>;
       if (responseData['success'] == true && responseData['data'] != null) {
         final steps = List<Map<String, dynamic>>.from(responseData['data']);
-        debugPrint('[$timestamp] ✅ Successfully retrieved ${steps.length} migration steps');
+        _logger.log(
+          '[$timestamp] ✅ Successfully retrieved ${steps.length} migration steps',
+          level: LogLevel.info,
+          category: LogCategory.network,
+          error: null,
+          stackTrace: null,
+        );
         return steps;
       } else {
-        debugPrint('[$timestamp] ⚠️ Edge function returned unsuccessful response: $responseData');
+        _logger.log(
+          '[$timestamp] ⚠️ Edge function returned unsuccessful response: $responseData',
+          level: LogLevel.warning,
+          category: LogCategory.network,
+          error: null,
+          stackTrace: null,
+        );
         return [];
       }
     } catch (e) {
-      debugPrint('[$timestamp] ❌ Error in getMigrationSteps: $e');
-      _logger.error('MigrationSteps', 'Error retrieving migration steps: $e');
+      _logger.log(
+        '[$timestamp] ❌ Error in getMigrationSteps: $e',
+        level: LogLevel.error,
+        category: LogCategory.network,
+        error: e,
+        stackTrace: null,
+      );
       return [];
     }
   }

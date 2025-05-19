@@ -1,4 +1,3 @@
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:immigru/data/models/interest_model.dart';
 import 'package:immigru/domain/entities/interest.dart';
@@ -8,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Implementation of the InterestRepository interface
 class InterestRepositoryImpl implements InterestRepository {
   final SupabaseService _supabaseService;
-  final LoggerService _logger = LoggerService();
 
   InterestRepositoryImpl(this._supabaseService);
 

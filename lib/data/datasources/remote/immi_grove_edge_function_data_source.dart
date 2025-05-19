@@ -1,17 +1,13 @@
 import 'dart:convert';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 
 /// Data source for ImmiGrove edge functions
 class ImmiGroveEdgeFunctionDataSource {
   final SupabaseService _supabaseService;
-  final LoggerService _logger;
 
   ImmiGroveEdgeFunctionDataSource({
     required SupabaseService supabaseService,
-    required LoggerService logger,
-  })  : _supabaseService = supabaseService,
-        _logger = logger;
+  })  : _supabaseService = supabaseService;
 
   /// Get recommended ImmiGroves from the edge function
   Future<Map<String, dynamic>> getRecommendedImmiGroves({int limit = 6}) async {

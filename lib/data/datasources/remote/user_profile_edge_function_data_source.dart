@@ -1,16 +1,11 @@
-import 'package:immigru/core/services/edge_function_logger.dart';
-import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Data source for interacting with the user profile edge function
 class UserProfileEdgeFunctionDataSource {
   final SupabaseService _supabaseService;
-  final LoggerService _logger;
-  final EdgeFunctionLogger _edgeFunctionLogger;
 
-  UserProfileEdgeFunctionDataSource(this._supabaseService, this._logger)
-      : _edgeFunctionLogger = EdgeFunctionLogger(_logger);
+  UserProfileEdgeFunctionDataSource(this._supabaseService);
 
   /// Save data for a specific onboarding step
   Future<void> saveStepData({

@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/core/services/edge_function_logger.dart';
 import 'package:immigru/core/services/logger_service.dart';
 import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/core/services/session_manager.dart';
@@ -112,7 +111,6 @@ Future<void> init() async {
           getOnboardingDataUseCase: sl<GetOnboardingDataUseCase>(),
           checkOnboardingStatusUseCase: sl<CheckOnboardingStatusUseCase>(),
           completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
-          logger: sl<LoggerService>(),
         ));
   }
   // Register BLoCs
@@ -134,15 +132,13 @@ Future<void> init() async {
         checkOnboardingStatusUseCase: sl<CheckOnboardingStatusUseCase>(),
         getOnboardingDataUseCase: sl<GetOnboardingDataUseCase>(),
         completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
-        logger: sl<LoggerService>(),
       ));
 
   sl.registerFactory<ProfileBloc>(() => ProfileBloc(
         getProfileUseCase: sl<GetProfileUseCase>(),
         saveProfileUseCase: sl<SaveProfileUseCase>(),
         uploadProfilePhotoUseCase: sl<UploadProfilePhotoUseCase>(),
-        updatePrivacySettingsUseCase: sl<UpdatePrivacySettingsUseCase>(),
-        logger: sl<LoggerService>(),
+        updatePrivacySettingsUseCase: sl<UpdatePrivacySettingsUseCase>()
       ));
 
   sl.registerFactory<MigrationStepsBloc>(() => MigrationStepsBloc(
@@ -159,7 +155,6 @@ Future<void> init() async {
   sl.registerLazySingleton<CountryRepository>(
     () => CountryRepositoryImpl(
       dataSource: sl<SupabaseDataSource>(),
-      logger: sl<LoggerService>(),
     ),
   );
 
@@ -185,8 +180,7 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(
       sl<SupabaseService>(),
-      sl<LoggerService>(),
-      sl(), // UserProfileEdgeFunctionDataSource
+      sl<UserProfileEdgeFunctionDataSource>(),
       sl<OnboardingService>(),
     ),
   );
@@ -214,7 +208,6 @@ Future<void> init() async {
   sl.registerLazySingleton<CountryRepository>(
     () => CountryRepositoryImpl(
       dataSource: sl<SupabaseDataSource>(),
-      logger: sl<LoggerService>(),
     ),
   );
 
@@ -223,17 +216,14 @@ Future<void> init() async {
     () => SupabaseDataSourceImpl(sl<SupabaseService>()),
   );
   sl.registerLazySingleton<UserProfileEdgeFunctionDataSource>(
-    () => UserProfileEdgeFunctionDataSource(
-        sl<SupabaseService>(), sl<LoggerService>()),
+    () => UserProfileEdgeFunctionDataSource(sl<SupabaseService>()),
   );
   sl.registerLazySingleton<MigrationStepsEdgeFunctionDataSource>(
-    () => MigrationStepsEdgeFunctionDataSource(
-        sl<SupabaseService>(), sl<LoggerService>()),
+    () => MigrationStepsEdgeFunctionDataSource(sl<SupabaseService>(), sl<LoggerService>()),
   );
   sl.registerLazySingleton<ImmiGroveEdgeFunctionDataSource>(
     () => ImmiGroveEdgeFunctionDataSource(
       supabaseService: sl<SupabaseService>(),
-      logger: sl<LoggerService>(),
     ),
   );
 
@@ -254,8 +244,6 @@ Future<void> init() async {
   );
 
   // Register remaining services
-  sl.registerLazySingleton<EdgeFunctionLogger>(
-      () => EdgeFunctionLogger(sl<LoggerService>()));
   sl.registerLazySingleton<OnboardingService>(() => OnboardingService());
   sl.registerLazySingleton<SessionManager>(
       () => SessionManager(sl<AuthService>()));

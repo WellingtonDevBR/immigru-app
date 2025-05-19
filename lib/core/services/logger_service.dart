@@ -105,24 +105,6 @@ class LoggerService {
   void wtf(String message, {LogCategory category = LogCategory.general, Object? error, StackTrace? stackTrace}) {
     log(message, level: LogLevel.wtf, category: category, error: error, stackTrace: stackTrace);
   }
-  
-  /// Get emoji for the log level
-  String _getLevelEmoji(LogLevel level) {
-    switch (level) {
-      case LogLevel.verbose:
-        return '💬';
-      case LogLevel.debug:
-        return '🔍';
-      case LogLevel.info:
-        return 'ℹ️';
-      case LogLevel.warning:
-        return '⚠️';
-      case LogLevel.error:
-        return '❌';
-      case LogLevel.wtf:
-        return '💥';
-    }
-  }
 }
 
 /// Global logger instance for easy access
