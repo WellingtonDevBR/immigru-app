@@ -30,10 +30,13 @@ class OnboardingState extends Equatable {
   
   // Interest step data
   final List<int> interests;
+  
+  // ImmiGrove step data
+  final List<String> immiGroveIds;
 
   const OnboardingState({
     this.currentStepIndex = 0,
-    this.totalSteps = 6, // Birth country, current status, migration journey, profession, language, and interest steps
+    this.totalSteps = 7, // Birth country, current status, migration journey, profession, language, interest, and ImmiGrove steps
     this.isLoading = false,
     this.errorMessage,
     this.canMoveToNextStep = false,
@@ -47,13 +50,14 @@ class OnboardingState extends Equatable {
     this.industry,
     this.languages = const [],
     this.interests = const [],
+    this.immiGroveIds = const [],
   });
 
   /// Initial state for the onboarding flow
   factory OnboardingState.initial() {
     return const OnboardingState(
       currentStepIndex: 0,
-      totalSteps: 6, // Birth country, current status, migration journey, profession, language, and interest steps
+      totalSteps: 7, // Birth country, current status, migration journey, profession, language, interest, and ImmiGrove steps
       isLoading: true,
       canMoveToNextStep: false,
       isLastStep: false,
@@ -80,6 +84,7 @@ class OnboardingState extends Equatable {
     String? industry,
     List<String>? languages,
     List<int>? interests,
+    List<String>? immiGroveIds,
   }) {
     return OnboardingState(
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
@@ -97,6 +102,7 @@ class OnboardingState extends Equatable {
       industry: industry ?? this.industry,
       languages: languages ?? this.languages,
       interests: interests ?? this.interests,
+      immiGroveIds: immiGroveIds ?? this.immiGroveIds,
     );
   }
 

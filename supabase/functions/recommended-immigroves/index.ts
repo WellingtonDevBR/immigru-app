@@ -87,12 +87,23 @@ serve(async (req) => {
       .from('ImmiGrove')
       .select('*')
       .in('Id', ids);
+      
+    // Transform the data to match the expected format in the Flutter app
+    const transformedImmiGroves = (immigroves || []).map((grove: any) => ({
+      id: grove.Id,
+      name: grove.Name,
+      description: grove.Description || '',
+      icon_url: grove.IconUrl,
+      member_count: grove.MemberCount || 0,
+      is_joined: false, // Default to false since we're just recommending
+      categories: grove.Categories || []
+    }));
 
     if (fetchError) {
       throw new Error(`Failed to fetch ImmiGroves: ${fetchError.message}`);
     }
 
-    return new Response(JSON.stringify({ data: immigroves }), {
+    return new Response(JSON.stringify({ data: transformedImmiGroves }), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json',

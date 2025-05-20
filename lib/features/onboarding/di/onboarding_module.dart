@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:immigru/domain/repositories/onboarding_repository.dart' as old_repo;
 import 'package:immigru/domain/repositories/visa_repository.dart' as old_visa_repo;
 import 'package:immigru/domain/usecases/onboarding_usecases.dart' as old_usecases;
+import 'package:immigru/features/onboarding/data/datasources/onboarding_data_source.dart';
 import 'package:immigru/features/onboarding/data/repositories/migration_journey_repository_impl.dart';
 import 'package:immigru/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:immigru/features/onboarding/data/repositories/visa_repository_impl.dart';
@@ -27,6 +28,8 @@ import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboard
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_bloc.dart';
 import 'package:immigru/features/onboarding/di/language_module.dart';
 import 'package:immigru/features/onboarding/di/interest_module.dart';
+import 'package:immigru/features/onboarding/di/immi_grove_module.dart';
+import 'package:immigru/features/onboarding/domain/repositories/immi_grove_repository.dart';
 
 import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart' as new_arch;
 import 'package:immigru/new_core/di/service_locator.dart';
@@ -47,11 +50,21 @@ class OnboardingModule {
       );
     }
     
+    // Register data sources
+    if (!sl.isRegistered<OnboardingDataSource>()) {
+      sl.registerLazySingleton<OnboardingDataSource>(
+        () => OnboardingSupabaseDataSource(
+          client: sl<EdgeFunctionClient>(),
+          logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
+        ),
+      );
+    }
+    
     // Register repositories
     if (!sl.isRegistered<OnboardingFeatureRepository>()) {
       sl.registerLazySingleton<OnboardingFeatureRepository>(
         () => OnboardingRepositoryImpl(
-          sl<EdgeFunctionClient>(),
+          sl<OnboardingDataSource>(),
           sl<LoggerInterface>(instanceName: 'onboarding_logger'),
         ),
       );
@@ -265,6 +278,7 @@ class OnboardingModule {
       sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(
             repository: sl<OnboardingFeatureRepository>(),
             languageRepository: sl<LanguageRepository>(),
+            immiGroveRepository: sl<ImmiGroveRepository>(),
             logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
           ));
     }
@@ -282,5 +296,8 @@ class OnboardingModule {
     
     // Register interest module dependencies
     registerInterestDependencies(sl);
+    
+    // Register ImmiGrove module dependencies
+    ImmiGroveModule.register(sl);
   }
 }

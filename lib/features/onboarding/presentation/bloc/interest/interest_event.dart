@@ -47,3 +47,13 @@ class InterestSearchUpdated extends InterestEvent {
   @override
   List<Object?> get props => [query];
 }
+
+/// Event to preselect interests from previous state
+class InterestsPreselected extends InterestEvent {
+  final List<int> interestIds;
+  
+  const InterestsPreselected(this.interestIds);
+  
+  @override
+  List<Object?> get props => [interestIds];
+}

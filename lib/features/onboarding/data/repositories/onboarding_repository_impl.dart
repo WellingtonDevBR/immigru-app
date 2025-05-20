@@ -1,15 +1,16 @@
 import 'package:immigru/domain/entities/onboarding_data.dart';
+import 'package:immigru/domain/entities/visa.dart';
+import 'package:immigru/features/onboarding/data/datasources/onboarding_data_source.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Implementation of the OnboardingFeatureRepository for the new architecture
 class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
-  final EdgeFunctionClient _edgeFunctionClient;
+  final OnboardingDataSource _dataSource;
   final LoggerInterface _logger;
 
   OnboardingRepositoryImpl(
-    this._edgeFunctionClient,
+    this._dataSource,
     this._logger,
   );
 
@@ -24,15 +25,7 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
         };
         
         _logger.i('Saving birth country data: $birthCountryData', tag: 'Onboarding');
-        
-        await _edgeFunctionClient.invoke<dynamic>(
-          'user-profile',
-          body: {
-            'action': 'save',
-            'step': step,
-            'data': birthCountryData,
-          },
-        );
+        await _dataSource.saveStepData(step, birthCountryData);
       } 
       // Special handling for current status step
       else if (step == 'currentStatus') {
@@ -42,40 +35,17 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
         };
         
         _logger.i('Saving current status data: $statusData', tag: 'Onboarding');
+        _logger.d('Sending request for step: $step and data: $statusData', tag: 'Onboarding');
         
-        // Log the request for debugging
-        _logger.d('Sending request to user-profile edge function with step: $step and data: $statusData', tag: 'Onboarding');
-        
-        final response = await _edgeFunctionClient.invoke<dynamic>(
-          'user-profile',
-          body: {
-            'action': 'save',
-            'step': step,
-            'data': statusData,
-          },
-        );
-        
-        // Log the response for debugging
-        _logger.d('Response from user-profile edge function: ${response.data}', tag: 'Onboarding');
-        
-        if (!response.isSuccess) {
-          _logger.e('Failed to save current status: ${response.message}', tag: 'Onboarding');
-          throw Exception('Failed to save current status: ${response.message}');
-        }
+        await _dataSource.saveStepData(step, statusData);
       }
       // Default handling for other steps
       else {
-        await _edgeFunctionClient.invoke<dynamic>(
-          'user-profile',
-          body: {
-            'action': 'save',
-            'step': step,
-            'data': data,
-          },
-        );
+        _logger.i('Saving onboarding data for step: $step with data: $data', tag: 'Onboarding');
+        await _dataSource.saveStepData(step, data);
       }
-    } catch (e, stackTrace) {
-      _logger.e('Error saving step data', tag: 'Onboarding', error: e, stackTrace: stackTrace);
+    } catch (e) {
+      _logger.e('Error saving onboarding data: $e', tag: 'Onboarding');
       rethrow;
     }
   }
@@ -83,23 +53,46 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
   @override
   Future<OnboardingData?> getOnboardingData() async {
     try {
-      final response = await _edgeFunctionClient.invoke<Map<String, dynamic>>(
-        'user-profile',
-        body: {
-          'action': 'get',
-        },
-      );
-
-      final data = response.data;
-      if (data == null) {
+      _logger.i('Getting onboarding data', tag: 'Onboarding');
+      
+      final data = await _dataSource.getOnboardingData();
+      
+      _logger.d('Received onboarding data: $data', tag: 'Onboarding');
+      
+      if (data.isEmpty) {
         return null;
       }
-
+      
+      // Convert the migration steps data
+      final List<dynamic> rawMigrationSteps = data['migrationSteps'] ?? [];
+      final List<MigrationStep> migrationSteps = rawMigrationSteps.map((step) {
+        final Map<String, dynamic> stepData = step as Map<String, dynamic>;
+        return MigrationStep(
+          id: stepData['id'],
+          order: stepData['order'],
+          countryId: stepData['countryId'] ?? 0,
+          countryName: stepData['countryName'] ?? '',
+          visaId: stepData['visaId'],
+          visaName: stepData['visaName'] ?? '',
+          arrivedDate: stepData['arrivedDate'] != null 
+              ? DateTime.parse(stepData['arrivedDate']) 
+              : null,
+          leftDate: stepData['leftDate'] != null 
+              ? DateTime.parse(stepData['leftDate']) 
+              : null,
+          isCurrentLocation: stepData['isCurrentLocation'] ?? false,
+          isTargetDestination: stepData['isTargetDestination'] ?? false,
+          notes: stepData['notes'],
+          migrationReason: _parseMigrationReason(stepData['migrationReason']),
+          wasSuccessful: stepData['wasSuccessful'] ?? true,
+        );
+      }).toList();
+      
       // Convert the response to OnboardingData
       return OnboardingData(
         birthCountry: data['birthCountry'],
         currentStatus: data['currentStatus'],
-        migrationSteps: [], // TODO: Parse migration steps
+        migrationSteps: migrationSteps,
         profession: data['profession'],
         languages: List<String>.from(data['languages'] ?? []),
         interests: List<String>.from(data['interests'] ?? []),
@@ -113,8 +106,8 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
         selectedImmiGroves: List<String>.from(data['selectedImmiGroves'] ?? []),
         isCompleted: data['isCompleted'] ?? false,
       );
-    } catch (e, stackTrace) {
-      _logger.e('Error getting onboarding data', tag: 'Onboarding', error: e, stackTrace: stackTrace);
+    } catch (e) {
+      _logger.e('Error getting onboarding data: $e', tag: 'Onboarding');
       return null;
     }
   }
@@ -122,16 +115,15 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
   @override
   Future<bool> isOnboardingComplete() async {
     try {
-      final response = await _edgeFunctionClient.invoke<Map<String, dynamic>>(
-        'user-profile',
-        body: {
-          'action': 'checkStatus',
-        },
-      );
-
-      return response.data?['isCompleted'] ?? false;
-    } catch (e, stackTrace) {
-      _logger.e('Error checking onboarding status', tag: 'Onboarding', error: e, stackTrace: stackTrace);
+      _logger.i('Checking if onboarding is complete', tag: 'Onboarding');
+      
+      final isComplete = await _dataSource.isOnboardingComplete();
+      
+      _logger.i('Onboarding complete status: $isComplete', tag: 'Onboarding');
+      
+      return isComplete;
+    } catch (e) {
+      _logger.e('Error checking onboarding status: $e', tag: 'Onboarding');
       return false;
     }
   }
@@ -139,17 +131,40 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
   @override
   Future<void> completeOnboarding() async {
     try {
-      await _edgeFunctionClient.invoke<dynamic>(
-        'user-profile',
-        body: {
-          'action': 'save',
-          'step': 'complete',
-          'data': {'isCompleted': true},
-        },
-      );
-    } catch (e, stackTrace) {
-      _logger.e('Error completing onboarding', tag: 'Onboarding', error: e, stackTrace: stackTrace);
+      _logger.i('Marking onboarding as complete', tag: 'Onboarding');
+      
+      await _dataSource.completeOnboarding();
+      
+      _logger.i('Successfully marked onboarding as complete', tag: 'Onboarding');
+    } catch (e) {
+      _logger.e('Error completing onboarding: $e', tag: 'Onboarding');
       rethrow;
+    }
+  }
+  
+  /// Parse migration reason from string to enum
+  MigrationReason? _parseMigrationReason(String? reason) {
+    if (reason == null) return null;
+    
+    switch (reason.toLowerCase()) {
+      case 'work':
+        return MigrationReason.work;
+      case 'study':
+        return MigrationReason.study;
+      case 'family':
+        return MigrationReason.family;
+      case 'refugee':
+        return MigrationReason.refugee;
+      case 'retirement':
+        return MigrationReason.retirement;
+      case 'investment':
+        return MigrationReason.investment;
+      case 'lifestyle':
+        return MigrationReason.lifestyle;
+      case 'other':
+        return MigrationReason.other;
+      default:
+        return MigrationReason.other;
     }
   }
 }

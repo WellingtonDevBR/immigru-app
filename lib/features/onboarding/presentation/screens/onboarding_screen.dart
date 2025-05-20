@@ -6,13 +6,17 @@ import 'package:immigru/new_core/country/domain/entities/country.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_bloc.dart';
+// Import removed: immi_grove_event.dart
 import 'package:immigru/features/onboarding/presentation/widgets/birth_country/birth_country_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/current_status/current_status_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_journey_step_widget.dart';
-import 'package:immigru/features/onboarding/presentation/widgets/profession/profession_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/steps/language/language_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/interest/interest_step.dart';
 import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step_widget.dart';
+import 'package:get_it/get_it.dart';
 
 /// Main onboarding screen for the feature-first architecture
 class OnboardingScreen extends StatelessWidget {
@@ -21,8 +25,11 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The OnboardingBloc is now provided by the OnboardingFeature in app_new.dart
-    // So we can just use the OnboardingView directly
-    return const OnboardingView();
+    // But we need to provide the ImmiGroveBloc for the ImmiGrove step
+    return BlocProvider<ImmiGroveBloc>(
+      create: (_) => GetIt.instance<ImmiGroveBloc>(),
+      child: const OnboardingView(),
+    );
   }
 }
 
@@ -203,6 +210,22 @@ class _OnboardingViewState extends State<OnboardingView> {
                                   const NextStepRequested(),
                                 );
                           });
+                        },
+                      ),
+                      
+                      // ImmiGrove step
+                      ImmiGroveStepWidget(
+                        selectedImmiGroveIds: state.immiGroveIds,
+                        onImmiGrovesSelected: (List<String> immiGroveIds) {
+                          // Update the onboarding state with the selected ImmiGroves
+                          context.read<OnboardingBloc>().add(
+                                ImmiGrovesUpdated(immiGroveIds),
+                              );
+                          
+                          // Mark onboarding as complete
+                          context.read<OnboardingBloc>().add(
+                                const OnboardingCompleted(),
+                              );
                         },
                       ),
                     ],

@@ -5,7 +5,14 @@ export const ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:8080',
-    'http://localhost:9999'
+    'http://localhost:9999',
+    // Allow all mobile app requests
+    'capacitor://localhost',
+    'ionic://localhost',
+    'file://',
+    'http://localhost',
+    'https://localhost',
+    '*' // Allow all origins for mobile app testing
   ];
   
   // Default CORS headers for all responses

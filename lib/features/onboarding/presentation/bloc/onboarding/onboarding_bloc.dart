@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/features/onboarding/domain/repositories/immi_grove_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/language_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
@@ -9,14 +11,17 @@ import 'package:immigru/new_core/logging/logger_interface.dart';
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final OnboardingFeatureRepository _repository;
   final LanguageRepository _languageRepository;
+  final ImmiGroveRepository _immiGroveRepository;
   final LoggerInterface _logger;
 
   OnboardingBloc({
     required OnboardingFeatureRepository repository,
     required LanguageRepository languageRepository,
+    required ImmiGroveRepository immiGroveRepository,
     required LoggerInterface logger,
   })  : _repository = repository,
         _languageRepository = languageRepository,
+        _immiGroveRepository = immiGroveRepository,
         _logger = logger,
         super(OnboardingState.initial()) {
     on<OnboardingInitialized>(_onInitialized);
@@ -32,6 +37,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<OnboardingCompleted>(_onOnboardingCompleted);
     on<OnboardingSaved>(_onOnboardingSaved);
     on<LanguagesSaveRequested>(_onLanguagesSaveRequested);
+    on<ImmiGrovesUpdated>(_onImmiGrovesUpdated);
+    on<ImmiGrovesSaveRequested>(_onImmiGrovesSaveRequested);
   }
 
   /// Handle initialization event
@@ -373,6 +380,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       final nextStepIndex = state.currentStepIndex + 1;
 
       if (nextStepIndex < state.totalSteps) {
+        // Only set isLastStep to true when we're on the ImmiGrove step (index 6)
         final isLastStep = nextStepIndex >= state.totalSteps - 1;
 
         emit(state.copyWith(
@@ -384,7 +392,10 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
                 (nextStepIndex == 2 &&
                     state.migrationSteps
                         .isNotEmpty) || // Allow moving to next step if migration steps are added
-                (nextStepIndex == 3) // Always allow moving to profession step
+                (nextStepIndex == 3) || // Always allow moving to profession step
+                (nextStepIndex == 4) || // Always allow moving to language step
+                (nextStepIndex == 5) || // Always allow moving to interest step
+                (nextStepIndex == 6)    // Always allow moving to immi grove step
             ));
 
         // Log navigation for debugging
@@ -580,6 +591,52 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         stackTrace: stackTrace,
       );
       print('OnboardingBloc: Error saving languages: $e');
+    }
+  }
+  
+  /// Handle ImmiGroves updated event
+  Future<void> _onImmiGrovesUpdated(
+    ImmiGrovesUpdated event,
+    Emitter<OnboardingState> emit,
+  ) async {
+    try {
+      _logger.i('Updating selected ImmiGroves: ${event.immiGroveIds}', tag: 'Onboarding');
+      
+      // Update the state with the selected ImmiGrove IDs
+      emit(state.copyWith(
+        immiGroveIds: event.immiGroveIds,
+      ));
+      
+      _logger.i('ImmiGroves updated in state: ${state.immiGroveIds}', tag: 'Onboarding');
+    } catch (e, stackTrace) {
+      _logger.e(
+        'Error updating ImmiGroves',
+        tag: 'Onboarding',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+  
+  /// Handle ImmiGroves save request event
+  Future<void> _onImmiGrovesSaveRequested(
+    ImmiGrovesSaveRequested event,
+    Emitter<OnboardingState> emit,
+  ) async {
+    try {
+      _logger.i('Saving ImmiGroves: ${event.immiGroveIds}', tag: 'Onboarding');
+      
+      // Save the ImmiGrove IDs using the repository
+      await _immiGroveRepository.saveSelectedImmiGroves(event.immiGroveIds);
+      
+      _logger.i('ImmiGroves saved successfully', tag: 'Onboarding');
+    } catch (e, stackTrace) {
+      _logger.e(
+        'Error saving ImmiGroves',
+        tag: 'Onboarding',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

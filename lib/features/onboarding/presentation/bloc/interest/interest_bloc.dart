@@ -28,6 +28,7 @@ class InterestBloc extends Bloc<InterestEvent, InterestState> {
     on<InterestToggled>(_onInterestToggled);
     on<InterestsSaved>(_onInterestsSaved);
     on<InterestSearchUpdated>(_onSearchUpdated);
+    on<InterestsPreselected>(_onInterestsPreselected);
   }
   
   /// Handle loading all available interests
@@ -133,5 +134,18 @@ class InterestBloc extends Bloc<InterestEvent, InterestState> {
   void updateSearchQuery(String query) {
     // Use add event pattern instead of direct emit
     add(InterestSearchUpdated(query));
+  }
+  
+  /// Handle preselected interests
+  void _onInterestsPreselected(
+    InterestsPreselected event,
+    Emitter<InterestState> emit,
+  ) {
+    _logger.i('InterestBloc: Preselecting interests: ${event.interestIds}');
+    
+    emit(state.copyWith(
+      selectedInterestIds: event.interestIds,
+      saveSuccess: false,
+    ));
   }
 }

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_manager.dart';
+import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/steps/interest/interest_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/language/language_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/profession/profession_step.dart';
@@ -106,6 +108,21 @@ class OnboardingStepFactory {
           onInterestsSelected: (List<int> interests) {
             // Update interests in the onboarding bloc
             stepManager.onboardingBloc.add(InterestsUpdated(interests));
+            
+            // Add a small delay to ensure the save completes before moving to next step
+            Future.delayed(const Duration(milliseconds: 300), () {
+              stepManager.goToNextStep();
+            });
+          },
+        );
+        
+      case 6:
+        // ImmiGrove step
+        return ImmiGroveStepWidget(
+          selectedImmiGroveIds: state.immiGroveIds,
+          onImmiGrovesSelected: (List<String> immiGroveIds) {
+            // Update ImmiGroves in the onboarding bloc
+            stepManager.onboardingBloc.add(ImmiGrovesUpdated(immiGroveIds));
             
             // Add a small delay to ensure the save completes before moving to next step
             Future.delayed(const Duration(milliseconds: 300), () {

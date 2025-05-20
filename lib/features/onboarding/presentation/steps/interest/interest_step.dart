@@ -28,7 +28,6 @@ class InterestStep extends StatefulWidget {
 
 class _InterestStepState extends State<InterestStep> {
   final TextEditingController _searchController = TextEditingController();
-  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -38,6 +37,13 @@ class _InterestStepState extends State<InterestStep> {
     Future.microtask(() {
       context.read<InterestBloc>().add(const InterestsLoaded());
     });
+    
+    // Set initial selected interests if available
+    if (widget.selectedInterests.isNotEmpty) {
+      Future.microtask(() {
+        context.read<InterestBloc>().add(InterestsPreselected(widget.selectedInterests));
+      });
+    }
   }
 
   @override
@@ -52,12 +58,10 @@ class _InterestStepState extends State<InterestStep> {
       create: (context) => sl<InterestBloc>()..add(const InterestsLoaded()),
       child: BlocConsumer<InterestBloc, InterestState>(
         listenWhen: (previous, current) => 
-            previous.saveSuccess != current.saveSuccess && current.saveSuccess,
+            previous.selectedInterestIds != current.selectedInterestIds,
         listener: (context, state) {
-          if (state.saveSuccess && !_hasNavigated) {
-            _hasNavigated = true;
-            widget.onInterestsSelected(state.selectedInterestIds);
-          }
+          // Update the onboarding state when interests are selected
+          widget.onInterestsSelected(state.selectedInterestIds);
         },
         builder: (context, state) {
           if (state.isLoading) {
@@ -259,28 +263,8 @@ class _InterestStepState extends State<InterestStep> {
                 ),
         ),
         
-        // Continue button
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: state.selectedInterestIds.isNotEmpty
-                ? () {
-                    context.read<InterestBloc>().add(
-                          InterestsSaved(state.selectedInterestIds),
-                        );
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Continue'),
-          ),
-        ),
+        // Bottom padding to ensure content is visible
+        const SizedBox(height: 16),
       ],
     );
   }
