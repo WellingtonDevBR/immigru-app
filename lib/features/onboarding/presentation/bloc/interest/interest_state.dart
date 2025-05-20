@@ -4,7 +4,7 @@ import '../../../domain/entities/interest.dart';
 /// State for the interest selection step
 class InterestState extends Equatable {
   final List<Interest> availableInterests;
-  final List<int> selectedInterestIds;
+  final List<String> selectedInterestIds;
   final bool isLoading;
   final bool isSaving;
   final bool saveSuccess;
@@ -24,7 +24,7 @@ class InterestState extends Equatable {
   /// Create a copy of this state with the given fields replaced with new values
   InterestState copyWith({
     List<Interest>? availableInterests,
-    List<int>? selectedInterestIds,
+    List<String>? selectedInterestIds,
     bool? isLoading,
     bool? isSaving,
     bool? saveSuccess,
@@ -53,7 +53,7 @@ class InterestState extends Equatable {
   
   /// Get selected interests
   List<Interest> get selectedInterests => availableInterests
-      .where((interest) => selectedInterestIds.contains(interest.id))
+      .where((interest) => selectedInterestIds.contains(interest.id.toString()))
       .toList();
   
   @override

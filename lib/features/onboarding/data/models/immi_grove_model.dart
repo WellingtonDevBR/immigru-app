@@ -4,22 +4,14 @@ import '../../domain/entities/immi_grove.dart';
 class ImmiGroveModel extends ImmiGrove {
   /// Creates a new ImmiGroveModel instance
   const ImmiGroveModel({
-    required String id,
-    required String name,
-    required String description,
-    String? iconUrl,
-    required int memberCount,
-    bool isJoined = false,
-    List<String> categories = const [],
-  }) : super(
-          id: id,
-          name: name,
-          description: description,
-          iconUrl: iconUrl,
-          memberCount: memberCount,
-          isJoined: isJoined,
-          categories: categories,
-        );
+    required super.id,
+    required super.name,
+    required super.description,
+    super.iconUrl,
+    required super.memberCount,
+    super.isJoined,
+    super.categories,
+  });
 
   /// Creates an ImmiGroveModel from a JSON map
   factory ImmiGroveModel.fromJson(Map<String, dynamic> json) {
@@ -47,5 +39,27 @@ class ImmiGroveModel extends ImmiGrove {
       'is_joined': isJoined,
       'categories': categories,
     };
+  }
+  
+  /// Creates a copy of this ImmiGroveModel with the given fields replaced with new values
+  @override
+  ImmiGroveModel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? iconUrl,
+    int? memberCount,
+    bool? isJoined,
+    List<String>? categories,
+  }) {
+    return ImmiGroveModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      iconUrl: iconUrl ?? this.iconUrl,
+      memberCount: memberCount ?? this.memberCount,
+      isJoined: isJoined ?? this.isJoined,
+      categories: categories ?? this.categories,
+    );
   }
 }

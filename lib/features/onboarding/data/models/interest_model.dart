@@ -3,16 +3,11 @@ import '../../domain/entities/interest.dart';
 /// Model class for Interest entity
 class InterestModel extends Interest {
   const InterestModel({
-    required int id,
-    required String name,
-    String? description,
-    bool isSelected = false,
-  }) : super(
-          id: id,
-          name: name,
-          description: description,
-          isSelected: isSelected,
-        );
+    required super.id,
+    required super.name,
+    super.description,
+    super.isSelected,
+  });
         
   /// Create an InterestModel from a JSON map
   factory InterestModel.fromJson(Map<String, dynamic> json) {

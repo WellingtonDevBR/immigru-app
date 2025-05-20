@@ -1,11 +1,10 @@
-import 'package:immigru/domain/entities/onboarding_data.dart';
-import 'package:immigru/domain/repositories/onboarding_repository.dart' as old_repo;
-import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:immigru/features/onboarding/domain/entities/onboarding_data.dart';
+import 'package:immigru/features/onboarding/domain/repositories/onboarding_feature_repository.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
 
-/// Adapter class to connect the old OnboardingRepository with the new feature-first architecture
+/// Adapter class to connect the old repository implementation with the new feature-first architecture
 class OnboardingRepositoryAdapter implements OnboardingFeatureRepository {
-  final old_repo.OnboardingRepository _oldRepository;
+  final OnboardingFeatureRepository _oldRepository;
   final LoggerInterface _logger;
 
   OnboardingRepositoryAdapter(
@@ -16,21 +15,10 @@ class OnboardingRepositoryAdapter implements OnboardingFeatureRepository {
   @override
   Future<void> saveStepData(String step, Map<String, dynamic> data) async {
     try {
-      // Convert the step data to the format expected by the old repository
-      final baseData = await _oldRepository.getOnboardingData();
-      
-      // Update the specific step data
-      switch (step) {
-        case 'birthCountry':
-          final updatedData = baseData.copyWith(
-            birthCountry: data['countryId'],
-          );
-          await _oldRepository.saveOnboardingData(updatedData);
-          break;
-        // Add more cases for other steps as they are implemented
-        default:
-          _logger.d('Unknown step: $step', tag: 'Onboarding');
-      }
+      // Since we're now using the same interface, we can just delegate the call
+      // to the underlying repository implementation
+      await _oldRepository.saveStepData(step, data);
+      _logger.i('Successfully saved step data for: $step', tag: 'Onboarding');
     } catch (e, stackTrace) {
       _logger.e('Error saving step data', tag: 'Onboarding', error: e, stackTrace: stackTrace);
       rethrow;
@@ -50,11 +38,9 @@ class OnboardingRepositoryAdapter implements OnboardingFeatureRepository {
   @override
   Future<bool> isOnboardingComplete() async {
     try {
-      // Check if onboarding data exists and is marked as completed
-      final data = await _oldRepository.getOnboardingData();
-      return data.isCompleted;
+      return await _oldRepository.isOnboardingComplete();
     } catch (e, stackTrace) {
-      _logger.e('Error checking onboarding status', tag: 'Onboarding', error: e, stackTrace: stackTrace);
+      _logger.e('Error checking onboarding completion', tag: 'Onboarding', error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -62,12 +48,8 @@ class OnboardingRepositoryAdapter implements OnboardingFeatureRepository {
   @override
   Future<void> completeOnboarding() async {
     try {
-      // Get current onboarding data
-      final baseData = await _oldRepository.getOnboardingData();
-      
-      // Mark as completed
-      final updatedData = baseData.copyWith(isCompleted: true);
-      await _oldRepository.saveOnboardingData(updatedData);
+      await _oldRepository.completeOnboarding();
+      _logger.i('Successfully completed onboarding', tag: 'Onboarding');
     } catch (e, stackTrace) {
       _logger.e('Error completing onboarding', tag: 'Onboarding', error: e, stackTrace: stackTrace);
       rethrow;

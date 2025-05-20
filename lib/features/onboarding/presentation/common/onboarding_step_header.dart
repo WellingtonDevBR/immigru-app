@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// A reusable header component for onboarding steps
 class OnboardingStepHeader extends StatelessWidget {

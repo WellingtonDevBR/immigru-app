@@ -7,7 +7,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/profession/profess
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_state.dart';
 import 'package:immigru/features/onboarding/presentation/common/index.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the profession selection step in onboarding
 class ProfessionStepWidget extends StatelessWidget {
@@ -164,9 +164,11 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
           if (matchingProfession.isNotEmpty) {
             // Select the matching profession
             Future.microtask(() {
-              context.read<ProfessionBloc>().add(
-                    ProfessionSelected(matchingProfession.first),
-                  );
+              if (mounted) {
+                context.read<ProfessionBloc>().add(
+                      ProfessionSelected(matchingProfession.first),
+                    );
+              }
             });
           }
         }
@@ -188,7 +190,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primaryColor.withOpacity(0.7),
+                            AppColors.primaryColor.withValues(alpha:0.7),
                             AppColors.primaryColor,
                           ],
                           begin: Alignment.topLeft,
@@ -197,7 +199,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryColor.withOpacity(0.3),
+                            color: AppColors.primaryColor.withValues(alpha:0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -222,7 +224,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                                 Text(
                                   'Select your profession or enter a custom one',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha:0.9),
                                   ),
                                 ),
                               ],
@@ -240,7 +242,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha:0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),

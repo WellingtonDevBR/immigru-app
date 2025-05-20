@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 import 'package:intl/intl.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/country_selector.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/visa_selector.dart';
 import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
-import 'package:immigru/domain/entities/visa.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Modal for adding or editing a migration step
 class MigrationStepModal {

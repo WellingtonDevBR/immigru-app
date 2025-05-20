@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:immigru/new_core/country/domain/entities/country.dart';
 import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// A dropdown widget for selecting a country

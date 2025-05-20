@@ -50,7 +50,7 @@ class InterestSearchUpdated extends InterestEvent {
 
 /// Event to preselect interests from previous state
 class InterestsPreselected extends InterestEvent {
-  final List<int> interestIds;
+  final List<String> interestIds;
   
   const InterestsPreselected(this.interestIds);
   

@@ -3,7 +3,7 @@ import 'package:immigru/features/onboarding/domain/repositories/onboarding_repos
 
 /// Use case for updating the birth country during onboarding
 class UpdateBirthCountryUseCase {
-  final OnboardingFeatureRepository _repository;
+  final OnboardingRepository _repository;
 
   UpdateBirthCountryUseCase(this._repository);
 

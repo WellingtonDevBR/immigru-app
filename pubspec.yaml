@@ -57,6 +57,8 @@ dependencies:
   sign_in_with_apple_platform_interface: ^2.0.0
   sign_in_with_apple_web: ^3.0.0
   flutter_secure_storage: ^9.2.4
+  dartz: ^0.10.1
+  timeago: ^3.7.1
 
 dev_dependencies:
   flutter_test:

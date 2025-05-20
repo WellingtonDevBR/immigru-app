@@ -3,8 +3,10 @@ import 'package:immigru/features/onboarding/domain/entities/migration_step.dart'
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_manager.dart';
-import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step_widget.dart';
+import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/interest/interest_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/language/language_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/profession/profession_step.dart';
@@ -99,26 +101,32 @@ class OnboardingStepFactory {
               stepManager.goToNextStep();
             });
           },
+          logger: ServiceLocator.instance<LoggerInterface>(),
         );
         
       case 5:
         // Interest step
         return InterestStep(
-          selectedInterests: state.interests,
-          onInterestsSelected: (List<int> interests) {
+          selectedInterests: state.interests.isNotEmpty 
+              ? state.interests.map((e) => e).toList() 
+              : <String>[],
+          onInterestsSelected: (List<String> interests) {
             // Update interests in the onboarding bloc
-            stepManager.onboardingBloc.add(InterestsUpdated(interests));
+            stepManager.onboardingBloc.add(InterestsUpdated(
+              interests,
+            ));
             
             // Add a small delay to ensure the save completes before moving to next step
             Future.delayed(const Duration(milliseconds: 300), () {
               stepManager.goToNextStep();
             });
           },
+          logger: ServiceLocator.instance<LoggerInterface>(),
         );
         
       case 6:
         // ImmiGrove step
-        return ImmiGroveStepWidget(
+        return ImmiGroveStep(
           selectedImmiGroveIds: state.immiGroveIds,
           onImmiGrovesSelected: (List<String> immiGroveIds) {
             // Update ImmiGroves in the onboarding bloc
@@ -129,6 +137,7 @@ class OnboardingStepFactory {
               stepManager.goToNextStep();
             });
           },
+          logger: ServiceLocator.instance<LoggerInterface>(),
         );
 
       // Additional cases for other steps will be added here

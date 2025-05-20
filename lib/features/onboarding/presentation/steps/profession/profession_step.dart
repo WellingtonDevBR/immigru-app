@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_state.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the profession selection step in onboarding
 class ProfessionStep extends StatefulWidget {

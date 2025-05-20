@@ -76,40 +76,74 @@ class LanguageSupabaseDataSource implements LanguageDataSource {
         return false;
       }
       
-      // Direct console output for immediate visibility
       _logger.i('LanguageDataSource: SAVING USER LANGUAGES: $languageIds');
       
-      // Prepare the request body - EXACTLY as Postman expects it
-      final requestBody = {
-        'languageIds': languageIds,
-      };
-      
-      _logger.i('LanguageDataSource: Request body: $requestBody');
-      
-      // Use the ORIGINAL user-language edge function that works with Postman
-      _logger.i('LanguageDataSource: Invoking user-language edge function');
-      final response = await _client.invoke<dynamic>(
-        'user-language',
-        body: requestBody,
-        method: HttpMethod.post,
-      );
-      
-      // Log the complete response for debugging
-      _logger.i('LanguageDataSource: Response from user-language: ${response.data}');
-      
-      if (!response.isSuccess) {
-        _logger.e('LanguageDataSource: ERROR - Edge function failed: ${response.message}');
-        _logger.e('LanguageDataSource: Failed to save user languages', error: response.message);
-        return false;
+      // First try the dedicated user-language edge function
+      try {
+        // Prepare the request body - EXACTLY as Postman expects it
+        final requestBody = {
+          'languageIds': languageIds,
+        };
+        
+        _logger.i('LanguageDataSource: Request body: $requestBody');
+        
+        // Use the ORIGINAL user-language edge function that works with Postman
+        _logger.i('LanguageDataSource: Invoking user-language edge function');
+        final response = await _client.invoke<dynamic>(
+          'user-language',
+          body: requestBody,
+          method: HttpMethod.post,
+        );
+        
+        // Log the complete response for debugging
+        _logger.i('LanguageDataSource: Response from user-language: ${response.data}');
+        
+        if (response.isSuccess) {
+          // Mark the cache as needing refresh after successful save
+          // This ensures we'll get fresh data next time getUserLanguages is called
+          _shouldRefreshCache = true;
+          
+          _logger.i('LanguageDataSource: Successfully saved languages via user-language edge function');
+          return true;
+        }
+        
+        _logger.w('LanguageDataSource: Primary method failed, trying fallback', 
+            error: response.message);
+      } catch (primaryError) {
+        _logger.w('LanguageDataSource: Primary method failed with exception, trying fallback', 
+            error: primaryError);
       }
       
-      // Mark the cache as needing refresh after successful save
-      // This ensures we'll get fresh data next time getUserLanguages is called
-      _shouldRefreshCache = true;
-      
-      _logger.i('LanguageDataSource: Successfully saved languages via user-language edge function');
-      _logger.i('LanguageDataSource: Successfully saved user languages: $languageIds');
-      return true;
+      // Fallback method: Use user-profile edge function with a simplified payload
+      try {
+        _logger.i('LanguageDataSource: Trying fallback with user-profile edge function');
+        final fallbackResponse = await _client.invoke<dynamic>(
+          'user-profile',
+          body: {
+            'action': 'save',
+            'step': 'languages',
+            'data': {
+              'languages': languageIds,
+            }
+          },
+        );
+        
+        if (!fallbackResponse.isSuccess) {
+          _logger.e('LanguageDataSource: Fallback method also failed', 
+              error: fallbackResponse.message);
+          return false;
+        }
+        
+        // Mark the cache as needing refresh after successful save
+        _shouldRefreshCache = true;
+        
+        _logger.i('LanguageDataSource: Successfully saved languages via fallback method');
+        return true;
+      } catch (fallbackError) {
+        _logger.e('LanguageDataSource: Fallback method failed with exception', 
+            error: fallbackError);
+        return false;
+      }
     } catch (e) {
       _logger.e('LanguageDataSource: CRITICAL ERROR - $e');
       _logger.e('LanguageDataSource: Failed to save user languages', error: e);
@@ -182,7 +216,7 @@ class LanguageSupabaseDataSource implements LanguageDataSource {
           if (retryCount >= maxRetries) {
             // If we've exhausted all retries, rethrow the exception
             _logger.e('LanguageDataSource: Failed after $maxRetries retries', error: e);
-            throw e;
+            rethrow;
           }
           
           // Wait with exponential backoff before retrying

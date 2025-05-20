@@ -1,8 +1,52 @@
-import 'package:immigru/data/models/visa_model.dart';
-import 'package:immigru/domain/entities/visa.dart';
+import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
 import 'package:immigru/new_core/network/edge_function_client.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
+
+/// Model class for Visa entity to handle JSON conversion
+class VisaModel extends Visa {
+  VisaModel({
+    required super.id,
+    required super.name,
+    super.visaCode,
+    super.description,
+    required super.countryId,
+    super.isCommon = false,
+    super.type,
+    super.pathwayToPR = false,
+    super.allowsWork = false,
+  });
+
+  /// Create a VisaModel from JSON data
+  factory VisaModel.fromJson(Map<String, dynamic> json) {
+    return VisaModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? json['visaName'] ?? '',
+      visaCode: json['visaCode'],
+      description: json['description'],
+      countryId: json['countryId'] ?? 0,
+      isCommon: json['isCommon'] ?? false,
+      type: json['type'],
+      pathwayToPR: json['pathwayToPR'] ?? false,
+      allowsWork: json['allowsWork'] ?? false,
+    );
+  }
+
+  /// Convert VisaModel to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'visaCode': visaCode,
+      'description': description,
+      'countryId': countryId,
+      'isCommon': isCommon,
+      'type': type,
+      'pathwayToPR': pathwayToPR,
+      'allowsWork': allowsWork,
+    };
+  }
+}
 
 /// Implementation of the VisaRepository interface for the new architecture
 class VisaRepositoryImpl implements VisaRepository {
@@ -130,91 +174,91 @@ class VisaRepositoryImpl implements VisaRepository {
     return [
       VisaModel(
         id: 1001,
+        name: 'Business Visitor',
         countryId: countryId,
-        visaName: 'Tourist',
         visaCode: 'TOUR',
         type: 'Visitor',
         pathwayToPR: false,
         allowsWork: false,
-        description: 'Tourist/visitor visa for short-term stays',
-        isPublic: true,
+        description: 'Business visitor visa for short-term business activities',
+        isCommon: true,
       ),
       VisaModel(
         id: 1002,
+        name: 'Student',
         countryId: countryId,
-        visaName: 'Student',
         visaCode: 'STUD',
         type: 'Education',
         pathwayToPR: false,
         allowsWork: true,
         description: 'Student visa for educational purposes',
-        isPublic: true,
+        isCommon: true,
       ),
       VisaModel(
         id: 1003,
+        name: 'Work',
         countryId: countryId,
-        visaName: 'Work',
         visaCode: 'WORK',
         type: 'Employment',
-        pathwayToPR: false,
+        pathwayToPR: true,
         allowsWork: true,
-        description: 'Work visa for employment purposes',
-        isPublic: true,
+        description: 'Work visa for skilled professionals',
+        isCommon: true,
       ),
       VisaModel(
         id: 1004,
+        name: 'Partner/Family',
         countryId: countryId,
-        visaName: 'Partner/Family',
         visaCode: 'FAM',
         type: 'Family',
         pathwayToPR: false,
         allowsWork: false,
         description: 'Family or partner visa for reunification',
-        isPublic: true,
+        isCommon: true,
       ),
       VisaModel(
         id: 1005,
+        name: 'Refugee/Asylum',
         countryId: countryId,
-        visaName: 'Refugee/Asylum',
         visaCode: 'REF',
         type: 'Humanitarian',
         pathwayToPR: false,
         allowsWork: false,
         description: 'Refugee or asylum seeker visa',
-        isPublic: true,
+        isCommon: true,
       ),
       VisaModel(
         id: 1006,
+        name: 'Bridging/Provisional',
         countryId: countryId,
-        visaName: 'Bridging/Provisional',
         visaCode: 'BRDG',
         type: 'Temporary',
         pathwayToPR: false,
         allowsWork: false,
         description: 'Temporary bridging or provisional visa',
-        isPublic: true,
+        isCommon: true,
       ),
       VisaModel(
         id: 1007,
+        name: 'PR/Citizen',
         countryId: countryId,
-        visaName: 'PR/Citizen',
         visaCode: 'PR',
         type: 'Permanent',
         pathwayToPR: true,
         allowsWork: true,
-        description: 'Permanent residency or citizenship',
-        isPublic: true,
+        description: 'Permanent residency visa',
+        isCommon: true,
       ),
       VisaModel(
         id: 1008,
+        name: 'Other/Unsure',
         countryId: countryId,
-        visaName: 'Other/Unsure',
         visaCode: 'OTHER',
         type: 'Other',
         pathwayToPR: false,
         allowsWork: false,
-        description: 'Other visa type or unsure',
-        isPublic: true,
+        description: 'Transit visa for short layovers',
+        isCommon: true,
       ),
     ];
   }
@@ -243,13 +287,13 @@ class VisaRepositoryImpl implements VisaRepository {
           return VisaModel(
             id: visa.id,
             countryId: countryId,
-            visaName: visa.visaName,
+            name: visa.name,
             visaCode: visa.visaCode,
             type: visa.type,
             pathwayToPR: visa.pathwayToPR,
             allowsWork: visa.allowsWork,
             description: visa.description,
-            isPublic: visa.isPublic,
+            isCommon: visa.isCommon,
           );
         })
         .toList();
@@ -269,198 +313,198 @@ class VisaRepositoryImpl implements VisaRepository {
     
     return [
       // Australia
-      const VisaModel(
+      VisaModel(
         id: 1,
+        name: 'Student Visa (Subclass 500)',
         countryId: 13, // Australia
-        visaName: 'Student Visa (Subclass 500)',
         visaCode: '500',
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
         description: 'This visa allows you to stay in Australia to study full-time in a recognized education institution.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 2,
+        name: 'Temporary Skill Shortage Visa (Subclass 482)',
         countryId: 13, // Australia
-        visaName: 'Temporary Skill Shortage Visa (Subclass 482)',
         visaCode: '482',
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
         description: 'This visa lets an employer sponsor a skilled worker to fill a position they cannot find a suitably skilled Australian to fill.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 3, 
+        name: 'Skilled Independent Visa (Subclass 189)', 
         countryId: 13, 
-        visaName: 'Skilled Independent Visa (Subclass 189)', 
         visaCode: '189', 
         type: 'Skilled Migration', 
         pathwayToPR: true, 
         allowsWork: true, 
         description: 'For invited workers and New Zealand citizens with skills to fill positions needed in Australia.', 
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 10,
+        name: 'Visitor Visa',
         countryId: 13, // Australia
-        visaName: 'Visitor Visa',
         visaCode: '600',
         type: 'Tourist',
         pathwayToPR: false,
         allowsWork: false,
         description: 'For tourism or visiting family and friends.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 11,
+        name: 'Working Holiday Visa',
         countryId: 13, // Australia
-        visaName: 'Working Holiday Visa',
         visaCode: '417',
         type: 'Work and Holiday',
         pathwayToPR: false,
         allowsWork: true,
         description: 'For young adults who want to work and travel in Australia for up to a year.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 12,
+        name: 'Permanent Resident/Citizen',
         countryId: 13, // Australia
-        visaName: 'Permanent Resident/Citizen',
         visaCode: 'PR',
         type: 'Permanent',
         pathwayToPR: true,
         allowsWork: true,
         description: 'Permanent residency or citizenship status.',
-        isPublic: true,
+        isCommon: true,
       ),
       
       // USA
-      const VisaModel(
+      VisaModel(
         id: 20,
+        name: 'H-1B Specialty Occupation',
         countryId: 234, // USA
-        visaName: 'H-1B Specialty Occupation',
         visaCode: 'H-1B',
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
         description: 'For workers in specialty occupations that require theoretical or technical expertise.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 21,
+        name: 'F-1 Student Visa',
         countryId: 234, // USA
-        visaName: 'F-1 Student Visa',
         visaCode: 'F-1',
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
         description: 'For academic students admitted to a SEVP-certified school.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 22,
+        name: 'B-2 Tourist Visa',
         countryId: 234, // USA
-        visaName: 'B-2 Tourist Visa',
         visaCode: 'B-2',
         type: 'Tourist',
         pathwayToPR: false,
         allowsWork: false,
         description: 'For tourism, vacation, visiting family, medical treatment.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 23,
+        name: 'Green Card/Citizen',
         countryId: 234, // USA
-        visaName: 'Green Card/Citizen',
         visaCode: 'GC',
         type: 'Permanent',
         pathwayToPR: true,
         allowsWork: true,
         description: 'Permanent residency or citizenship status.',
-        isPublic: true,
+        isCommon: true,
       ),
       
       // UK
-      const VisaModel(
+      VisaModel(
         id: 30,
+        name: 'Skilled Worker Visa',
         countryId: 235, // UK
-        visaName: 'Skilled Worker Visa',
         visaCode: 'SW',
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
         description: 'This visa has replaced the Tier 2 (General) work visa. You can apply for a Skilled Worker visa if you have been offered a skilled job in the UK.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 31,
+        name: 'Student Visa',
         countryId: 235, // UK
-        visaName: 'Student Visa',
         visaCode: 'ST',
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
         description: 'This visa has replaced the Tier 4 (General) student visa. You can apply for a Student visa to study in the UK if you are 16 or over.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
+      VisaModel(
         id: 32,
+        name: 'Global Talent Visa',
         countryId: 235, // UK
-        visaName: 'Global Talent Visa',
         visaCode: 'GT',
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
         description: 'This visa has replaced the Tier 1 (Exceptional Talent) visa. It is for people who can show they have exceptional talent or exceptional promise in academia or research, arts and culture, or digital technology.',
-        isPublic: true,
+        isCommon: true,
       ),
       
       // Generic visas for any country
-      const VisaModel(
-        id: 100,
+      VisaModel(
+        id: 40,
+        name: 'Tourist/Visitor Visa',
         countryId: 0, // Generic
-        visaName: 'Tourist/Visitor Visa',
         visaCode: 'VISITOR',
         type: 'Visitor',
         pathwayToPR: false,
         allowsWork: false,
         description: 'Short-term visa for tourism or visiting family/friends.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
-        id: 101,
+      VisaModel(
+        id: 41,
+        name: 'Work Visa',
         countryId: 0, // Generic
-        visaName: 'Work Visa',
         visaCode: 'WORK',
         type: 'Work',
         pathwayToPR: false,
         allowsWork: true,
         description: 'General work visa for employment purposes.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
-        id: 102,
+      VisaModel(
+        id: 42,
+        name: 'Student Visa',
         countryId: 0, // Generic
-        visaName: 'Student Visa',
         visaCode: 'STUDENT',
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
         description: 'For studying at educational institutions.',
-        isPublic: true,
+        isCommon: true,
       ),
-      const VisaModel(
-        id: 103,
+      VisaModel(
+        id: 33,
+        name: 'Permanent Resident/Citizen',
         countryId: 0, // Generic
-        visaName: 'Permanent Resident/Citizen',
         visaCode: 'PR',
         type: 'Permanent',
         pathwayToPR: true,
         allowsWork: true,
         description: 'Permanent residency or citizenship status.',
-        isPublic: true,
+        isCommon: true,
       ),
     ];
   }

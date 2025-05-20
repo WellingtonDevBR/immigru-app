@@ -27,11 +27,24 @@ class EdgeFunctionClient {
         url = '$functionName?$queryString';
       }
       
-      // Invoke the edge function
+      // Get the current session for authentication
+      final session = _client.auth.currentSession;
+      
+      // Prepare headers with authentication token if available
+      final headers = <String, String>{};
+      if (session != null && session.accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${session.accessToken}';
+        debugPrint('EdgeFunctionClient: Adding auth token to request');
+      } else {
+        debugPrint('EdgeFunctionClient: No auth token available');
+      }
+      
+      // Invoke the edge function with authentication
       final response = await _client.functions.invoke(
         url,
         body: body,
         method: method,
+        headers: headers,
       );
       
       // Parse the response data

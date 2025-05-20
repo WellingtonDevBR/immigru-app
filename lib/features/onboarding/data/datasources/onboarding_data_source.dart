@@ -1,5 +1,7 @@
 import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart' as new_core;
+import 'package:get_it/get_it.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_bloc.dart';
 
 /// Data source interface for onboarding operations
 abstract class OnboardingDataSource {
@@ -19,12 +21,12 @@ abstract class OnboardingDataSource {
 /// Implementation of OnboardingDataSource using Supabase Edge Functions
 class OnboardingSupabaseDataSource implements OnboardingDataSource {
   final EdgeFunctionClient _client;
-  final LoggerInterface _logger;
+  final new_core.LoggerInterface _logger;
   
   /// Constructor
   OnboardingSupabaseDataSource({
     required EdgeFunctionClient client,
-    required LoggerInterface logger,
+    required new_core.LoggerInterface logger,
   }) : _client = client,
        _logger = logger;
   
@@ -109,29 +111,61 @@ class OnboardingSupabaseDataSource implements OnboardingDataSource {
   }
   
   /// Mark onboarding as complete
+  @override
   Future<void> completeOnboarding() async {
     try {
       _logger.i('OnboardingDataSource: Marking onboarding as complete');
       
-      // Use the update_profile action instead of complete_onboarding
-      // since the backend doesn't have a complete_onboarding action
-      final response = await _client.invoke<dynamic>(
+      // Get the selected ImmiGrove IDs from the ImmiGroveBloc
+      final immiGroveBloc = GetIt.instance<ImmiGroveBloc>();
+      final selectedImmiGroveIds = immiGroveBloc.state.selectedImmiGroveIds.toList();
+      
+      _logger.i('OnboardingDataSource: Selected ImmiGrove IDs: $selectedImmiGroveIds');
+      
+      // First try the 'save' action with step 'completed' to mark onboarding as complete
+      // This will update the User table with HasCompletedOnboarding = true
+      try {
+        final response = await _client.invoke<dynamic>(
+          'user-profile',
+          body: {
+            'action': 'save',
+            'step': 'completed',
+            'data': {
+              'immiGroveIds': selectedImmiGroveIds,
+            }
+          },
+        );
+        
+        if (response.isSuccess) {
+          _logger.i('OnboardingDataSource: Successfully marked onboarding as complete');
+          return;
+        } else {
+          _logger.w('OnboardingDataSource: Primary method failed, trying fallback', 
+              error: response.message);
+        }
+      } catch (primaryError) {
+        _logger.w('OnboardingDataSource: Primary method failed with exception, trying fallback', 
+            error: primaryError);
+      }
+      
+      // Fallback method: Use update_profile action to directly set HasCompletedOnboarding
+      final fallbackResponse = await _client.invoke<dynamic>(
         'user-profile',
         body: {
-          'action': 'update_profile',
+          'action': 'update',
           'data': {
-            'onboarding_completed': true
+            'HasCompletedOnboarding': true
           }
         },
       );
       
-      if (!response.isSuccess) {
-        _logger.e('OnboardingDataSource: Failed to mark onboarding as complete', 
-            error: response.message);
-        throw Exception(response.message);
+      if (!fallbackResponse.isSuccess) {
+        _logger.e('OnboardingDataSource: Failed to mark onboarding as complete with fallback method', 
+            error: fallbackResponse.message);
+        throw Exception(fallbackResponse.message);
       }
       
-      _logger.i('OnboardingDataSource: Successfully marked onboarding as complete');
+      _logger.i('OnboardingDataSource: Successfully marked onboarding as complete using fallback method');
     } catch (e) {
       _logger.e('OnboardingDataSource: Error marking onboarding as complete', error: e);
       rethrow;

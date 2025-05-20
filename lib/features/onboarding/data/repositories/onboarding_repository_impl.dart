@@ -1,11 +1,11 @@
-import 'package:immigru/domain/entities/onboarding_data.dart';
-import 'package:immigru/domain/entities/visa.dart';
+import 'package:immigru/features/onboarding/domain/entities/onboarding_data.dart';
+import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/data/datasources/onboarding_data_source.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
 
-/// Implementation of the OnboardingFeatureRepository for the new architecture
-class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
+/// Implementation of the OnboardingRepository for the new architecture
+class OnboardingRepositoryImpl implements OnboardingRepository {
   final OnboardingDataSource _dataSource;
   final LoggerInterface _logger;
 
@@ -31,7 +31,7 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
       else if (step == 'currentStatus') {
         // The edge function expects 'currentStatus', not 'statusId' or 'migrationStage'
         final Map<String, dynamic> statusData = {
-          'currentStatus': data['statusId'], // Send status ID as currentStatus
+          'currentStatus': data['currentStatus'], // Use the currentStatus parameter directly
         };
         
         _logger.i('Saving current status data: $statusData', tag: 'Onboarding');
@@ -67,24 +67,24 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
       final List<dynamic> rawMigrationSteps = data['migrationSteps'] ?? [];
       final List<MigrationStep> migrationSteps = rawMigrationSteps.map((step) {
         final Map<String, dynamic> stepData = step as Map<String, dynamic>;
+        
         return MigrationStep(
-          id: stepData['id'],
-          order: stepData['order'],
+          id: stepData['id'] ?? '',
           countryId: stepData['countryId'] ?? 0,
+          countryCode: stepData['countryCode'] ?? '',
           countryName: stepData['countryName'] ?? '',
-          visaId: stepData['visaId'],
-          visaName: stepData['visaName'] ?? '',
-          arrivedDate: stepData['arrivedDate'] != null 
+          visaTypeId: stepData['visaId'] ?? 0,
+          visaTypeName: stepData['visaName'] ?? '',
+          startDate: stepData['arrivedDate'] != null 
               ? DateTime.parse(stepData['arrivedDate']) 
               : null,
-          leftDate: stepData['leftDate'] != null 
+          endDate: stepData['leftDate'] != null 
               ? DateTime.parse(stepData['leftDate']) 
               : null,
           isCurrentLocation: stepData['isCurrentLocation'] ?? false,
-          isTargetDestination: stepData['isTargetDestination'] ?? false,
-          notes: stepData['notes'],
-          migrationReason: _parseMigrationReason(stepData['migrationReason']),
-          wasSuccessful: stepData['wasSuccessful'] ?? true,
+          isTargetCountry: stepData['isTargetDestination'] ?? false,
+          isBirthCountry: stepData['isBirthCountry'] ?? false,
+          order: stepData['order'] ?? 0,
         );
       }).toList();
       
@@ -142,29 +142,5 @@ class OnboardingRepositoryImpl implements OnboardingFeatureRepository {
     }
   }
   
-  /// Parse migration reason from string to enum
-  MigrationReason? _parseMigrationReason(String? reason) {
-    if (reason == null) return null;
-    
-    switch (reason.toLowerCase()) {
-      case 'work':
-        return MigrationReason.work;
-      case 'study':
-        return MigrationReason.study;
-      case 'family':
-        return MigrationReason.family;
-      case 'refugee':
-        return MigrationReason.refugee;
-      case 'retirement':
-        return MigrationReason.retirement;
-      case 'investment':
-        return MigrationReason.investment;
-      case 'lifestyle':
-        return MigrationReason.lifestyle;
-      case 'other':
-        return MigrationReason.other;
-      default:
-        return MigrationReason.other;
-    }
-  }
+
 }

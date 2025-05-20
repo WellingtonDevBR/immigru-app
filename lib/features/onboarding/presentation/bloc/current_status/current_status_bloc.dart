@@ -7,11 +7,11 @@ import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// BLoC for managing the current status step
 class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
-  final OnboardingFeatureRepository _repository;
+  final OnboardingRepository _repository;
   final LoggerInterface _logger;
 
   CurrentStatusBloc({
-    required OnboardingFeatureRepository repository,
+    required OnboardingRepository repository,
     required LoggerInterface logger,
   })  : _repository = repository,
         _logger = logger,
@@ -84,7 +84,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
     try {
       // Save the selected status to UserProfile.MigrationStage immediately
       await _repository.saveStepData('currentStatus', {
-        'statusId': event.status.id,
+        'currentStatus': event.status.id,
       });
       
       _logger.i(
@@ -131,7 +131,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
       
       // Save the selected status to onboarding data
       await _repository.saveStepData('currentStatus', {
-        'statusId': state.selectedStatus!.id,
+        'currentStatus': state.selectedStatus!.id,
       });
       
       _logger.i(

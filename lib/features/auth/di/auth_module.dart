@@ -52,6 +52,10 @@ class AuthModule {
       () => ResetPasswordUseCase(sl<AuthRepository>()),
     );
     
+    // Bridge between new and old architecture for backward compatibility
+    // We don't need to register the old SignOutUseCase here as it's already registered in the main injection container
+    // Instead, we'll create a simple adapter to map between the two in the HomeScreen
+    
     // Register BLoCs
     sl.registerFactory<AuthBloc>(
       () => AuthBloc(

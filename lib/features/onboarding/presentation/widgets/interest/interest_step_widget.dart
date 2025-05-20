@@ -151,7 +151,7 @@ class _InterestStepWidgetState extends State<InterestStepWidget> {
                               width: isSelected ? 2 : 1,
                             ),
                             color: isSelected
-                                ? AppColors.primaryColor.withOpacity(0.1)
+                                ? AppColors.primaryColor.withValues(alpha:0.1)
                                 : isDarkMode
                                     ? Colors.grey[800]
                                     : Colors.white,

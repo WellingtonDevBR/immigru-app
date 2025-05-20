@@ -59,9 +59,29 @@ class InterestSupabaseDataSource implements InterestDataSource {
   Future<bool> saveUserInterests(List<int> interestIds) async {
     try {
       _logger.i('InterestDataSource: Saving user interests: $interestIds');
+      
+      // First, delete existing user interests to prevent duplicate key violations
+      final deleteResponse = await _client.invoke<dynamic>(
+        'user-interest',
+        body: {
+          'action': 'delete_all'
+        },
+        method: HttpMethod.post,
+      );
+      
+      if (!deleteResponse.isSuccess) {
+        _logger.w('InterestDataSource: Failed to delete existing interests, continuing anyway',
+            error: deleteResponse.message);
+        // Continue anyway, as this might be a first-time setup
+      } else {
+        _logger.i('InterestDataSource: Successfully deleted existing user interests');
+      }
+      
+      // Now add the new interests
       final response = await _client.invoke<dynamic>(
         'user-interest',
         body: {
+          'action': 'save',
           'interestIds': interestIds,
         },
         method: HttpMethod.post,

@@ -7,7 +7,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/current_status/cur
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_state.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/new_core/logging/log_util.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 import 'dart:math' as math;
 
 /// Widget for the current immigration status selection step in onboarding

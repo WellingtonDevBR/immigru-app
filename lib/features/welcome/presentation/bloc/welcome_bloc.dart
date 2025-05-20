@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_event.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_state.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// BLoC for managing welcome screen state
 class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
@@ -44,6 +45,11 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
   ) async {
     try {
       _logger.i('Welcome screen completed', tag: 'WelcomeBloc');
+      
+      // Save welcome screen completion status to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_welcome_screen', true);
+      
       emit(state.copyWith(hasBeenSeen: true));
     } catch (e, stackTrace) {
       _logger.e(

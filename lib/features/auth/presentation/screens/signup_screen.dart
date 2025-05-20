@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/utils/input_validation.dart';
+import 'package:immigru/new_core/utils/input_validation.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
@@ -63,11 +63,8 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
       
-      // Import the validation utility
-      final validation = InputValidation();
-      
       // Validate password strength
-      final passwordError = validation.validatePassword(_passwordController.text);
+      final passwordError = InputValidation.validatePassword(_passwordController.text);
       if (passwordError != null) {
         // Determine the specific error code based on the error message
         String errorCode = 'weak_password';

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:immigru/new_core/logging/log_util.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:immigru/core/config/google_auth_config.dart';
+import 'package:immigru/new_core/config/google_auth_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:immigru/features/auth/data/models/user_model.dart';
 import 'package:immigru/features/auth/domain/entities/auth_error.dart';
@@ -42,9 +42,7 @@ class AuthDataSource {
             false, // Use PascalCase field name
       );
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       return null;
     }
   }
@@ -53,9 +51,7 @@ class AuthDataSource {
   Future<UserModel> signInWithEmailAndPassword(
       String email, String password) async {
     try {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
 
       final response = await _client.auth.signInWithPassword(
         email: email,
@@ -64,9 +60,7 @@ class AuthDataSource {
 
       final user = response.user;
       if (user == null) {
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
         throw AuthError.userNotFound();
       }
 
@@ -93,18 +87,14 @@ class AuthDataSource {
         );
       } catch (profileError) {
         // If we can't fetch the profile, create one and return a basic user model
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
 
         // Try to create a profile for this user
         try {
           await _createUserProfile(user.id);
         } catch (createError) {
           // Ignore profile creation errors during login
-          if (kDebugMode) {
-
-          }
+          if (kDebugMode) {}
         }
 
         return UserModel(
@@ -118,9 +108,7 @@ class AuthDataSource {
         );
       }
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
 
       if (e is AuthError) {
         rethrow;
@@ -153,22 +141,16 @@ class AuthDataSource {
   /// Sign in with phone number (start the process)
   Future<void> signInWithPhone(String phoneNumber) async {
     try {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       await _client.auth.signInWithOtp(
         phone: phoneNumber,
         channel: OtpChannel.sms,
         shouldCreateUser: true,
       );
 
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       throw Exception('Failed to start phone authentication: ${e.toString()}');
     }
   }
@@ -176,10 +158,8 @@ class AuthDataSource {
   /// Verify phone authentication code
   Future<UserModel> verifyPhoneCode(String phoneNumber, String code) async {
     try {
-      if (kDebugMode) {
+      if (kDebugMode) {}
 
-      }
-      
       final response = await _client.auth.verifyOTP(
         phone: phoneNumber,
         token: code,
@@ -191,9 +171,7 @@ class AuthDataSource {
         throw AuthError.unknown('Failed to verify phone: No user returned');
       }
 
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
 
       // Save user data to the User table using upsert
       try {
@@ -213,13 +191,9 @@ class AuthDataSource {
           onConflict: 'Id', // Use Id as the conflict resolution column
         );
 
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
       } catch (e) {
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
         // Continue even if this fails, as the auth part worked
       }
 
@@ -228,31 +202,24 @@ class AuthDataSource {
       final profileExists = await _checkProfileExists(user.id);
       if (!profileExists) {
         await _createUserProfile(user.id);
-      } else if (kDebugMode) {
-
-      }
+      } else if (kDebugMode) {}
 
       // Fetch user data from the User table to check HasCompletedOnboarding
       bool hasCompletedOnboarding = false;
       try {
         // First get the User record to check HasCompletedOnboarding
-        final userRecords = await _client
-            .from('User')
-            .select()
-            .eq('Id', user.id);
-            
+        final userRecords =
+            await _client.from('User').select().eq('Id', user.id);
+
         if (userRecords.isNotEmpty) {
-          hasCompletedOnboarding = userRecords[0]['HasCompletedOnboarding'] as bool? ?? false;
-          
-          if (kDebugMode) {
+          hasCompletedOnboarding =
+              userRecords[0]['HasCompletedOnboarding'] as bool? ?? false;
 
-          }
+          if (kDebugMode) {}
         } else {
-          if (kDebugMode) {
-
-          }
+          if (kDebugMode) {}
         }
-        
+
         // Then get the profile data
         final profileResponse = await _client
             .from('UserProfile')
@@ -271,10 +238,8 @@ class AuthDataSource {
           hasCompletedOnboarding: hasCompletedOnboarding,
         );
       } catch (e) {
-        if (kDebugMode) {
+        if (kDebugMode) {}
 
-        }
-        
         // Return basic user model if data fetch fails
         return UserModel(
           id: user.id,
@@ -294,9 +259,7 @@ class AuthDataSource {
   /// Sign in with Google
   Future<UserModel> signInWithGoogle() async {
     try {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
 
       // Create a completer to handle the async auth flow
       final completer = Completer<UserModel>();
@@ -319,24 +282,18 @@ class AuthDataSource {
             ], // openid scope is required for ID tokens
           );
 
-          if (kDebugMode) {
-
-          }
+          if (kDebugMode) {}
 
           // Perform interactive sign-in
           final googleUser = await googleSignIn.signIn();
 
           // Handle user cancellation
           if (googleUser == null) {
-            if (kDebugMode) {
-
-            }
+            if (kDebugMode) {}
             throw Exception('Google sign-in was canceled');
           }
 
-          if (kDebugMode) {
-
-          }
+          if (kDebugMode) {}
 
           // Get auth details from Google
           final googleAuth = await googleUser.authentication;
@@ -345,9 +302,7 @@ class AuthDataSource {
 
           // Validate tokens
           if (idToken == null) {
-            if (kDebugMode) {
-
-            }
+            if (kDebugMode) {}
             throw Exception('Authentication failed: Missing ID token');
           }
 
@@ -387,9 +342,7 @@ class AuthDataSource {
                 'UpdatedAt': DateTime.now().toIso8601String(),
               });
 
-              if (kDebugMode) {
-
-              }
+              if (kDebugMode) {}
             } else {
               // Update existing user with Google auth info
               await _client.from('User').update({
@@ -399,14 +352,10 @@ class AuthDataSource {
                 'UpdatedAt': DateTime.now().toIso8601String(),
               }).eq('Id', authUser.id);
 
-              if (kDebugMode) {
-
-              }
+              if (kDebugMode) {}
             }
           } catch (e) {
-            if (kDebugMode) {
-
-            }
+            if (kDebugMode) {}
             // Continue even if this fails, as the auth part worked
           }
 
@@ -439,9 +388,7 @@ class AuthDataSource {
 
             return user;
           } catch (e) {
-            if (kDebugMode) {
-
-            }
+            if (kDebugMode) {}
 
             // If we can't fetch the profile, still return a basic user model
             final user = UserModel(
@@ -457,9 +404,7 @@ class AuthDataSource {
             return user;
           }
         } catch (e) {
-          if (kDebugMode) {
-
-          }
+          if (kDebugMode) {}
           throw Exception('Failed to sign in with Google. Please try again.');
         }
       } else {
@@ -469,9 +414,7 @@ class AuthDataSource {
         subscription = _client.auth.onAuthStateChange.listen((data) async {
           final authUser = data.session?.user;
           if (authUser != null && !completer.isCompleted) {
-            if (kDebugMode) {
-
-            }
+            if (kDebugMode) {}
 
             // Check if profile exists, create if it doesn't
             final profileExists = await _checkProfileExists(authUser.id);
@@ -502,9 +445,7 @@ class AuthDataSource {
 
               completer.complete(user);
             } catch (e) {
-              if (kDebugMode) {
-
-              }
+              if (kDebugMode) {}
 
               // If we can't fetch the profile, still return a basic user model
               final user = UserModel(
@@ -543,9 +484,7 @@ class AuthDataSource {
           },
         );
 
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
 
         if (!response) {
           throw Exception('Failed to sign in with Google: OAuth flow canceled');
@@ -555,9 +494,7 @@ class AuthDataSource {
       // Return the future from the completer
       return completer.future;
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       throw Exception('Failed to sign in with Google: ${e.toString()}');
     }
   }
@@ -593,13 +530,9 @@ class AuthDataSource {
           'UpdatedAt': DateTime.now().toIso8601String(),
         });
 
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
       } catch (e) {
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
         // Continue even if this fails, as the auth part worked
       }
 
@@ -632,9 +565,7 @@ class AuthDataSource {
         );
       } catch (profileError) {
         // If we can't fetch the profile, return a basic user model
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
 
         return UserModel(
           id: user.id,
@@ -721,9 +652,7 @@ class AuthDataSource {
         'IsMentor': false,
       });
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       // Try a simpler profile creation as fallback
       await _createUserProfile(userId);
     }
@@ -830,11 +759,9 @@ class AuthDataSource {
   Future<void> _createUserProfile(String userId) async {
     try {
       // First check if profile exists to avoid duplicate entries
-      final existingProfiles = await _client
-          .from('UserProfile')
-          .select()
-          .eq('UserId', userId);
-          
+      final existingProfiles =
+          await _client.from('UserProfile').select().eq('UserId', userId);
+
       // Only create if it doesn't exist
       if (existingProfiles.isEmpty) {
         // Create a basic profile with required fields
@@ -846,22 +773,16 @@ class AuthDataSource {
           'CreatedAt': DateTime.now().toIso8601String(),
           'UpdatedAt': DateTime.now().toIso8601String(),
         };
-        
+
         // Use insert instead of upsert since there's no unique constraint
         await _client.from('UserProfile').insert(profileData);
-        
-        if (kDebugMode) {
 
-        }
+        if (kDebugMode) {}
       } else {
-        if (kDebugMode) {
-
-        }
+        if (kDebugMode) {}
       }
     } catch (e) {
-      if (kDebugMode) {
-
-      }
+      if (kDebugMode) {}
       // Don't throw here, as this is a background operation
     }
   }

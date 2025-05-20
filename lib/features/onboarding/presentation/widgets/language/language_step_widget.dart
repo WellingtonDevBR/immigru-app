@@ -44,7 +44,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primaryColor,
-                      AppColors.primaryColor.withOpacity(0.7),
+                      AppColors.primaryColor.withValues(alpha:0.7),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -57,7 +57,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha:0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -82,7 +82,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                           Text(
                             "Select all languages you speak or are learning",
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha:0.9),
                             ),
                           ),
                         ],
@@ -101,7 +101,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha:0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -214,7 +214,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? AppColors.primaryColor
-                                                .withOpacity(0.1)
+                                                .withValues(alpha:0.1)
                                             : isDarkMode
                                                 ? Colors.grey[800]
                                                 : Colors.white,
@@ -230,7 +230,7 @@ class _LanguageStepWidgetState extends State<LanguageStepWidget> {
                                         boxShadow: [
                                           BoxShadow(
                                             color:
-                                                Colors.black.withOpacity(0.03),
+                                                Colors.black.withValues(alpha:0.03),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
                                           ),

@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/interest/interest_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/interest/interest_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/interest/interest_state.dart';
+import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Widget for the interest selection step in onboarding
 class InterestStep extends StatefulWidget {
   /// Creates a new instance of [InterestStep]
-  final List<int> selectedInterests;
-  final Function(List<int>) onInterestsSelected;
+  final List<String> selectedInterests;
+  final Function(List<String>) onInterestsSelected;
+  final LoggerInterface logger;
   
   const InterestStep({
     super.key,
     required this.selectedInterests,
     required this.onInterestsSelected,
+    required this.logger,
   });
 
   String get title => 'What are you interested in?';
@@ -35,13 +38,17 @@ class _InterestStepState extends State<InterestStep> {
     
     // Load interests when the widget is initialized
     Future.microtask(() {
-      context.read<InterestBloc>().add(const InterestsLoaded());
+      if (mounted) {
+        context.read<InterestBloc>().add(const InterestsLoaded());
+      }
     });
     
     // Set initial selected interests if available
     if (widget.selectedInterests.isNotEmpty) {
       Future.microtask(() {
-        context.read<InterestBloc>().add(InterestsPreselected(widget.selectedInterests));
+        if (mounted) {
+          context.read<InterestBloc>().add(InterestsPreselected(widget.selectedInterests));
+        }
       });
     }
   }
@@ -55,7 +62,7 @@ class _InterestStepState extends State<InterestStep> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<InterestBloc>()..add(const InterestsLoaded()),
+      create: (context) => ServiceLocator.instance<InterestBloc>()..add(const InterestsLoaded()),
       child: BlocConsumer<InterestBloc, InterestState>(
         listenWhen: (previous, current) => 
             previous.selectedInterestIds != current.selectedInterestIds,
@@ -110,7 +117,7 @@ class _InterestStepState extends State<InterestStep> {
             gradient: LinearGradient(
               colors: [
                 AppColors.primaryColor,
-                AppColors.primaryColor.withOpacity(0.7),
+                AppColors.primaryColor.withValues(alpha:0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -123,7 +130,7 @@ class _InterestStepState extends State<InterestStep> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -148,7 +155,7 @@ class _InterestStepState extends State<InterestStep> {
                     Text(
                       "Select interests to personalize your experience",
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha:0.9),
                       ),
                     ),
                   ],
@@ -213,7 +220,7 @@ class _InterestStepState extends State<InterestStep> {
                   itemCount: state.filteredInterests.length,
                   itemBuilder: (context, index) {
                     final interest = state.filteredInterests[index];
-                    final isSelected = state.selectedInterestIds.contains(interest.id);
+                    final isSelected = state.selectedInterestIds.contains(interest.id.toString());
                     
                     return Card(
                       elevation: 1,

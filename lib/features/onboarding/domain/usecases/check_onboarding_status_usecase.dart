@@ -2,7 +2,7 @@ import 'package:immigru/features/onboarding/domain/repositories/onboarding_repos
 
 /// Use case for checking if onboarding is completed
 class CheckOnboardingStatusUseCase {
-  final OnboardingFeatureRepository _repository;
+  final OnboardingRepository _repository;
 
   CheckOnboardingStatusUseCase(this._repository);
 

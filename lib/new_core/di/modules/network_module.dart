@@ -1,6 +1,5 @@
 import 'package:get_it/get_it.dart';
 import 'package:immigru/new_core/network/api_client.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
 import 'package:immigru/new_core/network/interceptors/auth_interceptor.dart';
 import 'package:immigru/new_core/network/interceptors/logging_interceptor.dart';
 
@@ -26,7 +25,7 @@ class NetworkModule {
       ],
     ));
     
-    // Register Edge Function client
-    sl.registerLazySingleton<EdgeFunctionClient>(() => EdgeFunctionClient());
+    // Note: EdgeFunctionClient is registered in SupabaseModule
+    // We don't register it here to avoid conflicts
   }
 }

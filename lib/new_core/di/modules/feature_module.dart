@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:immigru/features/auth/di/auth_module.dart';
+import 'package:immigru/features/home/di/home_module.dart';
 import 'package:immigru/features/onboarding/di/onboarding_module.dart';
 import 'package:immigru/features/welcome/di/welcome_module.dart';
 
@@ -16,6 +17,8 @@ class FeatureModule {
     
     // Register onboarding feature
     await OnboardingModule.register(sl);
-
+    
+    // Register home feature
+    HomeModule.init(sl);
   }
 }

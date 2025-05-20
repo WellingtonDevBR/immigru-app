@@ -1,8 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/data/datasources/supabase_data_source.dart';
-import 'package:immigru/data/repositories/country_repository_impl.dart';
-import 'package:immigru/domain/repositories/country_repository.dart';
-import 'package:immigru/domain/usecases/country_usecases.dart';
 import 'package:immigru/new_core/country/data/repositories/country_repository_impl.dart'
     as new_arch;
 import 'package:immigru/new_core/country/domain/repositories/country_repository.dart';
@@ -46,16 +42,19 @@ class CountryModule {
 
     // For backward compatibility, register old architecture components
     // Register country repository if not already registered
-    if (!sl.isRegistered<CountryRepository>()) {
-      sl.registerLazySingleton<CountryRepository>(
-        () => CountryRepositoryImpl(dataSource: sl<SupabaseDataSource>()),
+    if (!sl.isRegistered<CountryFeatureRepository>()) {
+      sl.registerLazySingleton<CountryFeatureRepository>(
+        () => new_arch.CountryRepositoryImpl(
+          sl<EdgeFunctionClient>(),
+          sl<LoggerInterface>(instanceName: 'country_logger'),
+        ),
       );
     }
 
     // Register country use cases for backward compatibility
-    if (!sl.isRegistered<GetCountriesUseCase>()) {
-      sl.registerLazySingleton<GetCountriesUseCase>(
-        () => GetCountriesUseCase(sl<CountryRepository>()),
+    if (!sl.isRegistered<new_arch.GetCountriesUseCase>()) {
+      sl.registerLazySingleton<new_arch.GetCountriesUseCase>(
+        () => new_arch.GetCountriesUseCase(sl<CountryFeatureRepository>()),
       );
     }
   }

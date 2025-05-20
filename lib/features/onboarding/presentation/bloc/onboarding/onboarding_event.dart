@@ -99,7 +99,7 @@ class LanguagesUpdated extends OnboardingEvent {
 
 /// Event triggered when interests are updated
 class InterestsUpdated extends OnboardingEvent {
-  final List<int> interests;
+  final List<String> interests;
 
   const InterestsUpdated(this.interests);
 

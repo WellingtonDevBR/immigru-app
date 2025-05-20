@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/core/utils/input_validation.dart';
 import 'package:immigru/shared/theme/app_text_styles.dart';
 
 /// Widget to display password requirements and validation status
 class PasswordRequirementsWidget extends StatelessWidget {
+  // Constants for password requirements
+  static const int _minPasswordLength = 8;
   /// The current password value
   final String password;
   
@@ -25,7 +26,7 @@ class PasswordRequirementsWidget extends StatelessWidget {
     final isDarkMode = brightness == Brightness.dark;
     
     // Get password requirements status
-    final requirements = InputValidation().checkPasswordRequirements(password);
+    final requirements = _checkPasswordRequirements(password);
     
     return AnimatedOpacity(
       opacity: visible ? 1.0 : 0.0,
@@ -56,8 +57,8 @@ class PasswordRequirementsWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8.0),
             _buildRequirementRow(
-              context, 
-              'At least ${InputValidation.minPasswordLength} characters', 
+              context,
+              'At least 8 characters',
               requirements['length'] ?? false,
             ),
             _buildRequirementRow(
@@ -116,5 +117,16 @@ class PasswordRequirementsWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+  
+  /// Check password requirements
+  Map<String, bool> _checkPasswordRequirements(String password) {
+    return {
+      'length': password.length >= _minPasswordLength,
+      'uppercase': password.contains(RegExp(r'[A-Z]')),
+      'lowercase': password.contains(RegExp(r'[a-z]')),
+      'number': password.contains(RegExp(r'[0-9]')),
+      'special': password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')),
+    };
   }
 }

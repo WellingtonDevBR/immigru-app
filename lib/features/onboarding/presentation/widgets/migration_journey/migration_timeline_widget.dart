@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for displaying a timeline of migration steps
 class MigrationTimelineWidget extends StatelessWidget {

@@ -11,7 +11,7 @@ import 'package:immigru/features/onboarding/presentation/common/onboarding_step_
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_step_modal.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_timeline_widget.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the migration journey step in onboarding
 /// 

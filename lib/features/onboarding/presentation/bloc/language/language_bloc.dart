@@ -130,23 +130,22 @@ class LanguageBloc extends Bloc<LanguageEvent, LanguageState> {
       }
       
       _logger.i('LanguageBloc: Saving languages: ${event.languageIds}');
-      print('LanguageBloc: SAVING LANGUAGES: ${event.languageIds}');
+      _logger.i('LanguageBloc: SAVING LANGUAGES: ${event.languageIds}');
       emit(state.copyWith(isSaving: true, saveSuccess: false, errorMessage: null));
       
       // Add more detailed logging
       _logger.i('LanguageBloc: Current state before saving: selectedLanguageCodes=${state.selectedLanguageCodes}');
-      print('LanguageBloc: Current state before saving: selectedLanguageCodes=${state.selectedLanguageCodes}');
       
       // Call the save use case directly without delay - the data source will handle retries if needed
-      print('LanguageBloc: Calling saveUserLanguagesUseCase with language IDs: ${event.languageIds}');
+      _logger.i('LanguageBloc: Calling saveUserLanguagesUseCase with language IDs: ${event.languageIds}');
       final success = await _saveUserLanguagesUseCase(event.languageIds);
       
       // Log the result
       if (success) {
-        print('LanguageBloc: Language saving SUCCESSFUL');
+        _logger.i('LanguageBloc: Language saving SUCCESSFUL');
         _logger.i('LanguageBloc: Successfully saved languages: ${event.languageIds}');
       } else {
-        print('LanguageBloc: Language saving FAILED');
+        _logger.e('LanguageBloc: Language saving FAILED');
         _logger.e('LanguageBloc: Failed to save languages: ${event.languageIds}');
       }
       
@@ -167,7 +166,6 @@ class LanguageBloc extends Bloc<LanguageEvent, LanguageState> {
       }
     } catch (e) {
       _logger.e('LanguageBloc: Exception while saving languages', error: e);
-      print('LanguageBloc: EXCEPTION while saving languages: $e');
       emit(state.copyWith(
         isSaving: false,
         saveSuccess: false,

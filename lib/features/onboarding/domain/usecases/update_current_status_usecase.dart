@@ -1,5 +1,6 @@
+import 'package:immigru/features/onboarding/domain/usecases/get_onboarding_data_usecase.dart';
 import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/domain/usecases/onboarding_usecases.dart';
+import 'package:immigru/features/onboarding/domain/usecases/save_onboarding_data_usecase.dart';
 
 /// Use case for updating the user's current migration status
 class UpdateCurrentStatusUseCase {
@@ -36,10 +37,15 @@ class UpdateCurrentStatusUseCase {
       final currentData = await _getOnboardingDataUseCase();
       
       // Update only the current status field
-      final updatedData = currentData.copyWith(currentStatus: statusId);
+      final updatedData = currentData?.copyWith(currentStatus: statusId);
+      
+      if (updatedData == null) {
+        _logger.e('Failed to update current status: onboarding data is null', tag: 'UpdateCurrentStatusUseCase');
+        return false;
+      }
       
       // Save the updated data
-      await _saveOnboardingDataUseCase(updatedData);
+      await _saveOnboardingDataUseCase('currentStatus', {'currentStatus': statusId});
       
       _logger.i(
         'Successfully updated current status to: $statusId',

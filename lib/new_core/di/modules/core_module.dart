@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/core/services/onboarding_service.dart';
 import 'package:immigru/new_core/di/modules/country_module.dart';
 import 'package:immigru/new_core/di/modules/logging_module.dart';
 import 'package:immigru/new_core/di/modules/network_module.dart';
@@ -29,10 +28,5 @@ class CoreModule {
     
     // Register country dependencies
     await CountryModule.register(sl);
-    
-    // Register OnboardingService for backward compatibility
-    if (!sl.isRegistered<OnboardingService>()) {
-      sl.registerLazySingleton<OnboardingService>(() => OnboardingService());
-    }
   }
 }

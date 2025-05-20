@@ -2,7 +2,7 @@ import 'package:immigru/features/onboarding/domain/repositories/onboarding_repos
 
 /// Use case for saving onboarding data for a specific step
 class SaveOnboardingDataUseCase {
-  final OnboardingFeatureRepository _repository;
+  final OnboardingRepository _repository;
 
   SaveOnboardingDataUseCase(this._repository);
 

@@ -2,108 +2,149 @@
 trigger: always_on
 ---
 
-# Immigru Architecture Guidelines
+mmigru Architecture Guidelines (Feature-First Clean Architecture)
+🧭 Guiding Principles
+The Immigru application follows:
 
-## Clean Architecture Principles
+Clean Architecture for maintainability, testability, and scalability
 
-The Immigru application follows Clean Architecture principles to ensure:
-- Separation of concerns
-- Testability
-- Maintainability
-- Scalability
+Feature-First Organization for modular development and better ownership
 
-### Layer Separation
+Dependency Inversion for clean layering and mocking in tests
 
-1. **Presentation Layer**
-   - Contains UI components (screens, widgets)
-   - Uses BLoC pattern for state management
-   - Should not contain business logic
-   - Should not directly access data sources
+📁 Folder Structure Overview
+bash
+Copy
+Edit
+/lib
+  /features
+    /<feature_name>
+      ├── data
+      ├── domain
+      ├── presentation
+      └── di
+  /new_core
+  /shared
+  main.dart
+🔍 Inside a Feature (e.g., auth)
+bash
+Copy
+Edit
+/features/auth
+  ├── data
+  │   ├── datasources         # API clients, local storage access
+  │   ├── models              # DTOs and serializers
+  │   └── repositories        # Implements domain interfaces
+  ├── domain
+  │   ├── entities            # Business models
+  │   ├── repositories        # Abstract contracts
+  │   ├── usecases            # Business operations
+  │   └── utils               # Feature-specific utilities
+  ├── presentation
+  │   ├── bloc                # State management
+  │   ├── routes              # Navigation config
+  │   ├── screens             # UI pages
+  │   └── widgets             # Shared UI components
+  └── di                      # Dependency injection for this feature
+🧱 Layered Architecture in Each Feature
+Presentation Layer
+Contains screens, widgets, BLoCs/Cubits
 
-2. **Domain Layer**
-   - Contains business logic and rules
-   - Independent of frameworks and UI
-   - Uses use cases for business operations
-   - Defines repository interfaces
+Calls use cases via BLoCs
 
-3. **Data Layer**
-   - Implements repository interfaces
-   - Manages data sources
-   - Handles data transformations
-   - Abstracts external services
+No direct data access or business logic
 
-4. **Core/Infrastructure Layer**
-   - Provides common functionality
-   - Manages dependencies
-   - Contains utilities and services
+Domain Layer
+Defines Entities, UseCases, Repositories
 
-### Dependency Rule
+Pure Dart (no Flutter or data package imports)
 
-Dependencies should always point inward:
-- Presentation depends on Domain
-- Data depends on Domain
-- No layer should depend on layers outside of it
+Interfaces that the data layer implements
 
-## Implementation Guidelines
+Data Layer
+Implements domain Repository interfaces
 
-### Creating New Features
+Manages data fetching/transformation (via models, datasources)
 
-1. **Define Domain First**
-   - Create entities
-   - Define repository interfaces
-   - Create use cases
+Maps between domain entities and data models
 
-2. **Implement Data Layer**
-   - Create repository implementations
-   - Create data sources
-   - Handle data transformations
+🔁 Dependency Rule
+Dependencies point inward:
 
-3. **Create Presentation Layer**
-   - Implement BLoC for state management
-   - Create screens and widgets
-   - Handle user interactions
+Presentation → Domain
 
-4. **Register Dependencies**
-   - Add dependencies to injection container
+Data → Domain
 
-### UI Guidelines
+Domain → Core only
 
-1. **Modern Design**
-   - Use animations for transitions
-   - Implement responsive layouts
-   - Follow material design principles
+Shared utilities go in new_core or shared
 
-2. **Theme Awareness**
-   - Support both light and dark modes
-   - Use theme-aware colors and styles
-   - Maintain consistent styling
+🛠️ Implementation Steps (New Feature)
+Define the Domain Layer
 
-3. **Error Handling**
-   - Provide clear error messages
-   - Handle edge cases gracefully
-   - Implement proper loading states
+Create entities, repository interfaces, and use cases
 
-### Authentication Flow
+Build the Data Layer
 
-1. **Phone Authentication**
-   - Use dedicated screens for each step
-   - Implement proper validation
-   - Provide clear user feedback
-   - Handle errors gracefully
+Implement repository
 
-2. **Email Authentication**
-   - Follow similar pattern to phone authentication
-   - Implement proper validation
-   - Provide clear user feedback
+Setup data sources and models
 
-## Folder Structure
+Map models ↔ entities
 
-Follow the established folder structure:
-- `/core`: Core functionality and utilities
-- `/data`: Data sources and repository implementations
-- `/domain`: Business logic, entities, and repository interfaces
-- `/presentation`: UI components and state management
+Setup Presentation Layer
 
-## Conclusion
+Create screens and widgets
 
-Following these guidelines ensures a consistent, maintainable, and scalable application architecture. The clean architecture approach allows for easy testing, feature addition, and code maintenance.
+Implement state management (Bloc/Cubit)
+
+Trigger use cases via events
+
+Register Dependencies
+
+Use the feature’s di/ folder
+
+Add to global container via new_core/di/modules/
+
+🎨 UI Guidelines
+Design & UX
+Follow Material Design
+
+Use shared/widgets/ for reusable UI
+
+Support animations and transitions
+
+Theming
+Define all theming in shared/theme/
+
+Use ThemeProvider for light/dark support
+
+Error Handling
+Display errors via shared/widgets/error_message_widget.dart
+
+Handle all states: loading, success, error
+
+🔐 Authentication Flow
+Phone & Email Auth
+Separate BLoCs and screens for each auth step
+
+Clear error feedback and form validation
+
+Use dependency injection via auth/di/
+
+♻️ Shared & Core Usage
+shared/
+Widgets: Common UI components
+
+Theme: App-wide colors and styles
+
+new_core/
+Storage: Secure and local storage
+
+Network: API clients and interceptors
+
+DI: Global dependency registration
+
+Config: Static app configuration
+
+

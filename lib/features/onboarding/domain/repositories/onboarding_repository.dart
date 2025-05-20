@@ -1,7 +1,7 @@
-import 'package:immigru/domain/entities/onboarding_data.dart';
+import 'package:immigru/features/onboarding/domain/entities/onboarding_data.dart';
 
 /// Repository interface for onboarding operations
-abstract class OnboardingFeatureRepository {
+abstract class OnboardingRepository {
   /// Save onboarding data for a specific step
   Future<void> saveStepData(String step, Map<String, dynamic> data);
   

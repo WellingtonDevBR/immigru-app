@@ -1,24 +1,21 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/core/services/supabase_service.dart';
-import 'package:immigru/data/datasources/supabase_data_source.dart';
+import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase module for dependency injection
 /// Registers all Supabase-related dependencies
 class SupabaseModule {
   /// Register all Supabase dependencies
   static Future<void> register(GetIt sl) async {
-    // Register Supabase service as a singleton that's immediately initialized
-    if (!sl.isRegistered<SupabaseService>()) {
-      final supabaseService = SupabaseService();
-      await supabaseService.initialize();
-      sl.registerLazySingleton<SupabaseService>(() => supabaseService);
+    // Register Supabase client
+    if (!sl.isRegistered<SupabaseClient>()) {
+      sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
     }
     
-    // Register SupabaseDataSource
-    if (!sl.isRegistered<SupabaseDataSource>()) {
-      sl.registerLazySingleton<SupabaseDataSource>(
-        () => SupabaseDataSourceImpl(sl<SupabaseService>()),
-      );
+    // Register Edge Function client
+    if (!sl.isRegistered<EdgeFunctionClient>()) {
+      final supabaseService = EdgeFunctionClient();
+      sl.registerLazySingleton<EdgeFunctionClient>(() => supabaseService);
     }
   }
 }

@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/features/onboarding/domain/entities/immi_grove.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_state.dart';
+import 'package:immigru/new_core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Widget for the ImmiGroves recommendation step in the onboarding process
 class ImmiGroveStep extends StatefulWidget {
   /// Function called when ImmiGroves are selected
   final Function(List<String>) onImmiGrovesSelected;
-  
+
   /// List of initially selected ImmiGrove IDs
   final List<String> selectedImmiGroveIds;
+
+  /// Logger for tracking events
+  final LoggerInterface logger;
 
   /// Creates a new ImmiGroveStep
   const ImmiGroveStep({
     super.key,
     required this.onImmiGrovesSelected,
     this.selectedImmiGroveIds = const [],
+    required this.logger,
   });
 
   @override
@@ -39,37 +44,43 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ImmiGroveBloc>()
+      create: (context) => ServiceLocator.instance<ImmiGroveBloc>()
         ..add(const LoadRecommendedImmiGroves())
         ..add(const LoadJoinedImmiGroves()),
       child: BlocConsumer<ImmiGroveBloc, ImmiGroveState>(
-        listenWhen: (previous, current) => 
-            previous.status != current.status && 
+        listenWhen: (previous, current) =>
+            previous.status != current.status &&
             current.status == ImmiGroveStatus.saved,
         listener: (context, state) {
           if (state.status == ImmiGroveStatus.saved && !_hasNavigated) {
             _hasNavigated = true;
+            widget.logger.i('ImmiGroveStep: Saving selected ImmiGroves: ${state.selectedImmiGroveIds}');
             widget.onImmiGrovesSelected(state.selectedImmiGroveIds.toList());
           }
         },
         builder: (context, state) {
-          if (state.isLoading && state.recommendedImmiGroves.isEmpty) {
+          if (state.isLoading) {
+            widget.logger.i('ImmiGroveStep: Loading ImmiGroves');
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state.errorMessage != null && state.recommendedImmiGroves.isEmpty) {
+          if (state.errorMessage != null &&
+              state.recommendedImmiGroves.isEmpty) {
+            widget.logger.e('ImmiGroveStep: Error loading ImmiGroves: ${state.errorMessage}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    state.errorMessage ?? 'An error occurred',
-                    style: const TextStyle(color: Colors.red),
-                  ),
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(state.errorMessage ?? 'Failed to load ImmiGroves'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<ImmiGroveBloc>().add(const RefreshImmiGroves());
+                      widget.logger.i('ImmiGroveStep: Retrying ImmiGrove load');
+                      context
+                          .read<ImmiGroveBloc>()
+                          .add(const RefreshImmiGroves());
                     },
                     child: const Text('Retry'),
                   ),
@@ -87,16 +98,16 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
   Widget _buildImmiGrovesList(BuildContext context, ImmiGroveState state) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     // Combine recommended and joined ImmiGroves, removing duplicates
-    final allImmiGroves = {...state.recommendedImmiGroves, ...state.joinedImmiGroves}
-        .toList();
-    
+    final allImmiGroves =
+        {...state.recommendedImmiGroves, ...state.joinedImmiGroves}.toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 16),
-        
+
         // Header with gradient background
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -151,23 +162,9 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
-        // Selected count
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Selected: ${state.selectedImmiGroveIds.length}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-        ),
-        
-        const SizedBox(height: 16),
-        
+
         // ImmiGroves list
         Expanded(
           child: allImmiGroves.isEmpty
@@ -177,16 +174,21 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
                   itemCount: allImmiGroves.length,
                   itemBuilder: (context, index) {
                     final immiGrove = allImmiGroves[index];
-                    final isSelected = state.selectedImmiGroveIds.contains(immiGrove.id);
-                    
+                    final isSelected =
+                        state.selectedImmiGroveIds.contains(immiGrove.id);
+
                     return _ImmiGroveCard(
                       immiGrove: immiGrove,
                       isSelected: isSelected,
                       onToggle: () {
                         if (isSelected) {
-                          context.read<ImmiGroveBloc>().add(LeaveImmiGrove(immiGrove.id));
+                          context
+                              .read<ImmiGroveBloc>()
+                              .add(LeaveImmiGrove(immiGrove.id));
                         } else {
-                          context.read<ImmiGroveBloc>().add(JoinImmiGrove(immiGrove.id));
+                          context
+                              .read<ImmiGroveBloc>()
+                              .add(JoinImmiGrove(immiGrove.id));
                         }
                       },
                     );
@@ -194,28 +196,7 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
                 ),
         ),
         
-        // Continue button
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: state.selectedImmiGroveIds.isNotEmpty
-                ? () {
-                    context.read<ImmiGroveBloc>().add(
-                          SaveSelectedImmiGroves(state.selectedImmiGroveIds.toList()),
-                        );
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Continue'),
-          ),
-        ),
+        // We don't need a Finish button here since we already have one at the bottom
       ],
     );
   }
@@ -287,7 +268,8 @@ class _ImmiGroveCard extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                  color:
+                      isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: immiGrove.iconUrl != null
@@ -304,7 +286,7 @@ class _ImmiGroveCard extends StatelessWidget {
                     : const Icon(Icons.people, size: 30),
               ),
               const SizedBox(width: 16),
-              
+
               // ImmiGrove details
               Expanded(
                 child: Column(
@@ -321,7 +303,9 @@ class _ImmiGroveCard extends StatelessWidget {
                     Text(
                       immiGrove.description,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                        color: isDarkMode
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade700,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -332,13 +316,17 @@ class _ImmiGroveCard extends StatelessWidget {
                         Icon(
                           Icons.people,
                           size: 16,
-                          color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                          color: isDarkMode
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade700,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${immiGrove.memberCount} ${immiGrove.memberCount == 1 ? 'member' : 'members'}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                            color: isDarkMode
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade700,
                           ),
                         ),
                         if (immiGrove.categories.isNotEmpty) ...[
@@ -346,14 +334,18 @@ class _ImmiGroveCard extends StatelessWidget {
                           Icon(
                             Icons.tag,
                             size: 16,
-                            color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                            color: isDarkMode
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade700,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               immiGrove.categories.join(', '),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                                color: isDarkMode
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade700,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -365,30 +357,30 @@ class _ImmiGroveCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
-              // Selection indicator
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.primaryColor
-                        : isDarkMode
-                            ? Colors.grey.shade600
-                            : Colors.grey.shade400,
-                    width: 2,
+
+              // Join/Leave button
+              ElevatedButton(
+                onPressed: onToggle,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSelected
+                      ? Colors.grey.shade200
+                      : AppColors.primaryColor,
+                  foregroundColor: isSelected ? Colors.black87 : Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(80, 36),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  color: isSelected ? AppColors.primaryColor : Colors.transparent,
                 ),
-                child: isSelected
-                    ? const Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Colors.white,
-                      )
-                    : null,
+                child: Text(
+                  isSelected ? 'Leave' : 'Join',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isSelected ? Colors.black87 : Colors.white,
+                  ),
+                ),
               ),
             ],
           ),

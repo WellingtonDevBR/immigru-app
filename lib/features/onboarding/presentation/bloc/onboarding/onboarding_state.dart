@@ -10,6 +10,7 @@ class OnboardingState extends Equatable {
   final bool canMoveToNextStep;
   final bool isLastStep;
   final bool preventAutoNavigation;
+  final bool isOnboardingCompleted;
   
   // Birth country step data
   final String? birthCountryId;
@@ -29,7 +30,7 @@ class OnboardingState extends Equatable {
   final List<String> languages;
   
   // Interest step data
-  final List<int> interests;
+  final List<String> interests;
   
   // ImmiGrove step data
   final List<String> immiGroveIds;
@@ -42,6 +43,7 @@ class OnboardingState extends Equatable {
     this.canMoveToNextStep = false,
     this.isLastStep = false,
     this.preventAutoNavigation = false,
+    this.isOnboardingCompleted = false,
     this.birthCountryId,
     this.birthCountryName,
     this.currentStatus,
@@ -62,12 +64,14 @@ class OnboardingState extends Equatable {
       canMoveToNextStep: false,
       isLastStep: false,
       preventAutoNavigation: false,
+      isOnboardingCompleted: false,
       migrationSteps: [],
       languages: [],
+      interests: [],
     );
   }
 
-  /// Create a copy of this state with updated properties
+  /// Create a copy of this state with the given fields replaced with new values
   OnboardingState copyWith({
     int? currentStepIndex,
     int? totalSteps,
@@ -76,6 +80,7 @@ class OnboardingState extends Equatable {
     bool? canMoveToNextStep,
     bool? isLastStep,
     bool? preventAutoNavigation,
+    bool? isOnboardingCompleted,
     String? birthCountryId,
     String? birthCountryName,
     String? currentStatus,
@@ -83,7 +88,7 @@ class OnboardingState extends Equatable {
     String? profession,
     String? industry,
     List<String>? languages,
-    List<int>? interests,
+    List<String>? interests,
     List<String>? immiGroveIds,
   }) {
     return OnboardingState(
@@ -94,6 +99,7 @@ class OnboardingState extends Equatable {
       canMoveToNextStep: canMoveToNextStep ?? this.canMoveToNextStep,
       isLastStep: isLastStep ?? this.isLastStep,
       preventAutoNavigation: preventAutoNavigation ?? this.preventAutoNavigation,
+      isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
       birthCountryId: birthCountryId ?? this.birthCountryId,
       birthCountryName: birthCountryName ?? this.birthCountryName,
       currentStatus: currentStatus ?? this.currentStatus,

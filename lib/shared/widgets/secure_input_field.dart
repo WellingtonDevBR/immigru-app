@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:immigru/core/utils/input_validation.dart';
 import 'package:immigru/features/auth/presentation/widgets/password_requirements_widget.dart';
+import 'package:immigru/new_core/utils/input_validation.dart';
 import 'package:immigru/shared/theme/app_text_styles.dart';
 
 /// Type of input field
@@ -116,7 +116,6 @@ class _SecureInputFieldState extends State<SecureInputField> {
   bool _obscureText = true;
   bool _isFocused = false;
   String? _errorText;
-  final InputValidation _validation = InputValidation();
   
   @override
   void initState() {
@@ -163,20 +162,20 @@ class _SecureInputFieldState extends State<SecureInputField> {
     String? error;
     switch (widget.inputType) {
       case SecureInputType.password:
-        error = _validation.validatePassword(value);
+        error = InputValidation.validatePassword(value);
         break;
       case SecureInputType.email:
-        error = _validation.validateEmail(value);
+        error = InputValidation.validateEmail(value);
         break;
       case SecureInputType.phone:
-        error = _validation.validatePhone(value);
+        error = InputValidation.validatePhoneNumber(value);
         break;
       case SecureInputType.username:
-        error = _validation.validateUsername(value);
+        error = InputValidation.validateUsername(value);
         break;
       case SecureInputType.text:
       case SecureInputType.bio:
-        error = _validation.validateTextInput(
+        error = InputValidation.validateTextInput(
           value, 
           maxLength: widget.maxLength,
           required: widget.isRequired,
@@ -191,7 +190,7 @@ class _SecureInputFieldState extends State<SecureInputField> {
   /// Handle text change
   void _handleTextChange(String value) {
     // Sanitize input
-    final sanitized = _validation.sanitizeInput(value);
+    final sanitized = InputValidation.sanitizeInput(value);
     
     // Only update if the sanitized value is different
     if (sanitized != value) {

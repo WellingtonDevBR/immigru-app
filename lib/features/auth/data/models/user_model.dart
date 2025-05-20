@@ -20,10 +20,15 @@ class UserModel extends User {
       id: json['Id'] as String? ?? json['id'] as String,
       email: json['Email'] as String? ?? json['email'] as String?,
       phone: json['PhoneNumber'] as String? ?? json['phone'] as String?,
-      displayName: json['DisplayName'] as String? ?? json['display_name'] as String?,
+      displayName:
+          json['DisplayName'] as String? ?? json['display_name'] as String?,
       photoUrl: json['AvatarUrl'] as String? ?? json['photo_url'] as String?,
-      emailVerified: json['EmailVerified'] as bool? ?? json['email_verified'] as bool? ?? false,
-      hasCompletedOnboarding: json['HasCompletedOnboarding'] as bool? ?? json['has_completed_onboarding'] as bool? ?? false,
+      emailVerified: json['EmailVerified'] as bool? ??
+          json['email_verified'] as bool? ??
+          false,
+      hasCompletedOnboarding: json['HasCompletedOnboarding'] as bool? ??
+          json['has_completed_onboarding'] as bool? ??
+          false,
     );
   }
 
@@ -39,7 +44,7 @@ class UserModel extends User {
       'HasCompletedOnboarding': hasCompletedOnboarding,
     };
   }
-  
+
   /// Convert UserModel to a JSON map with snake_case field names for API compatibility
   Map<String, dynamic> toApiJson() {
     return {
@@ -84,7 +89,8 @@ class UserModel extends User {
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
       emailVerified: emailVerified ?? this.emailVerified,
-      hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      hasCompletedOnboarding:
+          hasCompletedOnboarding ?? this.hasCompletedOnboarding,
     );
   }
 }

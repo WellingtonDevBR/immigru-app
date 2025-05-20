@@ -8,7 +8,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_step_modal.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_timeline_widget.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the migration journey step in onboarding
 class MigrationJourneyStepWidget extends StatelessWidget {
@@ -366,7 +366,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryColor.withOpacity(0.2),
+              color: AppColors.primaryColor.withValues(alpha:0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -374,7 +374,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
           gradient: LinearGradient(
             colors: [
               AppColors.primaryColor,
-              AppColors.primaryColor.withOpacity(0.7),
+              AppColors.primaryColor.withValues(alpha:0.7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -394,7 +394,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha:0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

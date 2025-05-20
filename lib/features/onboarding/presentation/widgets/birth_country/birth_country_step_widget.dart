@@ -6,7 +6,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birt
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_state.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 // No longer using the CountrySelector widget as we've built a custom implementation
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math' as math;

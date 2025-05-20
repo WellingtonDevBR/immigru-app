@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/domain/entities/visa.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
+import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:immigru/new_core/logging/log_util.dart';
 
@@ -165,7 +165,7 @@ class _VisaSelectorState extends State<VisaSelector> {
         _filteredVisas = _visas
             .where((visa) =>
                 visa.visaName.toLowerCase().contains(searchQuery) ||
-                (visa.description.toLowerCase().contains(searchQuery)))
+                (visa.description?.toLowerCase() ?? '').contains(searchQuery))
             .toList();
       });
     }
@@ -213,8 +213,8 @@ class _VisaSelectorState extends State<VisaSelector> {
         visas = [
           Visa(
             id: 101,
+            name: 'Skilled Independent Visa',
             countryId: 14,
-            visaName: 'Skilled Independent Visa',
             visaCode: 'Subclass 189',
             type: 'Permanent',
             description:
@@ -224,8 +224,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 102,
+            name: 'Skilled Nominated Visa',
             countryId: 14,
-            visaName: 'Skilled Nominated Visa',
             visaCode: 'Subclass 190',
             type: 'Permanent',
             description:
@@ -235,8 +235,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 103,
+            name: 'Student Visa',
             countryId: 14,
-            visaName: 'Student Visa',
             visaCode: 'Subclass 500',
             type: 'Temporary',
             description: 'For international students to study in Australia.',
@@ -245,8 +245,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 104,
+            name: 'Working Holiday Visa',
             countryId: 14,
-            visaName: 'Working Holiday Visa',
             visaCode: 'Subclass 417',
             type: 'Temporary',
             description:
@@ -256,8 +256,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 105,
+            name: 'Business Innovation and Investment Visa',
             countryId: 14,
-            visaName: 'Business Innovation and Investment Visa',
             visaCode: 'Subclass 188',
             type: 'Temporary',
             description: 'For business owners, investors, and entrepreneurs.',
@@ -266,8 +266,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 106,
+            name: 'Partner Visa',
             countryId: 14,
-            visaName: 'Partner Visa',
             visaCode: 'Subclass 820/801',
             type: 'Temporary & Permanent',
             description:
@@ -277,8 +277,8 @@ class _VisaSelectorState extends State<VisaSelector> {
           ),
           Visa(
             id: 107,
+            name: 'Work Visa',
             countryId: 14,
-            visaName: 'Work Visa',
             visaCode: 'General',
             type: 'Temporary',
             description: 'General work visa for employment purposes.',
@@ -489,7 +489,7 @@ class _VisaSelectorState extends State<VisaSelector> {
                     ),
                   ),
                   Text(
-                    _selectedVisa!.description,
+                    _selectedVisa!.description ?? '',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isDarkMode ? Colors.white70 : Colors.grey[700],
                     ),
@@ -654,7 +654,7 @@ class _VisaSelectorState extends State<VisaSelector> {
                     ),
                   ),
                   Text(
-                    visa.description,
+                    visa.description ?? '',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isSelected
                           ? AppColors.primaryColor.withValues(alpha: 0.8)

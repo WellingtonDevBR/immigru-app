@@ -2,7 +2,7 @@ import 'package:immigru/features/onboarding/domain/repositories/onboarding_repos
 
 /// Use case for marking onboarding as completed
 class CompleteOnboardingUseCase {
-  final OnboardingFeatureRepository _repository;
+  final OnboardingRepository _repository;
 
   CompleteOnboardingUseCase(this._repository);
 

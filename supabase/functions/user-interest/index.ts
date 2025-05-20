@@ -83,59 +83,72 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      
-      
       try {
         const body = await req.json();
-        const interestIds: number[] = body.interestIds;
+        const action = body.action || 'save';
         
-        
+        // Handle different actions
+        if (action === 'delete_all') {
+          // Delete all user interests
+          const { error: deleteError } = await supabase
+            .from('UserInterest')
+            .delete()
+            .eq('UserId', user.id);
 
-        if (!Array.isArray(interestIds)) {
+          if (deleteError) {
+            throw new Error(`Failed to delete existing interests: ${deleteError.message}`);
+          }
+          
+          return new Response(JSON.stringify({ success: true, message: 'All interests deleted' }), {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+            },
+            status: 200,
+          });
+        } 
+        else if (action === 'save') {
+          const interestIds: number[] = body.interestIds;
+          
+          if (!Array.isArray(interestIds)) {
+            return new Response(JSON.stringify({ error: 'Invalid interestIds array' }), {
+              headers: corsHeaders,
+              status: 400,
+            });
+          }
+          
+          // Delete existing interests first to avoid conflicts
+          const { error: deleteError } = await supabase
+            .from('UserInterest')
+            .delete()
+            .eq('UserId', user.id);
 
-          return new Response(JSON.stringify({ error: 'Invalid interestIds array' }), {
+          if (deleteError) {
+            throw new Error(`Failed to delete existing interests: ${deleteError.message}`);
+          }
+          
+          // Only insert new interests if there are any to insert
+          if (interestIds.length > 0) {
+            // Insert new interests
+            const inserts = interestIds.map((id) => ({
+              UserId: user.id,
+              InterestId: id,
+            }));
+
+            const { error: insertError } = await supabase
+              .from('UserInterest')
+              .insert(inserts);
+
+            if (insertError) {
+              throw new Error(`Failed to insert new interests: ${insertError.message}`);
+            }
+          }
+        }
+        else {
+          return new Response(JSON.stringify({ error: 'Invalid action' }), {
             headers: corsHeaders,
             status: 400,
           });
-        }
-        
-        
-
-        // Delete existing interests
-        
-        const { error: deleteError } = await supabase
-          .from('UserInterest')
-          .delete()
-          .eq('UserId', user.id);
-
-        if (deleteError) {
-
-          throw new Error(`Failed to delete existing interests: ${deleteError.message}`);
-        }
-        
-        
-
-        // Only insert new interests if there are any to insert
-        if (interestIds.length > 0) {
-          // Insert new interests
-          
-          const inserts = interestIds.map((id) => ({
-            UserId: user.id,
-            InterestId: id,
-          }));
-
-          const { error: insertError } = await supabase
-            .from('UserInterest')
-            .insert(inserts);
-
-          if (insertError) {
-
-            throw new Error(`Failed to insert new interests: ${insertError.message}`);
-          }
-          
-          
-        } else {
-          
         }
 
         return new Response(JSON.stringify({ success: true }), {

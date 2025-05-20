@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
-import 'package:immigru/presentation/widgets/loading_indicator.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
+import 'package:immigru/shared/widgets/loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// A reusable country selector widget that can be used across the application

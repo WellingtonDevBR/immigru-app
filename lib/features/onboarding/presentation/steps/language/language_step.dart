@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/core/di/injection_container.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/language/language_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/language/language_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/language/language_state.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
+import 'package:immigru/new_core/di/service_locator.dart';
 import '../../widgets/language/language_step_widget.dart';
+import 'package:immigru/new_core/logging/logger_interface.dart';
 
 /// Step for selecting languages in the onboarding flow
 class LanguageStep extends StatefulWidget {
   final List<String> selectedLanguages;
   final Function(List<String>) onLanguagesSelected;
+  final LoggerInterface logger;
 
   const LanguageStep({
     super.key,
     required this.selectedLanguages,
     required this.onLanguagesSelected,
+    required this.logger,
   });
 
   @override
@@ -36,7 +39,7 @@ class _LanguageStepState extends State<LanguageStep> {
     return BlocProvider(
       create: (context) {
         // Initialize the bloc and load languages
-        final bloc = sl<LanguageBloc>();
+        final bloc = ServiceLocator.instance<LanguageBloc>();
         // First load all available languages
         bloc.add(const LanguagesLoaded());
         // Then load user's selected languages
@@ -74,16 +77,16 @@ class _LanguageStepState extends State<LanguageStep> {
                     .toList();
                     
                 if (selectedIds.isNotEmpty) {
-                  print('LanguageStep: Saving languages with IDs: $selectedIds');
+                  widget.logger.i('LanguageStep: Saving languages with IDs: $selectedIds');
                   // Trigger language saving in the bloc
                   context.read<LanguageBloc>().add(
                     LanguagesSaved(selectedIds),
                   );
                 } else {
-                  print('LanguageStep: No valid language IDs found to save');
+                  widget.logger.w('LanguageStep: No valid language IDs found to save');
                 }
               } else {
-                print('LanguageStep: No languages selected to save');
+                widget.logger.w('LanguageStep: No languages selected to save');
               }
             },
           );

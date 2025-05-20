@@ -68,7 +68,7 @@ class InterestBloc extends Bloc<InterestEvent, InterestState> {
       final userInterests = await _getUserInterestsUseCase();
       
       if (userInterests.isNotEmpty) {
-        final selectedIds = userInterests.map((interest) => interest.id).toList();
+        final selectedIds = userInterests.map((interest) => interest.id.toString()).toList();
         
         _logger.i('InterestBloc: User has ${selectedIds.length} interests selected');
         
@@ -87,8 +87,8 @@ class InterestBloc extends Bloc<InterestEvent, InterestState> {
     InterestToggled event,
     Emitter<InterestState> emit,
   ) {
-    final interestId = event.interestId;
-    final currentSelected = List<int>.from(state.selectedInterestIds);
+    final interestId = event.interestId.toString();
+    final currentSelected = List<String>.from(state.selectedInterestIds);
     
     if (currentSelected.contains(interestId)) {
       _logger.i('InterestBloc: Removing interest: $interestId');

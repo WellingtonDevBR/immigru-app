@@ -1,4 +1,4 @@
-import 'package:immigru/domain/entities/visa.dart';
+import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 
 /// Repository interface for visa data in the new architecture
 abstract class VisaRepository {

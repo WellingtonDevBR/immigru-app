@@ -9,8 +9,8 @@ import 'package:immigru/features/onboarding/presentation/common/base_onboarding_
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_header.dart';
 import 'package:immigru/new_core/country/domain/entities/country.dart';
 import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/presentation/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the birth country selection step in onboarding
 /// 
