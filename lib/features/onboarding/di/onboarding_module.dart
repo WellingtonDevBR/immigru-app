@@ -5,6 +5,7 @@ import 'package:immigru/domain/usecases/onboarding_usecases.dart' as old_usecase
 import 'package:immigru/features/onboarding/data/repositories/migration_journey_repository_impl.dart';
 import 'package:immigru/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:immigru/features/onboarding/data/repositories/visa_repository_impl.dart';
+import 'package:immigru/features/onboarding/domain/repositories/language_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
@@ -23,6 +24,9 @@ import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birt
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
+import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_bloc.dart';
+import 'package:immigru/features/onboarding/di/language_module.dart';
+import 'package:immigru/features/onboarding/di/interest_module.dart';
 
 import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart' as new_arch;
 import 'package:immigru/new_core/di/service_locator.dart';
@@ -260,8 +264,23 @@ class OnboardingModule {
     if (!sl.isRegistered<OnboardingBloc>()) {
       sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(
             repository: sl<OnboardingFeatureRepository>(),
+            languageRepository: sl<LanguageRepository>(),
             logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
           ));
     }
+    
+    // Register ProfessionBloc
+    if (!sl.isRegistered<ProfessionBloc>()) {
+      sl.registerFactory<ProfessionBloc>(() => ProfessionBloc(
+            onboardingBloc: sl<OnboardingBloc>(),
+            logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
+          ));
+    }
+    
+    // Register language module dependencies
+    registerLanguageModule(sl);
+    
+    // Register interest module dependencies
+    registerInterestDependencies(sl);
   }
 }

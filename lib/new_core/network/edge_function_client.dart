@@ -18,16 +18,6 @@ class EdgeFunctionClient {
     HttpMethod method = HttpMethod.post,
   }) async {
     try {
-      // Log the request in debug mode
-      if (kDebugMode) {
-
-
-        if (params != null) {
-
-        }
-
-      }
-      
       // Build the URL with query parameters if provided
       String url = functionName;
       if (params != null && params.isNotEmpty) {
@@ -47,12 +37,6 @@ class EdgeFunctionClient {
       // Parse the response data
       final responseData = response.data;
       
-      // Log the response in debug mode
-      if (kDebugMode) {
-
-
-      }
-      
       // Check if the response contains an error
       if (responseData is Map<String, dynamic> && 
           responseData.containsKey('error') && 
@@ -67,20 +51,24 @@ class EdgeFunctionClient {
       return EdgeFunctionResponse<T>.success(
         data: _convertToType<T>(responseData),
       );
-    } catch (error, stackTrace) {
-      // Log the error in debug mode
-      if (kDebugMode) {
-
-
-
-      }
-      
+    } catch (error, stackTrace) {  
       // Return error response
       return EdgeFunctionResponse<T>.error(
         message: error.toString(),
         error: error,
         stackTrace: stackTrace,
       );
+    }
+  }
+  
+  /// Checks if there is a valid auth session
+  Future<bool> hasValidSession() async {
+    try {
+      final session = _client.auth.currentSession;
+      return session != null && session.accessToken.isNotEmpty;
+    } catch (e) {
+      debugPrint('EdgeFunctionClient: Error checking session: $e');
+      return false;
     }
   }
   
@@ -131,9 +119,6 @@ class EdgeFunctionClient {
     try {
       return value as T?;
     } catch (e) {
-      if (kDebugMode) {
-
-      }
       return null;
     }
   }

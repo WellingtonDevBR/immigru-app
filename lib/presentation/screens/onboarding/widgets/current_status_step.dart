@@ -67,7 +67,8 @@ class CurrentStatusStep extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: AppColors.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -92,7 +93,9 @@ class CurrentStatusStep extends StatelessWidget {
                         Text(
                           'Select your current immigration status',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : Colors.grey[700],
                           ),
                         ),
                       ],
@@ -111,20 +114,22 @@ class CurrentStatusStep extends StatelessWidget {
 
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {
                           HapticFeedback.selectionClick();
-                          
+
                           // Get the selected status ID
                           final selectedStatus = status['id'] as String;
                           onStatusSelected(selectedStatus);
                           if (context.mounted) {
                             final bloc = context.read<OnboardingBloc>();
                             bloc.add(const OnboardingSaved());
-                            Future.delayed(const Duration(milliseconds: 2000), () {
+                            Future.delayed(const Duration(milliseconds: 2000),
+                                () {
                               if (context.mounted) {
                                 bloc.add(const NextStepRequested());
                               }
@@ -133,7 +138,8 @@ class CurrentStatusStep extends StatelessWidget {
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primaryColor.withValues(alpha: 0.15)
@@ -144,22 +150,27 @@ class CurrentStatusStep extends StatelessWidget {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primaryColor.withValues(alpha: 0.2),
+                                      color: AppColors.primaryColor
+                                          .withValues(alpha: 0.2),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     )
                                   ]
                                 : [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.05),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     )
                                   ],
                             border: isSelected
-                                ? Border.all(color: AppColors.primaryColor, width: 2)
+                                ? Border.all(
+                                    color: AppColors.primaryColor, width: 2)
                                 : Border.all(
-                                    color: isDarkMode ? AppColors.borderDark : AppColors.borderLight,
+                                    color: isDarkMode
+                                        ? AppColors.borderDark
+                                        : AppColors.borderLight,
                                     width: 1,
                                   ),
                           ),
@@ -170,14 +181,16 @@ class CurrentStatusStep extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.primaryColor.withValues(alpha: 0.2)
+                                      ? AppColors.primaryColor
+                                          .withValues(alpha: 0.2)
                                       : isDarkMode
                                           ? AppColors.surfaceDark
                                           : AppColors.surfaceLight,
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     )
@@ -197,9 +210,12 @@ class CurrentStatusStep extends StatelessWidget {
                                   children: [
                                     Text(
                                       status['title'] as String,
-                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                      style:
+                                          theme.textTheme.bodyLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black87,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black87,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -207,7 +223,9 @@ class CurrentStatusStep extends StatelessWidget {
                                       status['subtitle'] as String,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black54,
                                       ),
                                     ),
                                   ],

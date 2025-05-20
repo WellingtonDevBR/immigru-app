@@ -9,15 +9,15 @@ import 'package:immigru/features/onboarding/presentation/screens/onboarding_scre
 /// Feature module for the onboarding feature
 class OnboardingFeature {
   final GetIt _serviceLocator;
-  
+
   /// Constructor
   OnboardingFeature(this._serviceLocator);
-  
+
   /// Initialize the onboarding feature
   Future<void> initialize() async {
     await OnboardingModule.register(_serviceLocator);
   }
-  
+
   /// Get the onboarding routes
   Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -34,12 +34,12 @@ class OnboardingFeature {
     }
     return null;
   }
-  
+
   /// Provide the onboarding bloc for the app
   BlocProvider<OnboardingBloc> provideBloc() {
     return BlocProvider<OnboardingBloc>(
-      create: (context) => _serviceLocator<OnboardingBloc>()
-        ..add(const OnboardingInitialized()),
+      create: (context) =>
+          _serviceLocator<OnboardingBloc>()..add(const OnboardingInitialized()),
     );
   }
 }

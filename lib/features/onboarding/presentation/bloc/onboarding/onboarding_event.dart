@@ -27,7 +27,13 @@ class BirthCountryUpdated extends OnboardingEvent {
 
 /// Event triggered when the next step is requested
 class NextStepRequested extends OnboardingEvent {
-  const NextStepRequested();
+  /// Whether to force navigation even if canMoveToNextStep is false
+  final bool forceNavigation;
+  
+  const NextStepRequested({this.forceNavigation = false});
+  
+  @override
+  List<Object?> get props => [forceNavigation];
 }
 
 /// Event triggered when the previous step is requested
@@ -68,4 +74,45 @@ class MigrationJourneyUpdated extends OnboardingEvent {
 
   @override
   List<Object?> get props => [steps];
+}
+
+/// Event triggered when the profession is updated
+class ProfessionUpdated extends OnboardingEvent {
+  final String profession;
+  final String? industry;
+
+  const ProfessionUpdated(this.profession, {this.industry});
+
+  @override
+  List<Object?> get props => [profession, industry];
+}
+
+/// Event triggered when languages are updated
+class LanguagesUpdated extends OnboardingEvent {
+  final List<String> languages;
+
+  const LanguagesUpdated(this.languages);
+
+  @override
+  List<Object?> get props => [languages];
+}
+
+/// Event triggered when interests are updated
+class InterestsUpdated extends OnboardingEvent {
+  final List<int> interests;
+
+  const InterestsUpdated(this.interests);
+
+  @override
+  List<Object?> get props => [interests];
+}
+
+/// Event triggered when languages need to be saved
+class LanguagesSaveRequested extends OnboardingEvent {
+  final List<String> languageCodes;
+
+  const LanguagesSaveRequested(this.languageCodes);
+
+  @override
+  List<Object?> get props => [languageCodes];
 }

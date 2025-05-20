@@ -9,6 +9,7 @@ class OnboardingState extends Equatable {
   final String? errorMessage;
   final bool canMoveToNextStep;
   final bool isLastStep;
+  final bool preventAutoNavigation;
   
   // Birth country step data
   final String? birthCountryId;
@@ -19,29 +20,46 @@ class OnboardingState extends Equatable {
   
   // Migration journey step data
   final List<MigrationStep> migrationSteps;
+  
+  // Profession step data
+  final String? profession;
+  final String? industry;
+  
+  // Language step data
+  final List<String> languages;
+  
+  // Interest step data
+  final List<int> interests;
 
   const OnboardingState({
     this.currentStepIndex = 0,
-    this.totalSteps = 3, // Birth country, current status, and migration journey steps
+    this.totalSteps = 6, // Birth country, current status, migration journey, profession, language, and interest steps
     this.isLoading = false,
     this.errorMessage,
     this.canMoveToNextStep = false,
     this.isLastStep = false,
+    this.preventAutoNavigation = false,
     this.birthCountryId,
     this.birthCountryName,
     this.currentStatus,
     this.migrationSteps = const [],
+    this.profession,
+    this.industry,
+    this.languages = const [],
+    this.interests = const [],
   });
 
   /// Initial state for the onboarding flow
   factory OnboardingState.initial() {
     return const OnboardingState(
       currentStepIndex: 0,
-      totalSteps: 3, // Birth country, current status, and migration journey steps
+      totalSteps: 6, // Birth country, current status, migration journey, profession, language, and interest steps
       isLoading: true,
       canMoveToNextStep: false,
       isLastStep: false,
+      preventAutoNavigation: false,
       migrationSteps: [],
+      languages: [],
     );
   }
 
@@ -53,10 +71,15 @@ class OnboardingState extends Equatable {
     String? errorMessage,
     bool? canMoveToNextStep,
     bool? isLastStep,
+    bool? preventAutoNavigation,
     String? birthCountryId,
     String? birthCountryName,
     String? currentStatus,
     List<MigrationStep>? migrationSteps,
+    String? profession,
+    String? industry,
+    List<String>? languages,
+    List<int>? interests,
   }) {
     return OnboardingState(
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
@@ -65,24 +88,34 @@ class OnboardingState extends Equatable {
       errorMessage: errorMessage,
       canMoveToNextStep: canMoveToNextStep ?? this.canMoveToNextStep,
       isLastStep: isLastStep ?? this.isLastStep,
+      preventAutoNavigation: preventAutoNavigation ?? this.preventAutoNavigation,
       birthCountryId: birthCountryId ?? this.birthCountryId,
       birthCountryName: birthCountryName ?? this.birthCountryName,
       currentStatus: currentStatus ?? this.currentStatus,
       migrationSteps: migrationSteps ?? this.migrationSteps,
+      profession: profession ?? this.profession,
+      industry: industry ?? this.industry,
+      languages: languages ?? this.languages,
+      interests: interests ?? this.interests,
     );
   }
 
   @override
   List<Object?> get props => [
-        currentStepIndex,
-        totalSteps,
-        isLoading,
-        errorMessage,
-        canMoveToNextStep,
-        isLastStep,
-        birthCountryId,
-        birthCountryName,
-        currentStatus,
-        migrationSteps,
-      ];
+    currentStepIndex,
+    totalSteps,
+    isLoading,
+    errorMessage,
+    canMoveToNextStep,
+    isLastStep,
+    preventAutoNavigation,
+    birthCountryId,
+    birthCountryName,
+    currentStatus,
+    migrationSteps,
+    profession,
+    industry,
+    languages,
+    interests,
+  ];
 }

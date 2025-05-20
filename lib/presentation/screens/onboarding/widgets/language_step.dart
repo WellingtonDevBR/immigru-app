@@ -42,14 +42,14 @@ class _LanguageStepState extends State<LanguageStep> {
 
   // Store a reference to the onboarding bloc
   late OnboardingBloc _onboardingBloc;
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Safely capture the bloc reference when dependencies change
     _onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
   }
-  
+
   @override
   void initState() {
     super.initState();

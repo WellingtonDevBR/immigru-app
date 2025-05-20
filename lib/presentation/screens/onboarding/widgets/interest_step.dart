@@ -36,14 +36,14 @@ class _InterestStepState extends State<InterestStep>
   bool _isLoading = true;
   String? _errorMessage;
   bool _isSaving = false;
-  
+
   // Store a reference to the onboarding bloc
   late OnboardingBloc _onboardingBloc;
 
   // Keep this widget alive to prevent rebuilds
   @override
   bool get wantKeepAlive => true;
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

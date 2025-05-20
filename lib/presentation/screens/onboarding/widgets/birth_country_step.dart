@@ -94,10 +94,10 @@ class _BirthCountryStepState extends State<BirthCountryStep> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withValues(alpha:0.1),
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border:
-                    Border.all(color: AppColors.primaryColor.withValues(alpha:0.3)),
+                border: Border.all(
+                    color: AppColors.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -144,23 +144,25 @@ class _BirthCountryStepState extends State<BirthCountryStep> {
                   setState(() {
                     _selectedCountry = country;
                   });
-                  
+
                   // Call the callback to move to the next step
                   widget.onCountrySelected(country);
-                  
+
                   // Add a visual feedback before moving to next step
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Selected ${country.name} as your birth country'),
+                      content: Text(
+                          'Selected ${country.name} as your birth country'),
                       backgroundColor: AppColors.primaryColor,
                       duration: const Duration(milliseconds: 800),
                     ),
                   );
-                  
+
                   // Automatically trigger next step after a short delay
                   // Store the bloc reference before the async operation
-                  final onboardingBloc = BlocProvider.of<OnboardingBloc>(context);
-                  
+                  final onboardingBloc =
+                      BlocProvider.of<OnboardingBloc>(context);
+
                   Future.delayed(const Duration(milliseconds: 1000), () {
                     // Check if widget is still mounted before using the bloc
                     if (mounted) {

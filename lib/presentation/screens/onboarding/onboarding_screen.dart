@@ -542,12 +542,14 @@ class _OnboardingViewState extends State<OnboardingView>
 
                                     // Add a small delay to ensure the save completes before moving to next step
                                     // Store the bloc reference before the async gap
-                                    final onboardingBloc = context.read<OnboardingBloc>();
+                                    final onboardingBloc =
+                                        context.read<OnboardingBloc>();
                                     Future.delayed(
                                         const Duration(milliseconds: 300), () {
                                       if (mounted) {
                                         // Use the stored bloc reference instead of accessing context
-                                        onboardingBloc.add(const NextStepRequested());
+                                        onboardingBloc
+                                            .add(const NextStepRequested());
                                       }
                                     });
                                   } else {
