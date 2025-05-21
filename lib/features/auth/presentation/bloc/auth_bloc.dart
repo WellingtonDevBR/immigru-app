@@ -86,7 +86,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(state.unauthenticated());
       }
     } catch (e) {
-      if (kDebugMode) {}
       emit(state
           .error('Unable to verify authentication status. Please try again.'));
     }
@@ -101,16 +100,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await _loginWithEmailUseCase(event.email, event.password);
       emit(state.authenticated(user));
     } catch (e) {
-      if (kDebugMode) {}
 
       if (e is AuthError) {
         final errorState = state.errorFromAuthError(e);
-        if (kDebugMode) {}
         emit(errorState);
       } else {
         final errorMessage =
             'Failed to sign in. Please check your credentials and try again.';
-        if (kDebugMode) {}
         emit(state.error(errorMessage));
       }
     }

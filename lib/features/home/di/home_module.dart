@@ -61,10 +61,10 @@ class HomeModule {
         );
       }
 
-      // BLoCs
+      // BLoCs - Using singleton for HomeBloc to prevent multiple instances
       if (!sl.isRegistered<HomeBloc>()) {
-        sl.registerFactory<HomeBloc>(
-          () => HomeBloc(
+        sl.registerSingleton<HomeBloc>(
+          HomeBloc(
             getPostsUseCase: sl<GetPostsUseCase>(),
             getPersonalizedPostsUseCase: sl<GetPersonalizedPostsUseCase>(),
             getEventsUseCase: sl<GetEventsUseCase>(),

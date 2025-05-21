@@ -15,18 +15,25 @@ class HomeFeature {
   /// Initialize the home feature
   Future<void> initialize() async {
     try {
-      HomeModule.init(_serviceLocator);
+      // Check if HomeBloc is already registered to prevent duplicate registration
+      if (!_serviceLocator.isRegistered<HomeBloc>()) {
+        HomeModule.init(_serviceLocator);
+        print('HomeFeature initialized successfully');
+      } else {
+        print('HomeBloc already registered, skipping initialization');
+      }
     } catch (e) {
       print('Error initializing HomeFeature: $e');
+      // Continue execution even if there's an error to prevent app crashes
     }
   }
 
   /// Get the home routes
   Map<String, WidgetBuilder> getRoutes() {
     return {
-      '/features/home': (context) => BlocProvider<HomeBloc>(
-            create: (context) => _serviceLocator<HomeBloc>(),
-            child: const HomeScreen(),
+      '/features/home': (context) => BlocProvider.value(
+            value: _serviceLocator<HomeBloc>(),
+            child: HomeScreen(),
           ),
     };
   }
@@ -35,9 +42,9 @@ class HomeFeature {
   Route<dynamic>? generateRoute(RouteSettings settings) {
     if (settings.name == '/features/home') {
       return MaterialPageRoute(
-        builder: (_) => BlocProvider<HomeBloc>(
-          create: (context) => _serviceLocator<HomeBloc>(),
-          child: const HomeScreen(),
+        builder: (_) => BlocProvider.value(
+          value: _serviceLocator<HomeBloc>(),
+          child: HomeScreen(),
         ),
       );
     }
@@ -46,8 +53,14 @@ class HomeFeature {
 
   /// Provide the home bloc for the app
   BlocProvider<HomeBloc> provideBloc() {
-    return BlocProvider<HomeBloc>(
-      create: (context) => _serviceLocator<HomeBloc>(),
+    // Ensure HomeBloc is registered before providing it
+    if (!_serviceLocator.isRegistered<HomeBloc>()) {
+      HomeModule.init(_serviceLocator);
+    }
+    
+    // Use BlocProvider.value to reuse the existing instance
+    return BlocProvider.value(
+      value: _serviceLocator<HomeBloc>(),
     );
   }
 }

@@ -71,10 +71,10 @@ class PostCreationWidget extends StatelessWidget {
                           backgroundImage: user?.photoUrl != null
                               ? NetworkImage(user!.photoUrl!)
                               : null,
+                          radius: 20,
                           child: user?.photoUrl == null
                               ? Text(user?.displayName?.substring(0, 1).toUpperCase() ?? 'U')
                               : null,
-                          radius: 20,
                         ),
                         const SizedBox(width: 12),
                         Expanded(

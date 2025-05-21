@@ -2,8 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:immigru/features/home/domain/entities/event.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 
-/// States for the home screen
+/// Base state for the home feature
 abstract class HomeState extends Equatable {
+  /// Constructor
   const HomeState();
 
   @override
@@ -12,14 +13,19 @@ abstract class HomeState extends Equatable {
 
 /// Initial state
 class HomeInitial extends HomeState {
+  /// Constructor
   const HomeInitial();
 }
 
-/// Loading state for posts
+/// Loading posts state
 class PostsLoading extends HomeState {
+  /// Current posts if refreshing
   final List<Post>? currentPosts;
+
+  /// Whether this is a refresh operation
   final bool isRefreshing;
 
+  /// Constructor
   const PostsLoading({
     this.currentPosts,
     this.isRefreshing = false,
@@ -29,50 +35,70 @@ class PostsLoading extends HomeState {
   List<Object?> get props => [currentPosts, isRefreshing];
 }
 
-/// Loaded state for posts
+/// Posts loaded state
 class PostsLoaded extends HomeState {
+  /// List of posts
   final List<Post> posts;
-  final bool hasReachedMax;
-  final String? selectedCategory;
 
+  /// Whether we've reached the maximum number of posts
+  final bool hasReachedMax;
+
+  /// Selected category
+  final String selectedCategory;
+
+  /// Whether more posts are being loaded (pagination)
+  final bool isLoadingMore;
+
+  /// Constructor
   const PostsLoaded({
     required this.posts,
-    this.hasReachedMax = false,
-    this.selectedCategory,
+    required this.hasReachedMax,
+    required this.selectedCategory,
+    this.isLoadingMore = false,
   });
 
-  @override
-  List<Object?> get props => [posts, hasReachedMax, selectedCategory];
-
-  /// Create a copy with updated values
+  /// Create a copy with some fields changed
   PostsLoaded copyWith({
     List<Post>? posts,
     bool? hasReachedMax,
     String? selectedCategory,
+    bool? isLoadingMore,
   }) {
     return PostsLoaded(
       posts: posts ?? this.posts,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
+
+  @override
+  List<Object?> get props => [posts, hasReachedMax, selectedCategory, isLoadingMore];
 }
 
 /// Error state for posts
 class PostsError extends HomeState {
+  /// Error message
   final String message;
 
-  const PostsError({required this.message});
+  /// Constructor
+  const PostsError({
+    required this.message,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
-/// Loading state for personalized posts
+/// Loading personalized posts state
 class PersonalizedPostsLoading extends HomeState {
+  /// Current posts if refreshing
   final List<Post>? currentPosts;
+
+  /// Whether this is a refresh operation
   final bool isRefreshing;
 
+  /// Constructor
   const PersonalizedPostsLoading({
     this.currentPosts,
     this.isRefreshing = false,
@@ -82,18 +108,19 @@ class PersonalizedPostsLoading extends HomeState {
   List<Object?> get props => [currentPosts, isRefreshing];
 }
 
-/// Loaded state for personalized posts
+/// Personalized posts loaded state
 class PersonalizedPostsLoaded extends HomeState {
+  /// List of personalized posts
   final List<Post> posts;
+
+  /// Whether we've reached the maximum number of posts
   final bool hasReachedMax;
 
+  /// Constructor
   const PersonalizedPostsLoaded({
     required this.posts,
-    this.hasReachedMax = false,
+    required this.hasReachedMax,
   });
-
-  @override
-  List<Object> get props => [posts, hasReachedMax];
 
   /// Create a copy with updated values
   PersonalizedPostsLoaded copyWith({
@@ -105,23 +132,34 @@ class PersonalizedPostsLoaded extends HomeState {
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );
   }
+
+  @override
+  List<Object?> get props => [posts, hasReachedMax];
 }
 
 /// Error state for personalized posts
 class PersonalizedPostsError extends HomeState {
+  /// Error message
   final String message;
 
-  const PersonalizedPostsError({required this.message});
+  /// Constructor
+  const PersonalizedPostsError({
+    required this.message,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
-/// Loading state for events
+/// Loading events state
 class EventsLoading extends HomeState {
+  /// Current events if refreshing
   final List<Event>? currentEvents;
+
+  /// Whether this is a refresh operation
   final bool isRefreshing;
 
+  /// Constructor
   const EventsLoading({
     this.currentEvents,
     this.isRefreshing = false,
@@ -131,18 +169,22 @@ class EventsLoading extends HomeState {
   List<Object?> get props => [currentEvents, isRefreshing];
 }
 
-/// Loaded state for events
+/// Events loaded state
 class EventsLoaded extends HomeState {
+  /// List of events
   final List<Event> events;
+
+  /// Whether we've reached the maximum number of events
   final bool hasReachedMax;
 
+  /// Constructor
   const EventsLoaded({
     required this.events,
-    this.hasReachedMax = false,
+    required this.hasReachedMax,
   });
 
   @override
-  List<Object> get props => [events, hasReachedMax];
+  List<Object?> get props => [events, hasReachedMax];
 
   /// Create a copy with updated values
   EventsLoaded copyWith({
@@ -158,35 +200,60 @@ class EventsLoaded extends HomeState {
 
 /// Error state for events
 class EventsError extends HomeState {
+  /// Error message
   final String message;
 
-  const EventsError({required this.message});
+  /// Constructor
+  const EventsError({
+    required this.message,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
 /// Loading state for post creation
 class PostCreating extends HomeState {
+  /// Constructor
   const PostCreating();
 }
 
 /// Success state for post creation
 class PostCreated extends HomeState {
+  /// Created post
   final Post post;
 
-  const PostCreated({required this.post});
+  /// Constructor
+  const PostCreated({
+    required this.post,
+  });
 
   @override
-  List<Object> get props => [post];
+  List<Object?> get props => [post];
 }
 
 /// Error state for post creation
 class PostCreationError extends HomeState {
+  /// Error message
   final String message;
 
-  const PostCreationError({required this.message});
+  /// Constructor
+  const PostCreationError({
+    required this.message,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
+}
+
+/// State indicating the home screen is ready for navigation
+class HomeNavigationReady extends HomeState {
+  /// Constructor
+  const HomeNavigationReady();
+}
+
+/// State indicating the home screen is fully initialized
+class HomeFullyInitialized extends HomeState {
+  /// Constructor
+  const HomeFullyInitialized();
 }

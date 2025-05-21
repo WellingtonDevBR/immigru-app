@@ -131,8 +131,22 @@ class RegisterForEvent extends HomeEvent {
 class SelectCategory extends HomeEvent {
   final String category;
 
-  const SelectCategory({required this.category});
+  const SelectCategory({
+    required this.category,
+  });
 
   @override
   List<Object> get props => [category];
+}
+
+/// Event to handle errors in the home screen
+class HomeError extends HomeEvent {
+  final String message;
+
+  const HomeError({
+    required this.message,
+  });
+
+  @override
+  List<Object> get props => [message];
 }

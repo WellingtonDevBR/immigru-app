@@ -16,11 +16,13 @@ class WelcomeModule {
       );
     }
 
-    // Register BLoCs
-    sl.registerFactory<WelcomeBloc>(
-      () => WelcomeBloc(
-        logger: sl.get<LoggerInterface>(instanceName: 'welcome_logger'),
-      ),
-    );
+    // Register BLoCs - check if already registered to prevent duplicate registration
+    if (!sl.isRegistered<WelcomeBloc>()) {
+      sl.registerFactory<WelcomeBloc>(
+        () => WelcomeBloc(
+          logger: sl.get<LoggerInterface>(instanceName: 'welcome_logger'),
+        ),
+      );
+    }
   }
 }

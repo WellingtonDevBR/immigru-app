@@ -11,31 +11,32 @@ import 'package:immigru/shared/theme/app_text_styles.dart';
 abstract class PhoneLoginWidgetState extends State<PhoneLoginWidget> {
   /// Get the currently selected country code
   String getCountryCode();
-  
+
   /// Access to the country code
   String get countryCode;
 }
 
 // Global key to access the state of PhoneLoginWidget from outside
-final GlobalKey<PhoneLoginWidgetState> phoneLoginWidgetKey = GlobalKey<PhoneLoginWidgetState>();
+final GlobalKey<PhoneLoginWidgetState> phoneLoginWidgetKey =
+    GlobalKey<PhoneLoginWidgetState>();
 
 /// Widget for phone login form with country selection
 class PhoneLoginWidget extends StatefulWidget {
   /// Controller for phone number input
   final TextEditingController phoneController;
-  
+
   /// Whether the app is in dark mode
   final bool isDarkMode;
-  
+
   /// Current auth state
   final AuthState state;
-  
+
   /// Callback for phone login
   final VoidCallback onPhoneLogin;
-  
+
   /// Callback for Google sign in
   final VoidCallback onGoogleSignIn;
-  
+
   /// Get the currently selected country code
   String getCountryCode() {
     final state = phoneLoginWidgetKey.currentState;
@@ -51,7 +52,7 @@ class PhoneLoginWidget extends StatefulWidget {
     required this.onPhoneLogin,
     required this.onGoogleSignIn,
   });
-  
+
   @override
   State<PhoneLoginWidget> createState() => _PhoneLoginWidgetState();
 }
@@ -59,10 +60,10 @@ class PhoneLoginWidget extends StatefulWidget {
 class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
   final FocusNode _phoneFocusNode = FocusNode();
   String _countryCode = '+1'; // Default US country code
-  
+
   @override
   String get countryCode => _countryCode;
-  
+
   @override
   String getCountryCode() {
     return _countryCode;
@@ -71,13 +72,13 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
   @override
   void initState() {
     super.initState();
-    
+
     // Clear the phone controller to avoid any previous values
     if (widget.phoneController.text.isNotEmpty) {
       widget.phoneController.clear();
     }
   }
-  
+
   @override
   void dispose() {
     _phoneFocusNode.dispose();
@@ -87,7 +88,7 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = widget.isDarkMode;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -107,8 +108,8 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
             Container(
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.grey.withValues(alpha:0.1)
-                    : Colors.grey.withValues(alpha:0.05),
+                    ? Colors.grey.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDarkMode ? Colors.white30 : Colors.black12,
@@ -134,9 +135,6 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
                   ],
                   onChanged: (value) {
                     if (value != null) {
-                      if (kDebugMode) {
-
-                      }
                       setState(() {
                         _countryCode = value;
                       });
@@ -166,8 +164,8 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
                   ),
                   filled: true,
                   fillColor: isDarkMode
-                      ? Colors.grey.withValues(alpha:0.1)
-                      : Colors.grey.withValues(alpha:0.05),
+                      ? Colors.grey.withValues(alpha: 0.1)
+                      : Colors.grey.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
@@ -191,11 +189,6 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
                     color: isDarkMode ? Colors.white54 : Colors.black38,
                   ),
                 ),
-                onChanged: (value) {
-                  if (kDebugMode) {
-
-                  }
-                },
                 inputFormatters: [
                   // Only allow digits for phone number
                   FilteringTextInputFormatter.digitsOnly,
@@ -206,12 +199,12 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your phone number';
                   }
-                  
+
                   // Validate phone number length (without country code)
                   if (value.length < 6 || value.length > 12) {
                     return 'Please enter a valid phone number';
                   }
-                  
+
                   return null;
                 },
               ),
@@ -219,16 +212,16 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
           ],
         ),
         const SizedBox(height: 24),
-        
+
         // Login button
         AuthButton(
           text: 'Continue with Phone',
           isLoading: widget.state.isLoading,
           onPressed: widget.onPhoneLogin,
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Divider
         Row(
           children: [
@@ -257,25 +250,25 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Google sign in button
         SocialLoginButton(
           text: 'Continue with Google',
           icon: 'assets/icons/google_logo.svg',
           onPressed: widget.onGoogleSignIn,
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Phone verification info
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode 
-                ? Colors.grey.withValues(alpha:0.1) 
-                : Colors.grey.withValues(alpha:0.05),
+            color: isDarkMode
+                ? Colors.grey.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? Colors.white12 : Colors.black12,
@@ -295,7 +288,8 @@ class _PhoneLoginWidgetState extends PhoneLoginWidgetState {
                   Text(
                     'Phone Verification',
                     style: AppTextStyles.bodyMedium(
-                      brightness: isDarkMode ? Brightness.dark : Brightness.light,
+                      brightness:
+                          isDarkMode ? Brightness.dark : Brightness.light,
                     ).copyWith(
                       fontWeight: FontWeight.bold,
                     ),

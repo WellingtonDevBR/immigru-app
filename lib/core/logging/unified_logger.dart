@@ -89,9 +89,6 @@ class UnifiedLogger implements LoggerInterface {
   void configureRemoteLogging({required bool enabled, String? endpoint}) {
     // This method is a placeholder for future remote logging configuration
     // When you're ready to implement remote logging, you can add the implementation here
-    if (kDebugMode) {
-      print('Remote logging configuration: enabled=$enabled, endpoint=$endpoint');
-    }
   }
 
   @override

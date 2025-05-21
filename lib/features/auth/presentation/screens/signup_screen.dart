@@ -9,6 +9,7 @@ import 'package:immigru/features/auth/presentation/widgets/auth_button.dart';
 import 'package:immigru/features/auth/presentation/widgets/auth_header.dart';
 import 'package:immigru/features/auth/presentation/widgets/error_message_widget.dart';
 import 'package:immigru/features/auth/presentation/widgets/social_login_button.dart';
+import 'package:immigru/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/shared/theme/app_text_styles.dart';
 import 'package:immigru/shared/widgets/secure_input_field.dart';
@@ -151,7 +152,10 @@ class _SignupScreenState extends State<SignupScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state.isAuthenticated) {
-            Navigator.of(context).pushReplacementNamed('/onboarding');
+            // Use direct navigation for onboarding for consistency
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            );
           }
           
           // Error handling is now managed directly by the BLoC

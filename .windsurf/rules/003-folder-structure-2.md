@@ -1,8 +1,3 @@
----
-trigger: model_decision
-description: When creating new file or folder, check if doesnt already exist.
----
-
 lib/
 ├── core
 │   ├── config
@@ -68,6 +63,10 @@ lib/
 └── shared
     ├── theme
     └── widgets
+│   │   │   │   ├── onboarding_step.dart
+│   │   │   │   ├── profession.dart
+│   │   │   │   └── visa.dart
+│   │   │   ├── repositories
 │   │   │   │   ├── immi_grove_repository.dart
 │   │   │   │   ├── interest_repository.dart
 │   │   │   │   ├── language_repository.dart
@@ -169,6 +168,3 @@ lib/
 │   │       │       └── profession_step.dart
 │   │       └── widgets
 │   │           ├── birth_country
-│   │           │   └── birth_country_step_widget.dart
-│   │           ├── country_selector.dart
-│   │           ├── current_status

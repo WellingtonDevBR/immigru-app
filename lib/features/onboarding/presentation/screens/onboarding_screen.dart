@@ -9,6 +9,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboard
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/interest/interest_bloc.dart';
+import 'package:immigru/features/auth/presentation/widgets/auth_wrapper.dart';
 // Import removed: immi_grove_event.dart
 import 'package:immigru/features/onboarding/presentation/widgets/birth_country/birth_country_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/current_status/current_status_step_widget.dart';
@@ -115,11 +116,8 @@ class _OnboardingViewState extends State<OnboardingView> {
               Future.delayed(const Duration(milliseconds: 800), () {
                 // Check if widget is still mounted before accessing context
                 if (mounted) {
-                  // Navigate to the home page and remove all previous routes
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/home',
-                    (route) => false,
-                  );
+                  // Use the AuthWrapper's navigation helper instead of pushNamedAndRemoveUntil
+                  AuthWrapper.navigateToRoot(context);
                 }
               });
             }

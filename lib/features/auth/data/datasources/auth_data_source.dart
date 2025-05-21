@@ -10,12 +10,21 @@ import 'package:immigru/features/auth/domain/entities/auth_error.dart';
 /// Data source for authentication operations using Supabase
 class AuthDataSource {
   final SupabaseClient _client;
+  final UnifiedLogger _logger = UnifiedLogger();
+
+  // Cache for user profile data
+  static Map<String, dynamic>? _cachedUserProfile;
+  static Map<String, dynamic>? _cachedUserData;
+  static DateTime? _lastFetchTime;
+
+  // Cache expiration time (5 minutes)
+  static const Duration _cacheExpiration = Duration(minutes: 5);
 
   /// Constructor
   AuthDataSource({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
-  /// Get the current authenticated user
+  /// Get the current authenticated user with caching to prevent excessive fetching
   Future<UserModel?> getCurrentUser() async {
     try {
       final user = _client.auth.currentUser;
@@ -23,63 +32,67 @@ class AuthDataSource {
         return null;
       }
 
-      // Fetch user profile data from the database
-      final profileResponse = await _client
-          .from('UserProfile') // Use PascalCase table name
-          .select()
-          .eq('UserId', user.id) // Use PascalCase field name
-          .single();
-      
-      if (kDebugMode) {
-        print('AUTH_DATA_SOURCE: UserProfile response: $profileResponse');
-      }
-      
-      // Check if the user has completed onboarding - this value is in the User table
-      // Get it directly from the auth.user() object
+      // Check if we have a valid cache
+      final bool isCacheValid = _lastFetchTime != null &&
+          DateTime.now().difference(_lastFetchTime!) < _cacheExpiration &&
+          _cachedUserProfile != null &&
+          _cachedUserData != null;
+
+      Map<String, dynamic> profileResponse;
       bool hasCompletedOnboarding = false;
-      
-      try {
-        // Get the HasCompletedOnboarding flag from the User table
-        final userResponse = await _client
-            .from('User') // Use PascalCase table name
-            .select('HasCompletedOnboarding')
-            .eq('Id', user.id) // Use PascalCase field name
+
+      // Use cached data if available and valid
+      if (isCacheValid) {
+        _logger.d('Using cached user profile data', tag: 'AuthDataSource');
+        profileResponse = _cachedUserProfile!;
+        hasCompletedOnboarding =
+            _cachedUserData!['HasCompletedOnboarding'] ?? false;
+      } else {
+        // Fetch user profile data from the database
+        _logger.d('Fetching fresh user profile data', tag: 'AuthDataSource');
+        profileResponse = await _client
+            .from('UserProfile') // Use PascalCase table name
+            .select()
+            .eq('UserId', user.id) // Use PascalCase field name
             .single();
-            
-        if (kDebugMode) {
-          print('AUTH_DATA_SOURCE: User table response: $userResponse');
+
+        // Cache the profile response
+        _cachedUserProfile = profileResponse;
+
+        try {
+          // Get the HasCompletedOnboarding flag from the User table
+          final userResponse = await _client
+              .from('User') // Use PascalCase table name
+              .select('HasCompletedOnboarding')
+              .eq('Id', user.id) // Use PascalCase field name
+              .single();
+
+          // Cache the user data
+          _cachedUserData = userResponse;
+          _lastFetchTime = DateTime.now();
+
+          hasCompletedOnboarding =
+              userResponse['HasCompletedOnboarding'] ?? false;
+        } catch (e) {
+          // If there's an error, default to false
+          hasCompletedOnboarding = false;
         }
-        
-        if (userResponse['HasCompletedOnboarding'] != null) {
-          hasCompletedOnboarding = userResponse['HasCompletedOnboarding'] as bool;
-          if (kDebugMode) {
-            print('AUTH_DATA_SOURCE: HasCompletedOnboarding from User table: $hasCompletedOnboarding');
-          }
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('AUTH_DATA_SOURCE: Error getting HasCompletedOnboarding from User table: $e');
-        }
-        // If there's an error, assume onboarding is not complete
-        hasCompletedOnboarding = false;
       }
-      
-      if (kDebugMode) {
-        print('AUTH_DATA_SOURCE: Final hasCompletedOnboarding value: $hasCompletedOnboarding');
-      }
+
+      // Logging removed to prevent excessive console output
 
       return UserModel(
         id: user.id,
         email: user.email,
         phone: user.phone,
-        displayName:
-            profileResponse['DisplayName'] as String?, // Use PascalCase field name
-        photoUrl: profileResponse['AvatarUrl'] as String?, // Use PascalCase field name
+        displayName: profileResponse['DisplayName']
+            as String?, // Use PascalCase field name
+        photoUrl: profileResponse['AvatarUrl']
+            as String?, // Use PascalCase field name
         emailVerified: user.emailConfirmedAt != null,
         hasCompletedOnboarding: hasCompletedOnboarding,
       );
     } catch (e) {
-      if (kDebugMode) {}
       return null;
     }
   }
@@ -88,8 +101,6 @@ class AuthDataSource {
   Future<UserModel> signInWithEmailAndPassword(
       String email, String password) async {
     try {
-      if (kDebugMode) {}
-
       final response = await _client.auth.signInWithPassword(
         email: email,
         password: password,
@@ -97,7 +108,6 @@ class AuthDataSource {
 
       final user = response.user;
       if (user == null) {
-        if (kDebugMode) {}
         throw AuthError.userNotFound();
       }
 
@@ -124,14 +134,12 @@ class AuthDataSource {
         );
       } catch (profileError) {
         // If we can't fetch the profile, create one and return a basic user model
-        if (kDebugMode) {}
 
         // Try to create a profile for this user
         try {
           await _createUserProfile(user.id);
         } catch (createError) {
           // Ignore profile creation errors during login
-          if (kDebugMode) {}
         }
 
         return UserModel(
@@ -145,8 +153,6 @@ class AuthDataSource {
         );
       }
     } catch (e) {
-      if (kDebugMode) {}
-
       if (e is AuthError) {
         rethrow;
       }
@@ -178,16 +184,12 @@ class AuthDataSource {
   /// Sign in with phone number (start the process)
   Future<void> signInWithPhone(String phoneNumber) async {
     try {
-      if (kDebugMode) {}
       await _client.auth.signInWithOtp(
         phone: phoneNumber,
         channel: OtpChannel.sms,
         shouldCreateUser: true,
       );
-
-      if (kDebugMode) {}
     } catch (e) {
-      if (kDebugMode) {}
       throw Exception('Failed to start phone authentication: ${e.toString()}');
     }
   }
@@ -195,8 +197,6 @@ class AuthDataSource {
   /// Verify phone authentication code
   Future<UserModel> verifyPhoneCode(String phoneNumber, String code) async {
     try {
-      if (kDebugMode) {}
-
       final response = await _client.auth.verifyOTP(
         phone: phoneNumber,
         token: code,
@@ -207,8 +207,6 @@ class AuthDataSource {
       if (user == null) {
         throw AuthError.unknown('Failed to verify phone: No user returned');
       }
-
-      if (kDebugMode) {}
 
       // Save user data to the User table using upsert
       try {
@@ -227,10 +225,9 @@ class AuthDataSource {
           },
           onConflict: 'Id', // Use Id as the conflict resolution column
         );
-
-        if (kDebugMode) {}
       } catch (e) {
-        if (kDebugMode) {}
+        _logger.e('Failed to save user data to User table: $e',
+            tag: 'AuthDataSource');
         // Continue even if this fails, as the auth part worked
       }
 
@@ -239,7 +236,7 @@ class AuthDataSource {
       final profileExists = await _checkProfileExists(user.id);
       if (!profileExists) {
         await _createUserProfile(user.id);
-      } else if (kDebugMode) {}
+      }
 
       // Fetch user data from the User table to check HasCompletedOnboarding
       bool hasCompletedOnboarding = false;
@@ -252,9 +249,12 @@ class AuthDataSource {
           hasCompletedOnboarding =
               userRecords[0]['HasCompletedOnboarding'] as bool? ?? false;
 
-          if (kDebugMode) {}
+          _logger.d(
+              'PHONE AUTH: User record found, HasCompletedOnboarding = $hasCompletedOnboarding',
+              tag: 'AuthDataSource');
         } else {
-          if (kDebugMode) {}
+          _logger.w('PHONE AUTH: No User record found for ID: ${user.id}',
+              tag: 'AuthDataSource');
         }
 
         // Then get the profile data
@@ -275,8 +275,6 @@ class AuthDataSource {
           hasCompletedOnboarding: hasCompletedOnboarding,
         );
       } catch (e) {
-        if (kDebugMode) {}
-
         // Return basic user model if data fetch fails
         return UserModel(
           id: user.id,
@@ -296,8 +294,6 @@ class AuthDataSource {
   /// Sign in with Google
   Future<UserModel> signInWithGoogle() async {
     try {
-      if (kDebugMode) {}
-
       // Create a completer to handle the async auth flow
       final completer = Completer<UserModel>();
 
@@ -319,18 +315,13 @@ class AuthDataSource {
             ], // openid scope is required for ID tokens
           );
 
-          if (kDebugMode) {}
-
           // Perform interactive sign-in
           final googleUser = await googleSignIn.signIn();
 
           // Handle user cancellation
           if (googleUser == null) {
-            if (kDebugMode) {}
             throw Exception('Google sign-in was canceled');
           }
-
-          if (kDebugMode) {}
 
           // Get auth details from Google
           final googleAuth = await googleUser.authentication;
@@ -339,7 +330,6 @@ class AuthDataSource {
 
           // Validate tokens
           if (idToken == null) {
-            if (kDebugMode) {}
             throw Exception('Authentication failed: Missing ID token');
           }
 
@@ -378,8 +368,6 @@ class AuthDataSource {
                 'CreatedAt': DateTime.now().toIso8601String(),
                 'UpdatedAt': DateTime.now().toIso8601String(),
               });
-
-              if (kDebugMode) {}
             } else {
               // Update existing user with Google auth info
               await _client.from('User').update({
@@ -388,11 +376,8 @@ class AuthDataSource {
                 'AuthProvider': 'google',
                 'UpdatedAt': DateTime.now().toIso8601String(),
               }).eq('Id', authUser.id);
-
-              if (kDebugMode) {}
             }
           } catch (e) {
-            if (kDebugMode) {}
             // Continue even if this fails, as the auth part worked
           }
 
@@ -403,11 +388,32 @@ class AuthDataSource {
           }
 
           try {
-            // Fetch additional user data from the database
+            // First check the User table for HasCompletedOnboarding flag
+            bool hasCompletedOnboarding = false;
+            try {
+              final userRecord = await _client
+                  .from('User')
+                  .select('HasCompletedOnboarding')
+                  .eq('Id', authUser.id)
+                  .single();
+
+              hasCompletedOnboarding =
+                  userRecord['HasCompletedOnboarding'] as bool? ?? false;
+              _logger.d(
+                  'Google sign-in: HasCompletedOnboarding = $hasCompletedOnboarding',
+                  tag: 'AuthDataSource');
+            } catch (e) {
+              _logger.e('Error fetching User record: $e',
+                  tag: 'AuthDataSource');
+              // Default to false if we can't fetch the User record
+              hasCompletedOnboarding = false;
+            }
+
+            // Fetch profile data
             final profileResponse = await _client
-                .from('Profile')
+                .from('UserProfile')
                 .select()
-                .eq('Id', authUser.id)
+                .eq('UserId', authUser.id)
                 .single();
 
             final user = UserModel(
@@ -419,14 +425,11 @@ class AuthDataSource {
               photoUrl: profileResponse['AvatarUrl'] as String? ??
                   authUser.userMetadata?['avatar_url'] as String?,
               emailVerified: authUser.emailConfirmedAt != null,
-              hasCompletedOnboarding:
-                  profileResponse['HasCompletedOnboarding'] as bool? ?? false,
+              hasCompletedOnboarding: hasCompletedOnboarding,
             );
 
             return user;
           } catch (e) {
-            if (kDebugMode) {}
-
             // If we can't fetch the profile, still return a basic user model
             final user = UserModel(
               id: authUser.id,
@@ -441,7 +444,6 @@ class AuthDataSource {
             return user;
           }
         } catch (e) {
-          if (kDebugMode) {}
           throw Exception('Failed to sign in with Google. Please try again.');
         }
       } else {
@@ -451,8 +453,6 @@ class AuthDataSource {
         subscription = _client.auth.onAuthStateChange.listen((data) async {
           final authUser = data.session?.user;
           if (authUser != null && !completer.isCompleted) {
-            if (kDebugMode) {}
-
             // Check if profile exists, create if it doesn't
             final profileExists = await _checkProfileExists(authUser.id);
             if (!profileExists) {
@@ -461,10 +461,32 @@ class AuthDataSource {
 
             try {
               // Fetch additional user data from the database
+              // First check the User table for HasCompletedOnboarding flag
+              bool hasCompletedOnboarding = false;
+              try {
+                final userRecord = await _client
+                    .from('User')
+                    .select('HasCompletedOnboarding')
+                    .eq('Id', authUser.id)
+                    .single();
+
+                hasCompletedOnboarding =
+                    userRecord['HasCompletedOnboarding'] as bool? ?? false;
+                _logger.d(
+                    'Google sign-in web: HasCompletedOnboarding = $hasCompletedOnboarding',
+                    tag: 'AuthDataSource');
+              } catch (e) {
+                _logger.e('Error fetching User record: $e',
+                    tag: 'AuthDataSource');
+                // Default to false if we can't fetch the User record
+                hasCompletedOnboarding = false;
+              }
+
+              // Then fetch profile data
               final profileResponse = await _client
-                  .from('Profile')
+                  .from('UserProfile')
                   .select()
-                  .eq('Id', authUser.id)
+                  .eq('UserId', authUser.id)
                   .single();
 
               final user = UserModel(
@@ -476,15 +498,33 @@ class AuthDataSource {
                 photoUrl: profileResponse['AvatarUrl'] as String? ??
                     authUser.userMetadata?['avatar_url'] as String?,
                 emailVerified: authUser.emailConfirmedAt != null,
-                hasCompletedOnboarding:
-                    profileResponse['HasCompletedOnboarding'] as bool? ?? false,
+                hasCompletedOnboarding: hasCompletedOnboarding,
               );
 
               completer.complete(user);
             } catch (e) {
-              if (kDebugMode) {}
+              // Try to at least check the User table for HasCompletedOnboarding flag
+              bool hasCompletedOnboarding = false;
+              try {
+                final userRecord = await _client
+                    .from('User')
+                    .select('HasCompletedOnboarding')
+                    .eq('Id', authUser.id)
+                    .single();
 
-              // If we can't fetch the profile, still return a basic user model
+                hasCompletedOnboarding =
+                    userRecord['HasCompletedOnboarding'] as bool? ?? false;
+                _logger.d(
+                    'Google sign-in web: HasCompletedOnboarding = $hasCompletedOnboarding',
+                    tag: 'AuthDataSource');
+              } catch (e) {
+                _logger.e('Error fetching User record: $e',
+                    tag: 'AuthDataSource');
+                // Default to false if we can't fetch the User record
+                hasCompletedOnboarding = false;
+              }
+
+              // Return a user model with the onboarding status from User table
               final user = UserModel(
                 id: authUser.id,
                 email: authUser.email,
@@ -492,7 +532,7 @@ class AuthDataSource {
                 displayName: authUser.userMetadata?['full_name'] as String?,
                 photoUrl: authUser.userMetadata?['avatar_url'] as String?,
                 emailVerified: authUser.emailConfirmedAt != null,
-                hasCompletedOnboarding: false,
+                hasCompletedOnboarding: hasCompletedOnboarding,
               );
 
               completer.complete(user);
@@ -521,8 +561,6 @@ class AuthDataSource {
           },
         );
 
-        if (kDebugMode) {}
-
         if (!response) {
           throw Exception('Failed to sign in with Google: OAuth flow canceled');
         }
@@ -531,7 +569,6 @@ class AuthDataSource {
       // Return the future from the completer
       return completer.future;
     } catch (e) {
-      if (kDebugMode) {}
       throw Exception('Failed to sign in with Google: ${e.toString()}');
     }
   }
@@ -566,10 +603,7 @@ class AuthDataSource {
           'CreatedAt': DateTime.now().toIso8601String(),
           'UpdatedAt': DateTime.now().toIso8601String(),
         });
-
-        if (kDebugMode) {}
       } catch (e) {
-        if (kDebugMode) {}
         // Continue even if this fails, as the auth part worked
       }
 
@@ -602,7 +636,6 @@ class AuthDataSource {
         );
       } catch (profileError) {
         // If we can't fetch the profile, return a basic user model
-        if (kDebugMode) {}
 
         return UserModel(
           id: user.id,
@@ -689,7 +722,6 @@ class AuthDataSource {
         'IsMentor': false,
       });
     } catch (e) {
-      if (kDebugMode) {}
       // Try a simpler profile creation as fallback
       await _createUserProfile(userId);
     }
@@ -814,13 +846,8 @@ class AuthDataSource {
 
         // Use insert instead of upsert since there's no unique constraint
         await _client.from('UserProfile').insert(profileData);
-
-        if (kDebugMode) {}
-      } else {
-        if (kDebugMode) {}
-      }
+      } else {}
     } catch (e) {
-      if (kDebugMode) {}
       // Don't throw here, as this is a background operation
     }
   }

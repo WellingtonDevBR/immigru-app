@@ -25,12 +25,12 @@ class PostCreationScreen extends StatefulWidget {
 class _PostCreationScreenState extends State<PostCreationScreen> {
   final TextEditingController _contentController = TextEditingController();
   final _logger = UnifiedLogger();
-  String _selectedCategory = 'General';
+  final String _selectedCategory = 'General';
   String? _imageUrl;
   bool _isSubmitting = false;
 
-  // Available post categories
-  final List<String> _categories = [
+  // Available post categories - used in UI dropdown
+  static const List<String> _availableCategories = [
     'General',
     'Immigration News',
     'Legal Advice',
@@ -157,13 +157,13 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                       backgroundImage: widget.user.photoUrl != null
                           ? NetworkImage(widget.user.photoUrl!)
                           : null,
+                      radius: 22,
                       child: widget.user.photoUrl == null
                           ? Text(
                               widget.user.displayName?[0] ?? 'U',
                               style: const TextStyle(fontSize: 18),
                             )
                           : null,
-                      radius: 22,
                     ),
                     const SizedBox(width: 12),
                     Column(
@@ -453,35 +453,30 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
     );
   }
 
-  Widget _buildMediaButton({
+  // Helper method to build media attachment buttons in the UI
+  Widget _buildAttachmentButton({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white70
-                      : Colors.black54,
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color),
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
       ),
     );
   }

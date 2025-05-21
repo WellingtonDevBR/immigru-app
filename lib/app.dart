@@ -5,7 +5,6 @@ import 'package:immigru/features/auth/auth_feature.dart';
 import 'package:immigru/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:immigru/features/home/home_feature.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
-import 'package:immigru/features/home/presentation/screens/home_screen.dart';
 import 'package:immigru/features/onboarding/onboarding_feature.dart';
 import 'package:immigru/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:immigru/features/welcome/welcome_feature.dart';
@@ -59,21 +58,32 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
     _homeFeature = HomeFeature(sl);
     _welcomeFeature = WelcomeFeature(sl);
 
-    // Initialize features - wrap in try/catch to handle already registered dependencies
-    try {
-      _homeFeature.initialize();
-    } catch (e) {
-      print('Home feature already initialized: $e');
-    }
-
-    try {
-      _welcomeFeature.initialize();
-    } catch (e) {
-      print('Welcome feature already initialized: $e');
-    }
+    // Initialize features in a safer way to prevent multiple registrations
+    _initializeFeatures();
 
     // Check authentication status on app start
     _authFeature.checkAuthStatus();
+  }
+  
+  // Safe initialization of features with proper error handling
+  Future<void> _initializeFeatures() async {
+    try {
+      // Initialize home feature first to ensure HomeBloc is registered
+      await _homeFeature.initialize();
+      print('Home feature initialized successfully');
+    } catch (e) {
+      print('Home feature initialization error: $e');
+      // Continue execution even if there's an error
+    }
+
+    try {
+      // Then initialize welcome feature
+      await _welcomeFeature.initialize();
+      print('Welcome feature initialized successfully');
+    } catch (e) {
+      print('Welcome feature initialization error: $e');
+      // Continue execution even if there's an error
+    }
   }
 
   @override
@@ -90,10 +100,6 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
       routes: {
         ..._authFeature.getRoutes(),
         '/onboarding': (context) => const OnboardingScreen(),
-        '/home': (context) => BlocProvider<HomeBloc>(
-              create: (context) => sl<HomeBloc>(),
-              child: AuthWrapper(child: HomeScreen()),
-            ),
         '/features/welcome': (context) => BlocProvider<WelcomeBloc>(
               create: (context) => sl<WelcomeBloc>(),
               child: const WelcomeScreen(),
@@ -132,11 +138,10 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   }
 
   Widget _buildHomeScreen() {
+    // Use a single instance of HomeBloc for the entire app
     return BlocProvider<HomeBloc>(
       create: (context) => sl<HomeBloc>(),
-      child: AuthWrapper(
-        child: HomeScreen(),
-      ),
+      child: const AuthWrapper(), // Let AuthWrapper handle HomeScreen creation
     );
   }
 }

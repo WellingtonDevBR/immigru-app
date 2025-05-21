@@ -178,8 +178,7 @@ class HomeDataSourceImpl implements HomeDataSource {
         userId: 'mock-user-${i % 3 + 1}',
         userName: 'Mock User ${i % 3 + 1}',
         userAvatar: null,
-        content: 'This is a mock post #${i + 1} in the $postCategory category. ' +
-                'The app is currently in demo mode or experiencing connectivity issues.',
+        content: 'This is a mock post #${i + 1} in the $postCategory category. ' 'The app is currently in demo mode or experiencing connectivity issues.',
         category: postCategory,
         imageUrl: i % 3 == 0 ? 'https://picsum.photos/seed/${i + 1}/800/600' : null,
         likeCount: i * 5,

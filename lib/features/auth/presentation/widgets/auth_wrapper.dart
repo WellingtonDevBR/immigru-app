@@ -6,110 +6,143 @@ import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
 import 'package:immigru/features/auth/presentation/screens/login_screen.dart';
 import 'package:immigru/features/home/presentation/screens/home_screen.dart';
 import 'package:immigru/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:immigru/features/welcome/presentation/screens/welcome_screen.dart';
+import 'package:immigru/features/welcome/presentation/bloc/welcome_bloc.dart';
+import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// A widget that handles authentication state and redirects to the appropriate screen
-///
-/// This wrapper listens to authentication state changes and ensures users are
-/// directed to the correct screen based on their authentication status.
 class AuthWrapper extends StatefulWidget {
-  /// Child widget to display when user is authenticated
   final Widget? child;
 
-  /// Constructor
-  const AuthWrapper({
-    super.key,
-    this.child,
-  });
+  const AuthWrapper({super.key, this.child});
+  
+  /// Helper method to safely navigate to the root of the app
+  /// This ensures we're using a single instance of AuthWrapper
+  /// and letting it handle the routing logic
+  static void navigateToRoot(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => BlocProvider<HomeBloc>(
+        create: (context) => ServiceLocator.instance<HomeBloc>(),
+        child: const AuthWrapper(),
+      )),
+      (route) => false,
+    );
+  }
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  bool _isInitialized = false;
+  final UnifiedLogger _logger = UnifiedLogger();
+  
+  // Cooldown mechanism to prevent excessive refreshes
+  DateTime? _lastRefreshTime;
+  final Duration _refreshCooldown = const Duration(seconds: 30);
+  
+  // Use a constant key for HomeScreen to preserve state
+  final Widget _homeScreenInstance = HomeScreen(key: const Key('home_screen_singleton'));
 
   @override
   void initState() {
     super.initState();
-    // Check authentication status on initialization
-    _checkAuthStatus();
+    // No side effects in initState - will be handled by BlocListener
   }
-
-  Future<void> _checkAuthStatus() async {
-    if (!_isInitialized) {
-      // Trigger auth check in the AuthBloc
-      BlocProvider.of<AuthBloc>(context).add(AuthCheckStatusEvent());
-      setState(() {
-        _isInitialized = true;
-      });
+  
+  // Check if we're within the cooldown period
+  bool _canRefresh() {
+    final now = DateTime.now();
+    if (_lastRefreshTime != null && 
+        now.difference(_lastRefreshTime!) < _refreshCooldown) {
+      return false;
     }
+    return true;
+  }
+  
+  // Update the refresh timestamp
+  void _updateRefreshTimestamp() {
+    _lastRefreshTime = DateTime.now();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        // Handle authentication state changes
-        if (!state.isAuthenticated && !state.isLoading) {
-          // User is not authenticated, navigate to login screen
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        // Listener for authentication changes
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) => 
+              previous.isAuthenticated != current.isAuthenticated,
+          listener: (context, state) {
+            if (state.isAuthenticated) {
+              // User just authenticated, refresh data if needed
+              if (_canRefresh()) {
+                _logger.d('User authenticated, refreshing user data', tag: 'AuthWrapper');
+                _updateRefreshTimestamp();
+                context.read<AuthBloc>().add(AuthRefreshUserEvent());
+              } else {
+                _logger.d('Skipping refresh - within cooldown period', tag: 'AuthWrapper');
+              }
+            } else if (!state.isLoading) {
+              // User is not authenticated, navigate to login
+              _logger.d('User not authenticated, navigating to login', tag: 'AuthWrapper');
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+              }
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<AuthBloc, AuthState>(
+        buildWhen: (previous, current) => 
+            previous.isAuthenticated != current.isAuthenticated ||
+            previous.isLoading != current.isLoading ||
+            (previous.user?.hasCompletedOnboarding != current.user?.hasCompletedOnboarding),
         builder: (context, state) {
+          // Loading state
           if (state.isLoading) {
-            // Show loading indicator while checking auth status
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          } else if (state.isAuthenticated && state.user != null) {
-            // User is authenticated
-            if (state.user!.hasCompletedOnboarding) {
-              // User has completed onboarding, show home screen or child widget
-              return widget.child ?? const HomeScreen();
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+          
+          // Authenticated state
+          if (state.isAuthenticated && state.user != null) {
+            final hasCompletedOnboarding = state.user!.hasCompletedOnboarding;
+            _logger.d('User onboarding status: $hasCompletedOnboarding', tag: 'AuthWrapper');
+            
+            if (hasCompletedOnboarding) {
+              // User has completed onboarding, show home screen
+              return widget.child ?? _homeScreenInstance;
             } else {
               // User has not completed onboarding, show onboarding screen
-              // Trigger a refresh of the user data to ensure we have the latest onboarding status
-              if (!_isInitialized) {
-                Future.microtask(() {
-                  BlocProvider.of<AuthBloc>(context).add(const AuthRefreshUserEvent());
-                });
-              }
+              _logger.d('User has not completed onboarding, showing onboarding screen', tag: 'AuthWrapper');
               return const OnboardingScreen();
             }
-          } else {
-            // User is not authenticated, check if they've seen the welcome screen
-            return FutureBuilder<bool>(
-              future: _getHasSeenWelcomeScreen(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Scaffold(
-                    body: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final hasSeenWelcomeScreen = snapshot.data ?? false;
-                if (hasSeenWelcomeScreen) {
-                  // User has seen welcome screen, show login screen
-                  return const LoginScreen();
-                } else {
-                  // User hasn't seen welcome screen, navigate to welcome screen
-                  Navigator.of(context)
-                      .pushReplacementNamed('/features/welcome');
-                  return const Scaffold(
-                    body: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-              },
-            );
           }
+          
+          // Not authenticated: check if user has seen welcome screen
+          return FutureBuilder<bool>(
+            future: _getHasSeenWelcomeScreen(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              
+              final hasSeenWelcomeScreen = snapshot.data ?? false;
+              
+              if (hasSeenWelcomeScreen) {
+                return const LoginScreen();
+              } else {
+                // Show welcome screen
+                return BlocProvider<WelcomeBloc>(
+                  create: (context) => ServiceLocator.instance<WelcomeBloc>(),
+                  child: const WelcomeScreen(),
+                );
+              }
+            },
+          );
         },
       ),
     );
@@ -120,7 +153,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final preferences = await SharedPreferences.getInstance();
       return preferences.getBool('has_seen_welcome_screen') ?? false;
     } catch (e) {
-      // If there's an error, assume user hasn't seen welcome screen
       return false;
     }
   }

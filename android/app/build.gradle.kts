@@ -37,10 +37,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("release.keystore")
-            storePassword = "your-release-store-password"
-            keyAlias = "your-release-key-alias"
-            keyPassword = "your-release-key-password"
+            storeFile = file("immigru.keystore")
+            storePassword = "31051986"
+            keyAlias = "immigru"
+            keyPassword = "31051986"
         }
     }
 
@@ -50,8 +50,8 @@ android {
         }
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

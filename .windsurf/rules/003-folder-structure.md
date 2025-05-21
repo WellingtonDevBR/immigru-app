@@ -1,8 +1,3 @@
----
-trigger: model_decision
-description: When creating new file or folder, check if doesnt already exist.
----
-
 lib/
 ├── app.dart
 ├── core
@@ -33,9 +28,7 @@ lib/
 │   │   │   └── theme_module.dart
 │   │   └── service_locator.dart
 │   ├── logging
-│   │   ├── log_util.dart
 │   │   ├── logger_interface.dart
-│   │   ├── logger_provider.dart
 │   │   └── unified_logger.dart
 │   ├── network
 │   │   ├── api_client.dart
@@ -95,6 +88,7 @@ lib/
 │   │           ├── auth_footer.dart
 │   │           ├── auth_header.dart
 │   │           ├── auth_text_field.dart
+│   │           ├── auth_wrapper.dart
 │   │           ├── email_login_widget.dart
 │   │           ├── error_message_widget.dart
 │   │           ├── login_tab_bar.dart
@@ -132,19 +126,22 @@ lib/
 │   │       │   ├── home_event.dart
 │   │       │   └── home_state.dart
 │   │       ├── screens
-│   │       │   └── home_screen.dart
+│   │       │   ├── home_screen.dart
+│   │       │   └── post_creation_screen.dart
 │   │       └── widgets
 │   │           ├── app_bar_widget.dart
 │   │           ├── bottom_navigation.dart
 │   │           ├── create_post_dialog.dart
 │   │           ├── floating_action_button.dart
 │   │           ├── post_card.dart
+│   │           ├── post_creation_widget.dart
 │   │           ├── tab_navigation.dart
 │   │           └── tabs
 │   │               ├── all_posts_tab.dart
 │   │               ├── events_tab.dart
 │   │               ├── for_you_tab.dart
-│   │               └── immi_groves_tab.dart
+│   │               ├── immi_groves_tab.dart
+│   │               └── notifications_tab.dart
 │   ├── onboarding
 │   │   ├── data
 │   │   │   ├── datasources
@@ -179,7 +176,3 @@ lib/
 │   │   │   │   ├── migration_status.dart
 │   │   │   │   ├── migration_step.dart
 │   │   │   │   ├── onboarding_data.dart
-│   │   │   │   ├── onboarding_step.dart
-│   │   │   │   ├── profession.dart
-│   │   │   │   └── visa.dart
-│   │   │   ├── repositories

@@ -1,11 +1,18 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show KeyEvent, KeyDownEvent, LogicalKeyboardKey, FilteringTextInputFormatter;
+import 'package:flutter/services.dart'
+    show
+        KeyEvent,
+        KeyDownEvent,
+        LogicalKeyboardKey,
+        FilteringTextInputFormatter;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
+import 'package:immigru/features/auth/presentation/widgets/auth_wrapper.dart';
+import 'package:immigru/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:immigru/features/auth/presentation/widgets/auth_button.dart';
 import 'package:immigru/features/auth/presentation/widgets/auth_header.dart';
 import 'package:immigru/features/auth/presentation/widgets/error_message_widget.dart';
@@ -27,7 +34,8 @@ class PhoneVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
+  State<PhoneVerificationScreen> createState() =>
+      _PhoneVerificationScreenState();
 }
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
@@ -40,7 +48,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     (_) => FocusNode(),
   );
   final List<String> _otpValues = List.filled(6, '');
-  
+
   Timer? _resendTimer;
   int _remainingTime = 60;
   bool _canResend = false;
@@ -64,7 +72,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     _resendTimer?.cancel();
     super.dispose();
   }
-  
+
   void _dismissError() {
     setState(() {
       _errorMessage = null;
@@ -79,7 +87,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       _errorMessage = null;
       _errorCode = null;
     });
-    
+
     _resendTimer?.cancel();
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -99,7 +107,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       _errorMessage = null;
       _errorCode = null;
     });
-    
+
     if (_canResend) {
       context.read<AuthBloc>().add(
             AuthStartPhoneAuthEvent(
@@ -116,15 +124,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       _errorMessage = null;
       _errorCode = null;
     });
-    
+
     final code = _otpValues.join();
     if (code.length == 6) {
-      if (kDebugMode) {
-
-      }
       context.read<AuthBloc>().add(
             AuthVerifyPhoneCodeEvent(
-              verificationId: widget.phoneNumber, // Using phone number as verification ID
+              verificationId:
+                  widget.phoneNumber, // Using phone number as verification ID
               code: code,
             ),
           );
@@ -139,14 +145,14 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   void _onOtpDigitChanged(int index, String value) {
     if (value.isNotEmpty) {
       _otpValues[index] = value;
-      
+
       // Move to next field if not the last one
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
       } else {
         // Last field filled, remove focus
         FocusScope.of(context).unfocus();
-        
+
         // Auto-verify when all digits are filled
         _handleVerifyCode();
       }
@@ -157,8 +163,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
   void _onKeyEvent(int index, KeyEvent event) {
     if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.backspace && 
-          _controllers[index].text.isEmpty && 
+      if (event.logicalKey == LogicalKeyboardKey.backspace &&
+          _controllers[index].text.isEmpty &&
           index > 0) {
         // Move to previous field on backspace if current field is empty
         _focusNodes[index - 1].requestFocus();
@@ -187,9 +193,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         listener: (context, state) {
           if (state.isAuthenticated) {
             if (state.user?.hasCompletedOnboarding ?? false) {
-              Navigator.of(context).pushReplacementNamed('/home');
+              AuthWrapper.navigateToRoot(context);
             } else {
-              Navigator.of(context).pushReplacementNamed('/onboarding');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+              );
             }
           }
 
@@ -209,7 +217,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                 children: [
                   _buildHeader(),
                   const SizedBox(height: 24),
-                  
+
                   // Display error message if there is one
                   if (_errorMessage != null)
                     Padding(
@@ -220,7 +228,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                         onClose: _dismissError,
                       ),
                     ),
-                  
+
                   const SizedBox(height: 16),
                   _buildOtpFields(),
                   const SizedBox(height: 24),
@@ -239,7 +247,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   Widget _buildHeader() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -251,7 +259,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         const SizedBox(height: 8),
         Text(
           'We\'ve sent a verification code to ${widget.phoneNumber}',
-          style: AppTextStyles.bodyLarge(brightness: Theme.of(context).brightness).copyWith(
+          style:
+              AppTextStyles.bodyLarge(brightness: Theme.of(context).brightness)
+                  .copyWith(
             color: AppColors.textSecondary(Theme.of(context).brightness),
           ),
         ),
@@ -276,7 +286,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: 1,
-              style: AppTextStyles.heading3(brightness: Theme.of(context).brightness),
+              style: AppTextStyles.heading3(
+                  brightness: Theme.of(context).brightness),
               decoration: InputDecoration(
                 counterText: '',
                 filled: true,
@@ -319,21 +330,26 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       children: [
         Text(
           'Didn\'t receive code? ',
-          style: AppTextStyles.bodySmall(brightness: Theme.of(context).brightness),
+          style:
+              AppTextStyles.bodySmall(brightness: Theme.of(context).brightness),
         ),
         _canResend
             ? TextButton(
                 onPressed: _handleResendCode,
                 child: Text(
                   'Resend',
-                  style: AppTextStyles.buttonMedium(brightness: Theme.of(context).brightness).copyWith(
+                  style: AppTextStyles.buttonMedium(
+                          brightness: Theme.of(context).brightness)
+                      .copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               )
             : Text(
                 'Resend in $_remainingTime seconds',
-                style: AppTextStyles.bodySmall(brightness: Theme.of(context).brightness).copyWith(
+                style: AppTextStyles.bodySmall(
+                        brightness: Theme.of(context).brightness)
+                    .copyWith(
                   color: AppColors.textSecondary(Theme.of(context).brightness),
                 ),
               ),
@@ -343,7 +359,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
   Widget _buildVerifyButton(AuthState state) {
     final isComplete = !_otpValues.contains('');
-    
+
     return AuthButton(
       text: 'Verify',
       isLoading: state.isLoading,

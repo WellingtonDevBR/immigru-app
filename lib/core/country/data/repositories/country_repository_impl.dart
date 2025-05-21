@@ -7,12 +7,55 @@ import 'package:immigru/core/logging/logger_interface.dart';
 class CountryRepositoryImpl implements CountryFeatureRepository {
   final EdgeFunctionClient _edgeFunctionClient;
   final LoggerInterface _logger;
+  
+  // Cache for countries to prevent excessive API calls
+  static List<Country>? _countriesCache;
+  // Timestamp when the cache was last updated
+  static DateTime? _cacheTimestamp;
+  // Cache duration (10 minutes)
+  static const Duration _cacheDuration = Duration(minutes: 10);
+  // Flag to track if a request is in progress to prevent duplicate calls
+  static bool _isRequestInProgress = false;
 
   CountryRepositoryImpl(this._edgeFunctionClient, this._logger);
 
   @override
   Future<List<Country>> getCountries() async {
     try {
+      // Check if we have a valid cache
+      if (_countriesCache != null && _cacheTimestamp != null) {
+        final now = DateTime.now();
+        final cacheAge = now.difference(_cacheTimestamp!);
+        
+        // Return cached data if it's still valid and not empty
+        if (cacheAge < _cacheDuration && _countriesCache!.isNotEmpty) {
+          _logger.i('Using cached countries data (${_countriesCache!.length} countries, cache age: ${cacheAge.inSeconds}s)', 
+              tag: 'CountryRepository');
+          return _countriesCache!;
+        }
+      }
+      
+      // Check if a request is already in progress to prevent duplicate calls
+      if (_isRequestInProgress) {
+        _logger.i('Countries request already in progress, waiting...', tag: 'CountryRepository');
+        // Wait for a short time and check if cache was populated by another request
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (_countriesCache != null && _countriesCache!.isNotEmpty) {
+          _logger.i('Cache was populated by another request, using cached data', tag: 'CountryRepository');
+          return _countriesCache!;
+        }
+        
+        // If still no cache, use fallback countries
+        if (_isRequestInProgress) {
+          _logger.w('Request still in progress, using fallback countries', tag: 'CountryRepository');
+          return _getFallbackCountries();
+        }
+      }
+      
+      // Mark that a request is in progress
+      _isRequestInProgress = true;
+      
       _logger.i('Fetching countries from get-countries edge function', tag: 'CountryRepository');
       
       // Direct invocation of the edge function without body parameters
@@ -22,6 +65,9 @@ class CountryRepositoryImpl implements CountryFeatureRepository {
       );
 
       _logger.i('Received response from get-countries edge function', tag: 'CountryRepository');
+      
+      // Reset the in-progress flag
+      _isRequestInProgress = false;
       
       // Log the raw response for debugging
       _logger.i('Response type: ${response.data.runtimeType}', tag: 'CountryRepository');
@@ -177,15 +223,29 @@ class CountryRepositoryImpl implements CountryFeatureRepository {
         );
       }).whereType<Country>().toList();
       
-      _logger.i('Fetched ${countries.length} countries', tag: 'CountryRepository');
+      // Store the countries in the cache
+      _countriesCache = countries;
+      _cacheTimestamp = DateTime.now();
+      
+      _logger.i('Fetched ${countries.length} countries and updated cache', tag: 'CountryRepository');
       return countries;
     } catch (e, stackTrace) {
+      // Reset the in-progress flag when an error occurs
+      _isRequestInProgress = false;
+      
       _logger.e(
         'Error fetching countries',
         tag: 'CountryRepository',
         error: e,
         stackTrace: stackTrace,
       );
+      
+      // If we have a valid cache, use it even if it's expired rather than fallback data
+      if (_countriesCache != null && _countriesCache!.isNotEmpty) {
+        _logger.i('Using expired cache after error (${_countriesCache!.length} countries)', 
+            tag: 'CountryRepository');
+        return _countriesCache!;
+      }
       
       // Provide fallback countries in case of error
       return _getFallbackCountries();

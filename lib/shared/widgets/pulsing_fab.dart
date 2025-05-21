@@ -9,13 +9,13 @@ class PulsingFAB extends StatefulWidget {
   final IconData icon;
   
   const PulsingFAB({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.backgroundColor,
     required this.foregroundColor,
     required this.tooltip,
     required this.icon,
-  }) : super(key: key);
+  });
   
   @override
   _PulsingFABState createState() => _PulsingFABState();

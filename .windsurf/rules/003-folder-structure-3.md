@@ -1,8 +1,3 @@
----
-trigger: model_decision
-description: When creating new file or folder, check if doesnt already exist.
----
-
 lib/
 ├── core
 │   ├── config
@@ -68,6 +63,9 @@ lib/
 └── shared
     ├── theme
     └── widgets
+│   │           │   └── birth_country_step_widget.dart
+│   │           ├── country_selector.dart
+│   │           ├── current_status
 │   │           │   └── current_status_step_widget.dart
 │   │           ├── interest
 │   │           │   └── interest_step_widget.dart
@@ -107,4 +105,5 @@ lib/
         ├── error_display.dart
         ├── error_message_widget.dart
         ├── loading_indicator.dart
+        ├── pulsing_fab.dart
         └── secure_input_field.dart
