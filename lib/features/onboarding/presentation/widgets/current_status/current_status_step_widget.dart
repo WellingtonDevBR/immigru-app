@@ -6,7 +6,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/current_status/cur
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_state.dart';
 import 'package:immigru/core/di/service_locator.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'dart:math' as math;
 
@@ -137,7 +137,8 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent>
             setState(() {
               _statusSelected = true;
             });
-            LogUtil.d(
+            final logger = UnifiedLogger();
+            logger.d(
                 'Returning to current status screen with existing selection - not auto-navigating',
                 tag: 'CurrentStatusStep');
           }
@@ -420,7 +421,8 @@ class _CurrentStatusStepContentState extends State<_CurrentStatusStepContent>
                   _statusSelected = false; // Reset to allow navigation
                 });
 
-                LogUtil.d('Manual selection detected - enabling navigation',
+                final logger = UnifiedLogger();
+                logger.d('Manual selection detected - enabling navigation',
                     tag: 'CurrentStatusStep');
               }
 

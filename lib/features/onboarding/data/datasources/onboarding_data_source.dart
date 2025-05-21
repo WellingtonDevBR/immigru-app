@@ -133,6 +133,11 @@ class OnboardingSupabaseDataSource implements OnboardingDataSource {
       // First try the 'save' action with step 'completed' to mark onboarding as complete
       // This will update the User table with HasCompletedOnboarding = true
       try {
+        _logger.i(
+            'OnboardingDataSource: Attempting to mark onboarding as complete with primary method');
+        _logger.i(
+            'OnboardingDataSource: Calling user-profile edge function with action=save, step=completed');
+
         final response = await _client.invoke<dynamic>(
           'user-profile',
           body: {
@@ -140,13 +145,20 @@ class OnboardingSupabaseDataSource implements OnboardingDataSource {
             'step': 'completed',
             'data': {
               'immiGroveIds': selectedImmiGroveIds,
+              'hasCompletedOnboarding': true, // Explicitly set this flag
             }
           },
         );
 
+        _logger.i(
+            'OnboardingDataSource: Primary method response received: ${response.isSuccess}');
+        if (response.data != null) {
+          _logger.i('OnboardingDataSource: Response data: ${response.data}');
+        }
+
         if (response.isSuccess) {
           _logger.i(
-              'OnboardingDataSource: Successfully marked onboarding as complete');
+              'OnboardingDataSource: Successfully marked onboarding as complete with primary method');
           return;
         } else {
           _logger.w(
@@ -159,20 +171,73 @@ class OnboardingSupabaseDataSource implements OnboardingDataSource {
             error: primaryError);
       }
 
-      // Fallback method: Use update_profile action to directly set HasCompletedOnboarding
+      // Fallback method 1: Use update_profile action to directly set HasCompletedOnboarding
+      try {
+        _logger.i(
+            'OnboardingDataSource: Attempting fallback method 1 to mark onboarding as complete');
+        _logger.i(
+            'OnboardingDataSource: Calling user-profile edge function with action=update');
+
+        final fallbackResponse = await _client.invoke<dynamic>(
+          'user-profile',
+          body: {
+            'action': 'update',
+            'data': {'HasCompletedOnboarding': true}
+          },
+        );
+
+        _logger.i(
+            'OnboardingDataSource: Fallback method 1 response received: ${fallbackResponse.isSuccess}');
+        if (fallbackResponse.data != null) {
+          _logger.i(
+              'OnboardingDataSource: Fallback method 1 response data: ${fallbackResponse.data}');
+        }
+
+        if (fallbackResponse.isSuccess) {
+          _logger.i(
+              'OnboardingDataSource: Successfully marked onboarding as complete using fallback method 1');
+          return;
+        } else {
+          _logger.w(
+              'OnboardingDataSource: Fallback method 1 failed, trying fallback method 2',
+              error: fallbackResponse.message);
+        }
+      } catch (fallbackError) {
+        _logger.w(
+            'OnboardingDataSource: Fallback method 1 failed with exception, trying fallback method 2',
+            error: fallbackError);
+      }
+
+      // Fallback method 2: Use direct database update as a last resort
+      _logger.i(
+          'OnboardingDataSource: Attempting fallback method 2 to mark onboarding as complete');
+      _logger.i(
+          'OnboardingDataSource: Calling user-profile edge function with action=direct_update');
+
       final fallbackResponse = await _client.invoke<dynamic>(
         'user-profile',
         body: {
-          'action': 'update',
+          'action': 'direct_update',
+          'table': 'UserProfile',
           'data': {'HasCompletedOnboarding': true}
         },
       );
 
+      _logger.i(
+          'OnboardingDataSource: Fallback method 2 response received: ${fallbackResponse.isSuccess}');
+      if (fallbackResponse.data != null) {
+        _logger.i(
+            'OnboardingDataSource: Fallback method 2 response data: ${fallbackResponse.data}');
+      }
+
       if (!fallbackResponse.isSuccess) {
         _logger.e(
-            'OnboardingDataSource: Failed to mark onboarding as complete with fallback method',
+            'OnboardingDataSource: Failed to mark onboarding as complete with all methods',
             error: fallbackResponse.message);
-        throw Exception(fallbackResponse.message);
+        throw Exception('Failed to mark onboarding as complete');
+      } else {
+        _logger.i(
+            'OnboardingDataSource: Successfully marked onboarding as complete using fallback method 2');
       }
 
       _logger.i(

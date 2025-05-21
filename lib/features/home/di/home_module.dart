@@ -62,15 +62,17 @@ class HomeModule {
       }
 
       // BLoCs
-      sl.registerFactory(
-        () => HomeBloc(
-          getPostsUseCase: sl<GetPostsUseCase>(),
-          getPersonalizedPostsUseCase: sl<GetPersonalizedPostsUseCase>(),
-          getEventsUseCase: sl<GetEventsUseCase>(),
-          createPostUseCase: sl<CreatePostUseCase>(),
-          logger: sl<LoggerInterface>(),
-        ),
-      );
+      if (!sl.isRegistered<HomeBloc>()) {
+        sl.registerFactory<HomeBloc>(
+          () => HomeBloc(
+            getPostsUseCase: sl<GetPostsUseCase>(),
+            getPersonalizedPostsUseCase: sl<GetPersonalizedPostsUseCase>(),
+            getEventsUseCase: sl<GetEventsUseCase>(),
+            createPostUseCase: sl<CreatePostUseCase>(),
+            logger: sl<LoggerInterface>(),
+          ),
+        );
+      }
     } catch (e, stackTrace) {
       print('Error while registering home dependencies: $e');
       print('Stack trace: $stackTrace');

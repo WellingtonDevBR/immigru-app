@@ -81,11 +81,13 @@ class _ImmiGrovesTabState extends State<ImmiGrovesTab> {
         ),
       ];
 
-      setState(() {
-        _allImmiGroves = sampleImmiGroves;
-        _filteredImmiGroves = sampleImmiGroves;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _allImmiGroves = sampleImmiGroves;
+          _filteredImmiGroves = sampleImmiGroves;
+          _isLoading = false;
+        });
+      }
     });
   }
 

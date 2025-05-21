@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
 
-/// A minimal unified logger implementation for the Immigru app
+/// A unified logger implementation for the Immigru app
+/// This is the single logging solution for the entire application
 class UnifiedLogger implements LoggerInterface {
   /// Singleton instance
   static final UnifiedLogger _instance = UnifiedLogger._internal();
@@ -38,8 +39,7 @@ class UnifiedLogger implements LoggerInterface {
 
   @override
   void i(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.info, message,
-        tag: tag, error: error, stackTrace: stackTrace);
+    _log(LogLevel.info, message, tag: tag, error: error, stackTrace: stackTrace);
   }
 
   @override
@@ -50,13 +50,11 @@ class UnifiedLogger implements LoggerInterface {
 
   @override
   void e(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message,
-        tag: tag, error: error, stackTrace: stackTrace);
+    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
   }
 
   @override
-  void wtf(String message,
-      {String? tag, Object? error, StackTrace? stackTrace}) {
+  void wtf(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
     _log(LogLevel.wtf, message, tag: tag, error: error, stackTrace: stackTrace);
   }
 
@@ -66,16 +64,15 @@ class UnifiedLogger implements LoggerInterface {
       String? tag,
       Object? error,
       StackTrace? stackTrace}) {
-    _log(level, message,
-        tag: tag ?? 'Network', error: error, stackTrace: stackTrace);
+    _log(level, message, tag: tag ?? 'NETWORK', error: error, stackTrace: stackTrace);
   }
 
   @override
   void logEvent(String eventName,
       {Map<String, dynamic>? parameters, LogLevel level = LogLevel.info}) {
     final message =
-        'Event: $eventName${parameters != null ? ' - Parameters: $parameters' : ''}';
-    _log(level, message, tag: 'Analytics');
+        'EVENT: $eventName ${parameters != null ? parameters.toString() : ''}';
+    _log(level, message, tag: 'EVENT');
   }
 
   @override
@@ -90,9 +87,10 @@ class UnifiedLogger implements LoggerInterface {
 
   @override
   void configureRemoteLogging({required bool enabled, String? endpoint}) {
-    // Simple implementation - just print configuration
+    // This method is a placeholder for future remote logging configuration
+    // When you're ready to implement remote logging, you can add the implementation here
     if (kDebugMode) {
-      print('Remote logging configured: enabled=$enabled, endpoint=$endpoint');
+      print('Remote logging configuration: enabled=$enabled, endpoint=$endpoint');
     }
   }
 
@@ -113,40 +111,27 @@ class UnifiedLogger implements LoggerInterface {
       return;
     }
 
+    final timestamp = DateTime.now().toIso8601String();
     final logTag = tag != null ? '[$tag]' : '';
-    final userContext = _userId != null ? '[User:$_userId]' : '';
-    final timestamp = DateTime.now().toString();
-    final levelStr = _getLevelString(level);
+    final userId = _userId != null ? '[User:$_userId]' : '';
 
-    final logMessage = '[$timestamp]$levelStr$logTag$userContext $message';
+    // Format the log message
+    final formattedMessage =
+        '$timestamp[${level.toString().split('.').last.toUpperCase()}]$userId$logTag $message';
 
+    // Print to console
     if (error != null) {
-      if (kDebugMode) {
-        print(
-            '$logMessage\nError: $error${stackTrace != null ? '\n$stackTrace' : ''}');
-      }
+      debugPrint('$formattedMessage\nERROR: $error');
     } else {
-      if (kDebugMode) {
-        print(logMessage);
-      }
+      debugPrint(formattedMessage);
     }
-  }
 
-  /// Get string representation of log level
-  String _getLevelString(LogLevel level) {
-    switch (level) {
-      case LogLevel.verbose:
-        return '[V]';
-      case LogLevel.debug:
-        return '[D]';
-      case LogLevel.info:
-        return '[I]';
-      case LogLevel.warning:
-        return '[W]';
-      case LogLevel.error:
-        return '[E]';
-      case LogLevel.wtf:
-        return '[WTF]';
+    if (stackTrace != null) {
+      debugPrint('STACK TRACE:\n$stackTrace');
     }
+
+    // In the future, this is where you would send logs to a remote service
+    // Example:
+    // _sendToRemoteService(level, message, tag, error, stackTrace);
   }
 }

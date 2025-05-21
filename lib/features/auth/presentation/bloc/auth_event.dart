@@ -121,3 +121,9 @@ class AuthSetErrorEvent extends AuthEvent {
   List<Object?> get props => [message, code];
 }
 
+/// Event to refresh user data after onboarding completion
+class AuthRefreshUserEvent extends AuthEvent {
+  /// Constructor
+  const AuthRefreshUserEvent();
+}
+

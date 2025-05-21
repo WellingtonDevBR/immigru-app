@@ -4,7 +4,7 @@ import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// A dropdown widget for selecting a visa type
 class VisaSelector extends StatefulWidget {
@@ -124,8 +124,9 @@ class _VisaSelectorState extends State<VisaSelector> {
           }
         });
       } else {
-        // If we can't find the visa by ID, log the issue using LogUtil
-        LogUtil.w(
+        // If we can't find the visa by ID, log the issue
+        final logger = UnifiedLogger();
+        logger.w(
             'Could not find visa with ID $visaId in available visas. Available visa IDs: ${_visas.map((v) => v.id).join(', ')}',
             tag: 'VisaSelector');
 

@@ -6,10 +6,10 @@ import 'package:immigru/shared/theme/theme_provider.dart';
 class AuthHeader extends StatelessWidget {
   /// Whether the app is in dark mode
   final bool isDarkMode;
-  
+
   /// Primary color for active elements
   final Color primaryColor;
-  
+
   /// Title to display in the header
   final String title;
 
@@ -24,7 +24,7 @@ class AuthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -35,11 +35,11 @@ class AuthHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha:0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Image.asset(
-                  'assets/icons/immigru-logo.png',
+                  'assets/icons/logo.png',
                   width: 24,
                   height: 24,
                 ),
@@ -59,14 +59,16 @@ class AuthHeader extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Theme toggle button
         IconButton(
           onPressed: () {
             if (themeProvider.themeMode == ThemeMode.system) {
               // If system, switch to light or dark based on current system setting
-              final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-              themeProvider.setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
+              final isDark =
+                  MediaQuery.of(context).platformBrightness == Brightness.dark;
+              themeProvider
+                  .setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
             } else if (themeProvider.themeMode == ThemeMode.light) {
               themeProvider.setThemeMode(ThemeMode.dark);
             } else {

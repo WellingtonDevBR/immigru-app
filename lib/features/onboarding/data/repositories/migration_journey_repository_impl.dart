@@ -3,7 +3,7 @@ import 'package:immigru/features/onboarding/domain/entities/migration_step.dart'
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
 import 'package:immigru/core/network/edge_function_client.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// Implementation of the MigrationJourneyRepository
 class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
@@ -245,8 +245,9 @@ class MigrationJourneyRepositoryImpl implements MigrationJourneyRepository {
                 '🗑️ Explicitly marking step ${processedDeletedStep['id']} (${deletedStep.countryName}) for deletion',
                 tag: 'MigrationJourneyRepository');
 
-            // Use LogUtil for consistent logging
-            LogUtil.w(
+            // Use UnifiedLogger for consistent logging
+            final logger = UnifiedLogger();
+            logger.w(
                 '[$timestamp] 🗑️ DELETION: Step ${processedDeletedStep['id']} (${deletedStep.countryName})',
                 tag: 'MigrationJourneyRepository');
           }

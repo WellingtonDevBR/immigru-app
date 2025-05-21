@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:immigru/core/network/interceptors/network_interceptor.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// Interceptor that adds authentication headers to requests
 class AuthInterceptor implements NetworkInterceptor {
@@ -38,7 +38,8 @@ class AuthInterceptor implements NetworkInterceptor {
   @override
   Future<void> onError(Object error, StackTrace stackTrace) async {
     // Log authentication errors
-    LogUtil.e(
+    final logger = UnifiedLogger();
+    logger.e(
       'Authentication Error',
       tag: 'Auth',
       error: error,

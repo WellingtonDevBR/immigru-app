@@ -7,6 +7,10 @@ import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_gr
 import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/features/onboarding/presentation/common/onboarding_gradient_header.dart';
+import 'package:immigru/features/onboarding/presentation/common/onboarding_info_box.dart';
+import 'package:immigru/features/onboarding/presentation/common/themed_card.dart';
+import 'package:immigru/features/onboarding/presentation/common/onboarding_theme.dart';
 
 /// Widget for the ImmiGroves recommendation step in the onboarding process
 class ImmiGroveStep extends StatefulWidget {
@@ -98,9 +102,6 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
   }
 
   Widget _buildImmiGrovesList(BuildContext context, ImmiGroveState state) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
     // Combine recommended and joined ImmiGroves, removing duplicates
     final allImmiGroves =
         {...state.recommendedImmiGroves, ...state.joinedImmiGroves}.toList();
@@ -111,57 +112,22 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
         const SizedBox(height: 16),
 
         // Header with gradient background
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primaryColor,
-                AppColors.primaryColor.withOpacity(0.7),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.people_alt,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Join ImmiGroves",
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Connect with communities that match your interests",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        const OnboardingGradientHeader(
+          title: "Join ImmiGroves",
+          subtitle: "Connect with communities that match your interests",
+          icon: Icons.people_alt,
+        ),
+
+        const SizedBox(height: 16),
+
+        // Info box explaining ImmiGroves
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: OnboardingInfoBox(
+            icon: Icons.info_outline,
+            title: 'What are ImmiGroves?',
+            message:
+                'ImmiGroves are communities of people with similar immigration journeys and interests. Joining ImmiGroves helps you connect with others who share your experiences.',
           ),
         ),
 
@@ -204,24 +170,28 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.group_off,
             size: 64,
-            color: Colors.grey,
+            color: AppColors.icon(theme.brightness),
           ),
           const SizedBox(height: 16),
           Text(
             'No ImmiGroves available',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'We couldn\'t find any communities for you',
-            style: TextStyle(color: Colors.grey),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary(theme.brightness),
+            ),
           ),
         ],
       ),
@@ -244,148 +214,119 @@ class _ImmiGroveCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
 
-    return Card(
-      elevation: 1,
+    return ThemedCard(
+      isSelected: isSelected,
+      onTap: onToggle,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: isSelected
-            ? BorderSide(color: AppColors.primaryColor, width: 2)
-            : BorderSide(
-                color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
-                width: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            // ImmiGrove icon or placeholder
+            Container(
+              width: 48,
+              height: 48,
+              decoration: OnboardingTheme.iconContainerDecoration(
+                isSelected: isSelected,
+                brightness: theme.brightness,
               ),
-      ),
-      child: InkWell(
-        onTap: onToggle,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              // ImmiGrove icon or placeholder
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color:
-                      isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+              child: Center(
+                child: Icon(
+                  Icons.people,
+                  color: OnboardingTheme.iconColor(
+                    isSelected: isSelected,
+                    brightness: theme.brightness,
+                  ),
                 ),
-                child: immiGrove.iconUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          immiGrove.iconUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.people, size: 30);
-                          },
-                        ),
-                      )
-                    : const Icon(Icons.people, size: 30),
               ),
-              const SizedBox(width: 16),
+            ),
+            const SizedBox(width: 16),
 
-              // ImmiGrove details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      immiGrove.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? AppColors.primaryColor : null,
-                      ),
+            // ImmiGrove details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    immiGrove.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? AppColors.primaryColor : null,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      immiGrove.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDarkMode
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    immiGrove.description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary(theme.brightness),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.people,
+                        size: 16,
+                        color: AppColors.textSecondary(theme.brightness),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${immiGrove.memberCount} ${immiGrove.memberCount == 1 ? 'member' : 'members'}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary(theme.brightness),
+                        ),
+                      ),
+                      if (immiGrove.categories.isNotEmpty) ...[
+                        const SizedBox(width: 12),
                         Icon(
-                          Icons.people,
+                          Icons.tag,
                           size: 16,
-                          color: isDarkMode
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade700,
+                          color: AppColors.textSecondary(theme.brightness),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          '${immiGrove.memberCount} ${immiGrove.memberCount == 1 ? 'member' : 'members'}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: isDarkMode
-                                ? Colors.grey.shade400
-                                : Colors.grey.shade700,
+                        Expanded(
+                          child: Text(
+                            immiGrove.categories.join(', '),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary(theme.brightness),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (immiGrove.categories.isNotEmpty) ...[
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.tag,
-                            size: 16,
-                            color: isDarkMode
-                                ? Colors.grey.shade400
-                                : Colors.grey.shade700,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              immiGrove.categories.join(', '),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDarkMode
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Join/Leave button
-              ElevatedButton(
-                onPressed: onToggle,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSelected
-                      ? Colors.grey.shade200
-                      : AppColors.primaryColor,
-                  foregroundColor: isSelected ? Colors.black87 : Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  minimumSize: const Size(80, 36),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  isSelected ? 'Leave' : 'Join',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: isSelected ? Colors.black87 : Colors.white,
-                  ),
+            // Join/Leave button
+            ElevatedButton(
+              onPressed: onToggle,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSelected
+                    ? AppColors.surfaceLight
+                    : AppColors.primaryColor,
+                foregroundColor: isSelected ? Colors.black87 : Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: const Size(80, 36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            ],
-          ),
+              child: Text(
+                isSelected ? 'Leave' : 'Join',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

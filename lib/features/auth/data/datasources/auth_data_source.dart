@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:immigru/core/config/google_auth_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,23 +23,60 @@ class AuthDataSource {
         return null;
       }
 
-      // Fetch additional user data from the database
-      final response = await _client
+      // Fetch user profile data from the database
+      final profileResponse = await _client
           .from('UserProfile') // Use PascalCase table name
           .select()
           .eq('UserId', user.id) // Use PascalCase field name
           .single();
+      
+      if (kDebugMode) {
+        print('AUTH_DATA_SOURCE: UserProfile response: $profileResponse');
+      }
+      
+      // Check if the user has completed onboarding - this value is in the User table
+      // Get it directly from the auth.user() object
+      bool hasCompletedOnboarding = false;
+      
+      try {
+        // Get the HasCompletedOnboarding flag from the User table
+        final userResponse = await _client
+            .from('User') // Use PascalCase table name
+            .select('HasCompletedOnboarding')
+            .eq('Id', user.id) // Use PascalCase field name
+            .single();
+            
+        if (kDebugMode) {
+          print('AUTH_DATA_SOURCE: User table response: $userResponse');
+        }
+        
+        if (userResponse['HasCompletedOnboarding'] != null) {
+          hasCompletedOnboarding = userResponse['HasCompletedOnboarding'] as bool;
+          if (kDebugMode) {
+            print('AUTH_DATA_SOURCE: HasCompletedOnboarding from User table: $hasCompletedOnboarding');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('AUTH_DATA_SOURCE: Error getting HasCompletedOnboarding from User table: $e');
+        }
+        // If there's an error, assume onboarding is not complete
+        hasCompletedOnboarding = false;
+      }
+      
+      if (kDebugMode) {
+        print('AUTH_DATA_SOURCE: Final hasCompletedOnboarding value: $hasCompletedOnboarding');
+      }
 
       return UserModel(
         id: user.id,
         email: user.email,
         phone: user.phone,
         displayName:
-            response['DisplayName'] as String?, // Use PascalCase field name
-        photoUrl: response['AvatarUrl'] as String?, // Use PascalCase field name
+            profileResponse['DisplayName'] as String?, // Use PascalCase field name
+        photoUrl: profileResponse['AvatarUrl'] as String?, // Use PascalCase field name
         emailVerified: user.emailConfirmedAt != null,
-        hasCompletedOnboarding: response['HasCompletedOnboarding'] as bool? ??
-            false, // Use PascalCase field name
+        hasCompletedOnboarding: hasCompletedOnboarding,
       );
     } catch (e) {
       if (kDebugMode) {}
@@ -682,7 +719,8 @@ class AuthDataSource {
       // Note: For security reasons, Supabase doesn't indicate whether the email exists
       // This is intentional to prevent email enumeration attacks
     } catch (e) {
-      LogUtil.e('Error resetting password', tag: 'AuthDataSource', error: e);
+      final logger = UnifiedLogger();
+      logger.e('Error resetting password', tag: 'AuthDataSource', error: e);
     }
   }
 

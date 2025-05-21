@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:immigru/core/network/interceptors/network_interceptor.dart';
-import 'package:immigru/core/logging/log_util.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// Interceptor that logs network requests and responses
 class LoggingInterceptor implements NetworkInterceptor {
@@ -18,13 +18,15 @@ class LoggingInterceptor implements NetworkInterceptor {
     final url = response.request?.url.toString() ?? 'unknown';
 
     if (statusCode >= 400) {
-      LogUtil.e(
+      final logger = UnifiedLogger();
+      logger.e(
         'HTTP Response: $statusCode from $url',
         tag: 'Network',
         error: response.body,
       );
     } else {
-      LogUtil.d(
+      final logger = UnifiedLogger();
+      logger.d(
         'HTTP Response: $statusCode from $url',
         tag: 'Network',
       );
@@ -35,7 +37,8 @@ class LoggingInterceptor implements NetworkInterceptor {
 
   @override
   Future<void> onError(Object error, StackTrace stackTrace) async {
-    LogUtil.e(
+    final logger = UnifiedLogger();
+    logger.e(
       'Network Error',
       tag: 'Network',
       error: error,

@@ -149,7 +149,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       child: Row(
                         children: [
                           Image.asset(
-                            'assets/icons/immigru-logo.png',
+                            'assets/icons/logo.png',
                             width: 32,
                             height: 32,
                           ),

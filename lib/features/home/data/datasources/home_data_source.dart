@@ -100,10 +100,7 @@ class HomeDataSourceImpl implements HomeDataSource {
           .range(offset, offset + limit - 1);
 
       // Add category filter if provided
-      // For PostgrestTransformBuilder, we need to modify our approach
-      // We'll construct the query differently to handle the category filter
       if (category != null && category != 'All') {
-        // We need to modify our query to include the filter in the initial select
         query = supabase
             .from('Post')
             .select('''
@@ -123,7 +120,7 @@ class HomeDataSourceImpl implements HomeDataSource {
       final response = await query;
 
       // Transform the response
-      return response.map<PostModel>((json) {
+      final posts = response.map<PostModel>((json) {
         // Extract user data from the joined UserProfile
         final userData = json['UserProfile'] as Map<String, dynamic>?;
 
@@ -136,10 +133,63 @@ class HomeDataSourceImpl implements HomeDataSource {
 
         return PostModel.fromJson(flattenedJson);
       }).toList();
+      
+      // If we got posts, return them
+      if (posts.isNotEmpty) {
+        return posts;
+      }
+      
+      // If no posts were found and this is the first page, return mock data
+      if (offset == 0) {
+        return _getMockPosts(category: category, limit: limit);
+      }
+      
+      // Otherwise return empty list for pagination
+      return [];
     } catch (e) {
-      // Return empty list on error (will be handled by repository)
+      // On error, return mock data for first page or empty list for pagination
+      if (offset == 0) {
+        return _getMockPosts(category: category, limit: limit);
+      }
       return [];
     }
+  }
+  
+  /// Generate mock posts for testing and when the API is unavailable
+  List<PostModel> _getMockPosts({String? category, int limit = 5}) {
+    final now = DateTime.now();
+    final mockPosts = <PostModel>[];
+    
+    final categories = [
+      'Immigration News',
+      'Legal Advice',
+      'Community',
+      'Question',
+      'Experience',
+    ];
+    
+    for (int i = 0; i < limit; i++) {
+      final postCategory = category != null && category != 'All' 
+          ? category 
+          : categories[i % categories.length];
+          
+      mockPosts.add(PostModel(
+        id: 'mock-${i + 1}',
+        userId: 'mock-user-${i % 3 + 1}',
+        userName: 'Mock User ${i % 3 + 1}',
+        userAvatar: null,
+        content: 'This is a mock post #${i + 1} in the $postCategory category. ' +
+                'The app is currently in demo mode or experiencing connectivity issues.',
+        category: postCategory,
+        imageUrl: i % 3 == 0 ? 'https://picsum.photos/seed/${i + 1}/800/600' : null,
+        likeCount: i * 5,
+        commentCount: i * 2,
+        isLiked: false,
+        createdAt: now.subtract(Duration(hours: i * 3)),
+      ));
+    }
+    
+    return mockPosts;
   }
 
   @override

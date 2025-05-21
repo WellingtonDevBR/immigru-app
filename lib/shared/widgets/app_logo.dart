@@ -23,19 +23,24 @@ class AppLogo extends StatelessWidget {
         Container(
           height: height,
           width: height,
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Center(
-            child: Icon(
-              Icons.flight_takeoff,
-              color: Colors.white,
-              size: height * 0.6,
-            ),
+          child: Image.asset(
+            'assets/icons/logo.png',
+            fit: BoxFit.contain,
           ),
         ),
-        
+
         // Logo text
         if (showText) ...[
           const SizedBox(width: 8),

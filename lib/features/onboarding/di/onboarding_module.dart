@@ -30,8 +30,8 @@ import 'package:immigru/features/onboarding/domain/repositories/immi_grove_repos
 import 'package:immigru/core/country/domain/usecases/get_countries_usecase.dart'
     as new_arch;
 import 'package:immigru/core/di/service_locator.dart';
-import 'package:immigru/core/logging/logger_provider.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/core/network/edge_function_client.dart';
 
 /// Onboarding module for dependency injection
@@ -42,7 +42,7 @@ class OnboardingModule {
     // Register feature-specific logger
     if (!sl.isRegistered<LoggerInterface>(instanceName: 'onboarding_logger')) {
       sl.registerFactory<LoggerInterface>(
-        () => sl<LoggerProvider>().createFeatureLogger('Onboarding'),
+        () => UnifiedLogger(),
         instanceName: 'onboarding_logger',
       );
     }

@@ -104,8 +104,15 @@ class _OnboardingViewState extends State<OnboardingView> {
 
             // Navigate to home page when onboarding is completed
             if (state.isOnboardingCompleted) {
-              // Use a short delay to ensure the onboarding completion is processed
-              Future.delayed(const Duration(milliseconds: 300), () {
+              // Log that we're navigating to home
+              GetIt.instance<LoggerInterface>().i(
+                'Onboarding completed, navigating to home screen',
+                tag: 'OnboardingScreen',
+              );
+              
+              // Use a longer delay to ensure the onboarding completion is processed
+              // and the AuthBloc has time to refresh the user data
+              Future.delayed(const Duration(milliseconds: 800), () {
                 // Check if widget is still mounted before accessing context
                 if (mounted) {
                   // Navigate to the home page and remove all previous routes

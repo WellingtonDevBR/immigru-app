@@ -1,4 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/onboarding/domain/repositories/immi_grove_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/language_repository.dart';
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
@@ -514,6 +517,21 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       // Mark onboarding as complete
       await _repository.completeOnboarding();
+
+      // Notify AuthBloc to refresh user data
+      try {
+        final authBloc = GetIt.instance<AuthBloc>();
+        authBloc.add(const AuthRefreshUserEvent());
+        _logger.i(
+          'Notified AuthBloc to refresh user data',
+          tag: 'Onboarding',
+        );
+      } catch (e) {
+        _logger.w(
+          'Failed to notify AuthBloc: $e',
+          tag: 'Onboarding',
+        );
+      }
 
       // Set the onboarding completed flag
       emit(state.copyWith(

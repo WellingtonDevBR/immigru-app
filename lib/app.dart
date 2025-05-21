@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:immigru/features/auth/auth_feature.dart';
-import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
-import 'package:immigru/features/auth/presentation/screens/login_screen.dart';
+import 'package:immigru/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:immigru/features/home/home_feature.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/screens/home_screen.dart';
@@ -16,7 +14,6 @@ import 'package:immigru/features/welcome/presentation/screens/welcome_screen.dar
 import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_theme.dart';
 import 'package:immigru/shared/theme/theme_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Main application widget
 class ImmigruApp extends StatelessWidget {
@@ -62,9 +59,18 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
     _homeFeature = HomeFeature(sl);
     _welcomeFeature = WelcomeFeature(sl);
 
-    // Initialize features
-    _homeFeature.initialize();
-    _welcomeFeature.initialize();
+    // Initialize features - wrap in try/catch to handle already registered dependencies
+    try {
+      _homeFeature.initialize();
+    } catch (e) {
+      print('Home feature already initialized: $e');
+    }
+
+    try {
+      _welcomeFeature.initialize();
+    } catch (e) {
+      print('Welcome feature already initialized: $e');
+    }
 
     // Check authentication status on app start
     _authFeature.checkAuthStatus();
@@ -86,7 +92,11 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => BlocProvider<HomeBloc>(
               create: (context) => sl<HomeBloc>(),
-              child: HomeScreen(),
+              child: AuthWrapper(child: HomeScreen()),
+            ),
+        '/features/welcome': (context) => BlocProvider<WelcomeBloc>(
+              create: (context) => sl<WelcomeBloc>(),
+              child: const WelcomeScreen(),
             ),
       },
       onGenerateRoute: (settings) {
@@ -94,6 +104,12 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
         final authRoute = _authFeature.generateRoute(settings);
         if (authRoute != null) {
           return authRoute;
+        }
+
+        // Try welcome routes
+        final welcomeRoute = _welcomeFeature.generateRoute(settings);
+        if (welcomeRoute != null) {
+          return welcomeRoute;
         }
 
         // Add other feature routes here
@@ -116,64 +132,11 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
   }
 
   Widget _buildHomeScreen() {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state.isLoading) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        } else if (state.isAuthenticated && state.user != null) {
-          // Check if user has completed onboarding
-          final hasCompletedOnboarding = state.user!.hasCompletedOnboarding;
-
-          if (hasCompletedOnboarding) {
-            return BlocProvider<HomeBloc>(
-              create: (context) => sl<HomeBloc>(),
-              child: HomeScreen(),
-            );
-          } else {
-            return const OnboardingScreen();
-          }
-        } else {
-          // Check if user has seen welcome screen
-          return FutureBuilder<bool>(
-            future: _getHasSeenWelcomeScreen(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-
-              final hasSeenWelcomeScreen = snapshot.data ?? false;
-
-              if (hasSeenWelcomeScreen) {
-                return const LoginScreen();
-              } else {
-                return BlocProvider<WelcomeBloc>(
-                  create: (context) => sl<WelcomeBloc>(),
-                  child: const WelcomeScreen(),
-                );
-              }
-            },
-          );
-        }
-      },
+    return BlocProvider<HomeBloc>(
+      create: (context) => sl<HomeBloc>(),
+      child: AuthWrapper(
+        child: HomeScreen(),
+      ),
     );
-  }
-
-  Future<bool> _getHasSeenWelcomeScreen() async {
-    try {
-      // Check if user has seen welcome screen
-      final preferences = await SharedPreferences.getInstance();
-      return preferences.getBool('has_seen_welcome_screen') ?? false;
-    } catch (e) {
-      // If there's an error, assume user hasn't seen welcome screen
-      return false;
-    }
   }
 }

@@ -3,19 +3,19 @@ import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/shared/widgets/app_logo.dart';
 
-/// Modern app bar for the home screen
+/// Modern app bar for the home screen with Facebook-like design
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final User? user;
-  final VoidCallback? onMenuPressed;
   final VoidCallback? onSearchPressed;
-  final VoidCallback? onNotificationsPressed;
+  final bool hasUnreadMessages;
+  final int unreadMessageCount;
 
   const HomeAppBar({
     super.key,
     this.user,
-    this.onMenuPressed,
     this.onSearchPressed,
-    this.onNotificationsPressed,
+    this.hasUnreadMessages = false,
+    this.unreadMessageCount = 0,
   });
 
   @override
@@ -29,17 +29,23 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: isDarkMode ? AppColors.darkSurface : Colors.white,
       elevation: 0,
-      title: const AppLogo(),
+      title: const AppLogo(height: 28),
       centerTitle: false,
-      leading: IconButton(
-        icon: Icon(
-          Icons.menu,
-          color: isDarkMode ? Colors.white : Colors.black87,
-        ),
-        onPressed: onMenuPressed,
-        tooltip: 'Menu',
-      ),
+      automaticallyImplyLeading: false, // Remove default drawer button
       actions: [
+        // Chat button with badge for unread messages
+        IconButton(
+          icon: Badge(
+            label: Text('$unreadMessageCount'),
+            isLabelVisible: hasUnreadMessages,
+            child: Icon(
+              Icons.chat_bubble_outline,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          onPressed: () => Navigator.pushNamed(context, '/chat'),
+          tooltip: 'Chat',
+        ),
         // Search button
         IconButton(
           icon: Icon(
@@ -56,47 +62,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Search',
         ),
         
-        // Notifications button
-        IconButton(
-          icon: Stack(
-            children: [
-              Icon(
-                Icons.notifications_outlined,
-                color: isDarkMode ? Colors.white : Colors.black87,
-              ),
-              // Notification badge
-              if (user != null)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
-                    ),
-                    child: const Text(
-                      '',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          onPressed: onNotificationsPressed ?? () {
-            // Show notifications
-          },
-          tooltip: 'Notifications',
-        ),
-        
+        // Add a small spacing
         const SizedBox(width: 8),
       ],
     );

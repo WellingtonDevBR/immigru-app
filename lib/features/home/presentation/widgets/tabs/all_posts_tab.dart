@@ -5,9 +5,9 @@ import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
 import 'package:immigru/features/home/presentation/widgets/post_card.dart';
-import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/shared/widgets/error_message_widget.dart';
 import 'package:immigru/shared/widgets/loading_indicator.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 
 /// "All Posts" tab showing posts with category filtering
 class AllPostsTab extends StatefulWidget {
@@ -26,21 +26,29 @@ class AllPostsTab extends StatefulWidget {
 
 class _AllPostsTabState extends State<AllPostsTab> {
   final ScrollController _scrollController = ScrollController();
-  
-  // Available post categories
-  final List<String> _categories = [
-    'All',
-    'Immigration News',
-    'Legal Advice',
-    'Community',
-    'Question',
-    'Experience',
-  ];
+  final _logger = UnifiedLogger();
+  bool _isFirstLoad = true;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
+  bool _isRetrying = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    // Add a small delay before triggering the initial fetch to ensure the bloc is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchPosts();
+    });
+  }
+
+  void _fetchPosts() {
+    _logger.d('Fetching posts with category: ${widget.selectedCategory}',
+        tag: 'AllPostsTab');
+    BlocProvider.of<HomeBloc>(context).add(
+      FetchPosts(category: widget.selectedCategory, refresh: true),
+    );
   }
 
   @override
@@ -71,8 +79,19 @@ class _AllPostsTabState extends State<AllPostsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(
+    return BlocConsumer<HomeBloc, HomeState>(
+      listener: (context, state) {
+        if (state is PostsError) {
+          _logger.e('Post error: ${state.message}', tag: 'AllPostsTab');
+          // Show a snackbar with the error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${state.message}')),
+          );
+        }
+      },
       builder: (context, state) {
+        _logger.d('Current state: ${state.runtimeType}', tag: 'AllPostsTab');
+
         // Handle different states
         if (state is PostsLoading) {
           return _buildLoadingState(state);
@@ -80,24 +99,27 @@ class _AllPostsTabState extends State<AllPostsTab> {
           return _buildLoadedState(state);
         } else if (state is PostsError) {
           return ErrorMessageWidget(
-            message: state.message,
+            message: 'Could not load posts: ${state.message}',
             onRetry: () {
-              BlocProvider.of<HomeBloc>(context).add(
-                FetchPosts(category: widget.selectedCategory, refresh: true),
-              );
+              _retryCount = 0;
+              _fetchPosts();
             },
           );
         } else if (state is PostCreated) {
           // After post creation, refresh the feed
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            BlocProvider.of<HomeBloc>(context).add(
-              FetchPosts(category: widget.selectedCategory, refresh: true),
-            );
+            _fetchPosts();
           });
           return _buildLoadingState(null);
         }
 
         // Initial state or other states
+        if (_isFirstLoad && !_isRetrying) {
+          _isRetrying = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _fetchPosts();
+          });
+        }
         return _buildLoadingState(null);
       },
     );
@@ -105,111 +127,71 @@ class _AllPostsTabState extends State<AllPostsTab> {
 
   /// Build the loading state
   Widget _buildLoadingState(PostsLoading? state) {
-    if (state != null && state.currentPosts != null && state.currentPosts!.isNotEmpty) {
+    _logger.d('Building loading state, isFirstLoad: $_isFirstLoad',
+        tag: 'AllPostsTab');
+
+    if (state != null &&
+        state.currentPosts != null &&
+        state.currentPosts!.isNotEmpty) {
       // Show current posts with loading indicator at bottom
-      return Column(
-        children: [
-          _buildCategoryFilter(),
-          Expanded(
-            child: _buildPostsList(
-              state.currentPosts!,
-              showBottomLoader: true,
-              hasReachedMax: false,
-            ),
-          ),
-        ],
+      return _buildPostsList(
+        state.currentPosts!,
+        showBottomLoader: true,
+        hasReachedMax: false,
       );
     }
 
-    // Show full loading indicator
-    return Column(
-      children: [
-        _buildCategoryFilter(),
-        const Expanded(
-          child: Center(
-            child: LoadingIndicator(),
-          ),
-        ),
-      ],
+    // If we've been loading for too long on first load, show retry button
+    if (_isFirstLoad && _retryCount < _maxRetries && !_isRetrying) {
+      _isRetrying = true;
+      // Auto-retry after a short delay
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _isFirstLoad) {
+          _retryCount++;
+          _isRetrying = false;
+          _logger.d('Auto-retrying post fetch, attempt: $_retryCount',
+              tag: 'AllPostsTab');
+          _fetchPosts();
+        } else {
+          _isRetrying = false;
+        }
+      });
+    }
+
+    // Show loading indicator
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const LoadingIndicator(),
+          if (_retryCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                'Loading posts... (Attempt $_retryCount)',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   /// Build the loaded state with posts
   Widget _buildLoadedState(PostsLoaded state) {
-    return Column(
-      children: [
-        _buildCategoryFilter(),
-        Expanded(
-          child: state.posts.isEmpty
-              ? _buildEmptyState()
-              : _buildPostsList(
-                  state.posts,
-                  showBottomLoader: !state.hasReachedMax,
-                  hasReachedMax: state.hasReachedMax,
-                ),
-        ),
-      ],
-    );
-  }
+    // Reset flags since we successfully loaded posts
+    _isFirstLoad = false;
+    _retryCount = 0;
 
-  /// Build the category filter
-  Widget _buildCategoryFilter() {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    _logger.d('Posts loaded: ${state.posts.length}', tag: 'AllPostsTab');
 
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: isDarkMode ? AppColors.darkSurface : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          final isSelected = category == widget.selectedCategory;
-          
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: FilterChip(
-              label: Text(category),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  widget.onCategorySelected(category);
-                }
-              },
-              backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
-              selectedColor: theme.colorScheme.primary.withValues(alpha:0.2),
-              checkmarkColor: theme.colorScheme.primary,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : isDarkMode
-                        ? Colors.white
-                        : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: isSelected
-                    ? BorderSide(color: theme.colorScheme.primary, width: 1)
-                    : BorderSide.none,
-              ),
-            ),
+    return state.posts.isEmpty
+        ? _buildEmptyState()
+        : _buildPostsList(
+            state.posts,
+            showBottomLoader: !state.hasReachedMax,
+            hasReachedMax: state.hasReachedMax,
           );
-        },
-      ),
-    );
   }
 
   /// Build the list of posts
@@ -224,30 +206,40 @@ class _AllPostsTabState extends State<AllPostsTab> {
           FetchPosts(category: widget.selectedCategory, refresh: true),
         );
       },
-      child: ListView.builder(
+      child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.only(top: 8, bottom: 80),
         itemCount: posts.length + (showBottomLoader ? 1 : 0),
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+        padding: const EdgeInsets.only(
+            bottom: 72), // Extra padding for bottom nav bar
         itemBuilder: (context, index) {
           if (index >= posts.length) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
-                child: LoadingIndicator(size: 24),
+                child: LoadingIndicator(),
               ),
             );
           }
 
           final post = posts[index];
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: PostCard(
               post: post,
               onLike: () {
-                // Handle like action
+                BlocProvider.of<HomeBloc>(context).add(
+                  LikePost(
+                      postId: post.id,
+                      userId: post.userId,
+                      like: !post.isLiked),
+                );
               },
               onComment: () {
                 // Navigate to comments screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Comments coming soon')),
+                );
               },
             ),
           );
@@ -273,12 +265,12 @@ class _AllPostsTabState extends State<AllPostsTab> {
               height: 120,
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.grey.shade800.withValues(alpha:0.5)
+                    ? Colors.grey.shade800.withValues(alpha: 0.5)
                     : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(60),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -287,7 +279,7 @@ class _AllPostsTabState extends State<AllPostsTab> {
               child: Icon(
                 Icons.search_off_rounded,
                 size: 60,
-                color: theme.colorScheme.primary.withValues(alpha:0.7),
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -316,8 +308,10 @@ class _AllPostsTabState extends State<AllPostsTab> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
           ],
