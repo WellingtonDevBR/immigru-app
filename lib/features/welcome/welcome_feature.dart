@@ -18,11 +18,8 @@ class WelcomeFeature {
       // Check if WelcomeBloc is already registered to prevent duplicate registration
       if (!_serviceLocator.isRegistered<WelcomeBloc>()) {
         await WelcomeModule.register(_serviceLocator);
-      } else {
-        print('WelcomeFeature already initialized, skipping registration');
-      }
+      } else {}
     } catch (e) {
-      print('Error initializing WelcomeFeature: $e');
       // Continue execution even if there's an error to prevent app crashes
     }
   }

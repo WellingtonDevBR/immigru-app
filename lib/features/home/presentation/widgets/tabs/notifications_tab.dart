@@ -69,7 +69,7 @@ class _NotificationsTabState extends State<NotificationsTab> {
   Widget _buildNotificationItem(BuildContext context, int index) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     // Demo notification types
     final notificationTypes = [
       'liked your post',
@@ -78,17 +78,20 @@ class _NotificationsTabState extends State<NotificationsTab> {
       'invited you to join an ImmiGrove',
       'shared your post',
     ];
-    
+
     final randomType = notificationTypes[index % notificationTypes.length];
     final isUnread = index < 3; // First 3 are unread for demo
-    
+
     return Container(
-      color: isUnread 
-          ? (isDarkMode ? theme.colorScheme.primary.withOpacity(0.1) : theme.colorScheme.primary.withOpacity(0.05))
+      color: isUnread
+          ? (isDarkMode
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              : theme.colorScheme.primary.withValues(alpha: 0.05))
           : Colors.transparent,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=${index + 10}'),
+          backgroundImage:
+              NetworkImage('https://i.pravatar.cc/150?img=${index + 10}'),
         ),
         title: RichText(
           text: TextSpan(

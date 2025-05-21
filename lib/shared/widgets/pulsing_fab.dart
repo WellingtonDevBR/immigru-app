@@ -7,7 +7,7 @@ class PulsingFAB extends StatefulWidget {
   final Color foregroundColor;
   final String tooltip;
   final IconData icon;
-  
+
   const PulsingFAB({
     super.key,
     required this.onPressed,
@@ -16,15 +16,16 @@ class PulsingFAB extends StatefulWidget {
     required this.tooltip,
     required this.icon,
   });
-  
+
   @override
   _PulsingFABState createState() => _PulsingFABState();
 }
 
-class _PulsingFABState extends State<PulsingFAB> with SingleTickerProviderStateMixin {
+class _PulsingFABState extends State<PulsingFAB>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +33,7 @@ class _PulsingFABState extends State<PulsingFAB> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
+
     _animation = Tween<double>(begin: 1.0, end: 1.15).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -40,13 +41,13 @@ class _PulsingFABState extends State<PulsingFAB> with SingleTickerProviderStateM
       ),
     );
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -59,7 +60,7 @@ class _PulsingFABState extends State<PulsingFAB> with SingleTickerProviderStateM
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: widget.backgroundColor.withOpacity(0.3),
+                  color: widget.backgroundColor.withValues(alpha: 0.3),
                   blurRadius: 12 * _animation.value,
                   spreadRadius: 2 * _animation.value,
                 ),

@@ -26,7 +26,8 @@ class HomeScreen extends StatefulWidget {
   final User? user;
 
   // ✅ Singleton key and instance
-  static final GlobalKey _singletonKey = GlobalKey(debugLabel: 'HomeScreenSingleton');
+  static final GlobalKey _singletonKey =
+      GlobalKey(debugLabel: 'HomeScreenSingleton');
   static final HomeScreen singleton = HomeScreen(key: _singletonKey);
 
   @override
@@ -306,7 +307,8 @@ class _HomeScreenState extends State<HomeScreen>
               tag: 'HomeScreen');
           final homeBloc = context.read<HomeBloc>();
           if (!homeBloc.isClosed) {
-            homeBloc.add(FetchPosts(category: _selectedCategory, refresh: true));
+            homeBloc
+                .add(FetchPosts(category: _selectedCategory, refresh: true));
           }
         }
       });
@@ -689,13 +691,14 @@ class _HomeScreenState extends State<HomeScreen>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            theme.colorScheme.primary.withOpacity(0.05),
-                            theme.colorScheme.primary.withOpacity(0.1),
+                            theme.colorScheme.primary.withValues(alpha: 0.05),
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.2),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.2),
                           width: 1.0,
                         ),
                       ),
@@ -718,7 +721,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary
-                                        .withOpacity(0.1),
+                                        .withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -749,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                       width: 1.0,
                                     ),
                                   ),

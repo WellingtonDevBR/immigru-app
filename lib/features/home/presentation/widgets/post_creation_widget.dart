@@ -26,13 +26,14 @@ class PostCreationWidget extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: Container(
-          margin: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 12),
+          margin:
+              const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 12),
           decoration: BoxDecoration(
             color: isDarkMode ? AppColors.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -49,7 +50,8 @@ class PostCreationWidget extends StatelessWidget {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {
-                          logger.d('Post creation widget tapped', tag: 'PostCreationWidget');
+                          logger.d('Post creation widget tapped',
+                              tag: 'PostCreationWidget');
                           HapticFeedback.lightImpact();
                           onTap();
                         },
@@ -57,8 +59,10 @@ class PostCreationWidget extends StatelessWidget {
                           topLeft: Radius.circular(12),
                           topRight: Radius.circular(12),
                         ),
-                        splashColor: theme.colorScheme.primary.withOpacity(0.1),
-                        highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+                        splashColor:
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
+                        highlightColor:
+                            theme.colorScheme.primary.withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -73,15 +77,21 @@ class PostCreationWidget extends StatelessWidget {
                               : null,
                           radius: 20,
                           child: user?.photoUrl == null
-                              ? Text(user?.displayName?.substring(0, 1).toUpperCase() ?? 'U')
+                              ? Text(user?.displayName
+                                      ?.substring(0, 1)
+                                      .toUpperCase() ??
+                                  'U')
                               : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                              color: isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
                               borderRadius: BorderRadius.circular(24),
                             ),
                             child: Row(
@@ -89,15 +99,19 @@ class PostCreationWidget extends StatelessWidget {
                                 Text(
                                   'Create Post...',
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.grey[700],
                                     fontSize: 16,
                                   ),
                                 ),
                                 const Spacer(),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.2),
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Text(
@@ -125,9 +139,16 @@ class PostCreationWidget extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: isDarkMode 
-                        ? [AppColors.darkSurface, Color.lerp(AppColors.darkSurface, Colors.black, 0.05)!]
-                        : [Colors.white, Color.lerp(Colors.white, Colors.grey[100]!, 0.5)!],
+                    colors: isDarkMode
+                        ? [
+                            AppColors.darkSurface,
+                            Color.lerp(
+                                AppColors.darkSurface, Colors.black, 0.05)!
+                          ]
+                        : [
+                            Colors.white,
+                            Color.lerp(Colors.white, Colors.grey[100]!, 0.5)!
+                          ],
                   ),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(12),
@@ -176,7 +197,7 @@ class PostCreationWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildPostOption({
     required IconData icon,
     required String label,

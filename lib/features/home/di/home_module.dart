@@ -73,9 +73,6 @@ class HomeModule {
           ),
         );
       }
-    } catch (e, stackTrace) {
-      print('Error while registering home dependencies: $e');
-      print('Stack trace: $stackTrace');
-    }
+    } catch (e) {}
   }
 }

@@ -70,18 +70,14 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
     try {
       // Initialize home feature first to ensure HomeBloc is registered
       await _homeFeature.initialize();
-      print('Home feature initialized successfully');
     } catch (e) {
-      print('Home feature initialization error: $e');
       // Continue execution even if there's an error
     }
 
     try {
       // Then initialize welcome feature
       await _welcomeFeature.initialize();
-      print('Welcome feature initialized successfully');
     } catch (e) {
-      print('Welcome feature initialization error: $e');
       // Continue execution even if there's an error
     }
   }

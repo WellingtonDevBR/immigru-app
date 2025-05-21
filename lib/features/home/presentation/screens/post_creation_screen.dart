@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
-import 'dart:ui';
 
 /// Screen for creating a new post, displayed in a modal bottom sheet
 class PostCreationScreen extends StatefulWidget {
@@ -29,16 +28,6 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
   String? _imageUrl;
   bool _isSubmitting = false;
 
-  // Available post categories - used in UI dropdown
-  static const List<String> _availableCategories = [
-    'General',
-    'Immigration News',
-    'Legal Advice',
-    'Community',
-    'Question',
-    'Experience',
-  ];
-
   @override
   void dispose() {
     _contentController.dispose();
@@ -59,7 +48,7 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
     });
 
     _logger.d('Submitting post', tag: 'PostCreationScreen');
-    
+
     // Call the onPost callback
     widget.onPost(
       _contentController.text.trim(),
@@ -79,7 +68,8 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
     // In a real implementation, this would open the image picker
     setState(() {
       // Demo image
-      _imageUrl = 'https://picsum.photos/500/300?random=${DateTime.now().millisecondsSinceEpoch}';
+      _imageUrl =
+          'https://picsum.photos/500/300?random=${DateTime.now().millisecondsSinceEpoch}';
     });
     _logger.d('Add photo button pressed', tag: 'PostCreationScreen');
   }
@@ -102,7 +92,7 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),
@@ -123,7 +113,8 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
               ),
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     Text(
@@ -140,8 +131,10 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                         Navigator.pop(context);
                       },
                       style: IconButton.styleFrom(
-                        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        foregroundColor:
+                            isDarkMode ? Colors.white : Colors.black87,
                       ),
                     ),
                   ],
@@ -150,7 +143,8 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
               const Divider(),
               // User info
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -260,7 +254,8 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
               ),
               // Add image button and image preview
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -275,7 +270,7 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -288,17 +283,24 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                                   height: 200,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
                                     return Container(
                                       height: 200,
                                       width: double.infinity,
-                                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                                      color: isDarkMode
+                                          ? Colors.grey[800]
+                                          : Colors.grey[200],
                                       child: Center(
                                         child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
+                                          value: loadingProgress
+                                                      .expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
                                               : null,
                                           color: theme.colorScheme.primary,
                                         ),
@@ -312,7 +314,7 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                               top: 8,
                               right: 8,
                               child: Material(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 shape: const CircleBorder(),
                                 clipBehavior: Clip.antiAlias,
                                 child: InkWell(
@@ -338,12 +340,17 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                       ),
                     // Add media options
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.grey.shade900.withOpacity(0.3) : Colors.grey.shade50,
+                        color: isDarkMode
+                            ? Colors.grey.shade900.withValues(alpha: 0.3)
+                            : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
+                          color: isDarkMode
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300,
                           width: 1,
                         ),
                       ),
@@ -353,33 +360,41 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                             'Add to your post',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
-                              color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.grey[700],
                             ),
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: const Icon(Icons.photo_library, color: Colors.green),
+                            icon: const Icon(Icons.photo_library,
+                                color: Colors.green),
                             onPressed: () {
                               HapticFeedback.mediumImpact();
                               _pickImage();
                             },
                             tooltip: 'Add Photo',
                             style: IconButton.styleFrom(
-                              backgroundColor: Colors.green.withOpacity(0.1),
+                              backgroundColor:
+                                  Colors.green.withValues(alpha: 0.1),
                             ),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(Icons.location_on, color: Colors.red),
+                            icon: const Icon(Icons.location_on,
+                                color: Colors.red),
                             onPressed: () {
                               HapticFeedback.mediumImpact();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Location feature coming soon')),
+                                const SnackBar(
+                                    content:
+                                        Text('Location feature coming soon')),
                               );
                             },
                             tooltip: 'Add Location',
                             style: IconButton.styleFrom(
-                              backgroundColor: Colors.red.withOpacity(0.1),
+                              backgroundColor:
+                                  Colors.red.withValues(alpha: 0.1),
                             ),
                           ),
                         ],
@@ -397,8 +412,9 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                     duration: const Duration(milliseconds: 300),
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _contentController.text.trim().isEmpty || _isSubmitting 
-                          ? null 
+                      onPressed: _contentController.text.trim().isEmpty ||
+                              _isSubmitting
+                          ? null
                           : () {
                               HapticFeedback.mediumImpact();
                               _submitPost();
@@ -406,13 +422,14 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: isDarkMode 
-                            ? Colors.grey[800] 
-                            : theme.colorScheme.primary.withOpacity(0.3),
-                        disabledForegroundColor: isDarkMode 
-                            ? Colors.grey[600] 
-                            : Colors.white.withOpacity(0.8),
-                        elevation: _contentController.text.trim().isEmpty ? 0 : 2,
+                        disabledBackgroundColor: isDarkMode
+                            ? Colors.grey[800]
+                            : theme.colorScheme.primary.withValues(alpha: 0.3),
+                        disabledForegroundColor: isDarkMode
+                            ? Colors.grey[600]
+                            : Colors.white.withValues(alpha: 0.8),
+                        elevation:
+                            _contentController.text.trim().isEmpty ? 0 : 2,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -469,7 +486,7 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color),

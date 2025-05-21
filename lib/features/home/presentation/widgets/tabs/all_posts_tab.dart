@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
@@ -21,17 +22,20 @@ class AllPostsTab extends StatefulWidget {
   State<AllPostsTab> createState() => _AllPostsTabState();
 }
 
-class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClientMixin {
+class _AllPostsTabState extends State<AllPostsTab>
+    with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
   final _logger = UnifiedLogger();
-  
+
   // State tracking variables
-  bool _isFirstLoad = true;
   bool _isLoadingMore = false;
-  
+
+  // Local posts list to manage likes without relying on bloc state
+  List<Post> _localPosts = [];
+
   // Add a timeout to prevent getting stuck in loading state
   Timer? _loadingTimeoutTimer;
-  
+
   @override
   bool get wantKeepAlive => true; // Keep state alive when navigating
 
@@ -40,25 +44,26 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
     super.initState();
     _scrollController.addListener(_onScroll);
     _logger.d('AllPostsTab initialized', tag: 'AllPostsTab');
-    
+
     // Set a timeout to prevent getting stuck in loading state
     _startLoadingTimeout();
   }
-  
+
   // Start a timeout to prevent getting stuck in loading state
   void _startLoadingTimeout() {
     // Cancel any existing timer
     _loadingTimeoutTimer?.cancel();
-    
+
     // Set a new timer to check if we're still loading after 10 seconds
     _loadingTimeoutTimer = Timer(const Duration(seconds: 10), () {
       if (mounted) {
         final homeBloc = context.read<HomeBloc>();
         final currentState = homeBloc.state;
-        
+
         // If we're still in a loading state after the timeout, force a refresh
         if (currentState is PostsLoading) {
-          _logger.w('Loading timeout reached, forcing refresh', tag: 'AllPostsTab');
+          _logger.w('Loading timeout reached, forcing refresh',
+              tag: 'AllPostsTab');
           _isLoadingMore = false;
           _fetchPosts();
         }
@@ -80,52 +85,56 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
     if (!_scrollController.hasClients || _isLoadingMore) {
       return;
     }
-    
+
     // Only load more if we're near the bottom
     if (_isNearBottom()) {
       final state = context.read<HomeBloc>().state;
-      
+
       if (state is PostsLoaded && !state.hasReachedMax) {
         _loadMorePosts();
       }
     }
   }
-  
+
   void _loadMorePosts() {
     // Guard clause to prevent multiple simultaneous loads
     if (_isLoadingMore) {
-      _logger.d('Already loading more posts, ignoring request', tag: 'AllPostsTab');
+      _logger.d('Already loading more posts, ignoring request',
+          tag: 'AllPostsTab');
       return;
     }
-    
+
     _isLoadingMore = true;
-    _logger.d('Loading more posts for category: ${widget.selectedCategory}', tag: 'AllPostsTab');
-    
+    _logger.d('Loading more posts for category: ${widget.selectedCategory}',
+        tag: 'AllPostsTab');
+
     try {
       // Use read instead of watch to prevent unnecessary rebuilds
       final homeBloc = context.read<HomeBloc>();
       final currentState = homeBloc.state;
-      
+
       // Additional check to prevent loading more if we're not in a loaded state
       if (currentState is! PostsLoaded) {
-        _logger.d('Not in a loaded state, skipping load more', tag: 'AllPostsTab');
+        _logger.d('Not in a loaded state, skipping load more',
+            tag: 'AllPostsTab');
         _isLoadingMore = false;
         return;
       }
-      
+
       // Check if we've already reached max
       if (currentState.hasReachedMax) {
-        _logger.d('Already reached max posts, skipping load more', tag: 'AllPostsTab');
+        _logger.d('Already reached max posts, skipping load more',
+            tag: 'AllPostsTab');
         _isLoadingMore = false;
         return;
       }
-      
+
       homeBloc.add(FetchMorePosts());
     } catch (e) {
       _logger.e('Error loading more posts: $e', tag: 'AllPostsTab');
       _isLoadingMore = false; // Reset flag immediately on error
     }
-    
+
     // Reset loading flag after a delay to prevent rapid consecutive calls
     // Using a longer delay to ensure the request has time to complete
     Future.delayed(const Duration(seconds: 3), () {
@@ -139,13 +148,13 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
   /// Check if the user has scrolled to the bottom
   bool _isNearBottom() {
     if (!_scrollController.hasClients) return false;
-    
+
     // Add more comprehensive checks to prevent false positives
     if (_scrollController.position.outOfRange) return false;
-    
+
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.offset;
-    
+
     // Only trigger when we're at 80% of the way down to give more time for loading
     // This helps prevent multiple triggers when scrolling quickly
     return currentScroll >= (maxScroll * 0.8);
@@ -154,50 +163,56 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
   void _fetchPosts() {
     // Prevent multiple fetches with comprehensive guard clause
     if (!mounted || _isLoadingMore) {
-      _logger.d('Skipping fetch: widget not mounted or already loading', tag: 'AllPostsTab');
+      _logger.d('Skipping fetch: widget not mounted or already loading',
+          tag: 'AllPostsTab');
       return;
     }
-    
-    _logger.d('Fetching posts with category: ${widget.selectedCategory}', tag: 'AllPostsTab');
-    
+
+    _logger.d('Fetching posts with category: ${widget.selectedCategory}',
+        tag: 'AllPostsTab');
+
     _isLoadingMore = true;
-    
+
     try {
       // Use context.read for one-time access to the bloc
       final homeBloc = context.read<HomeBloc>();
-      
+
       // Check current state to avoid duplicate fetches
       final currentState = homeBloc.state;
-      
+
       // More comprehensive state checking
       if (currentState is PostsLoading) {
         _logger.d('Posts already loading, skipping fetch', tag: 'AllPostsTab');
         _isLoadingMore = false;
         return;
       }
-      
+
       // If we're in a loaded state and just refreshing, use the current category
       if (currentState is PostsLoaded) {
-        _logger.d('Refreshing posts with existing category: ${currentState.selectedCategory}', tag: 'AllPostsTab');
+        _logger.d(
+            'Refreshing posts with existing category: ${currentState.selectedCategory}',
+            tag: 'AllPostsTab');
         homeBloc.add(FetchPosts(
           category: currentState.selectedCategory,
           refresh: true,
         ));
       } else {
         // For other states, use the widget's category
-        _logger.d('Fetching posts with widget category: ${widget.selectedCategory}', tag: 'AllPostsTab');
+        _logger.d(
+            'Fetching posts with widget category: ${widget.selectedCategory}',
+            tag: 'AllPostsTab');
         homeBloc.add(FetchPosts(
           category: widget.selectedCategory,
           refresh: true,
         ));
       }
-      
+
       _logger.d('FetchPosts event dispatched', tag: 'AllPostsTab');
     } catch (e) {
       _logger.e('Error dispatching FetchPosts event: $e', tag: 'AllPostsTab');
       _isLoadingMore = false; // Reset immediately on error
     }
-    
+
     // Reset loading flag after a longer delay to ensure completion
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -210,7 +225,7 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     return BlocConsumer<HomeBloc, HomeState>(
       listenWhen: (previous, current) {
         // Only listen for specific state transitions to prevent excessive callbacks
@@ -224,13 +239,24 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
       },
       listener: (context, state) {
         if (state is PostsLoaded) {
-          _isFirstLoad = false;
           _isLoadingMore = false;
-          _logger.d('Posts loaded successfully: ${state.posts.length} posts', tag: 'AllPostsTab');
+          _logger.d('Posts loaded successfully: ${state.posts.length} posts',
+              tag: 'AllPostsTab');
+
+          // Update our local posts list with the new data from the bloc
+          // but preserve any local like state changes
+          if (_localPosts.isEmpty) {
+            setState(() {
+              _localPosts = List.from(state.posts);
+            });
+          } else {
+            // Merge new posts with our local state
+            _updateLocalPostsFromState(state.posts);
+          }
         } else if (state is PostsError) {
           _isLoadingMore = false;
           _logger.e('Post loading error: ${state.message}', tag: 'AllPostsTab');
-          
+
           // Show error message to user
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${state.message}')),
@@ -239,49 +265,80 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
       },
       buildWhen: (previous, current) {
         // Strict conditions to prevent unnecessary rebuilds
-        
+
         // For PostsLoading, only rebuild if coming from a non-loading state
         if (current is PostsLoading && previous is! PostsLoading) {
           _logger.d('Rebuilding for PostsLoading state', tag: 'AllPostsTab');
           return true;
         }
-        
+
         // Always rebuild for PostsLoaded state
         if (current is PostsLoaded) {
           _logger.d('Rebuilding for PostsLoaded state', tag: 'AllPostsTab');
           return true;
         }
-        
+
         // Always rebuild for PostsError state
         if (current is PostsError) {
-          _logger.d('Rebuilding for PostsError state', tag: 'AllPostsTab');
           return true;
         }
-        
-        _logger.d('Skipping rebuild for state transition: ${previous.runtimeType} -> ${current.runtimeType}', tag: 'AllPostsTab');
-        return false; // Skip all other state transitions
+
+        return false;
       },
       builder: (context, state) {
-        _logger.d('Building AllPostsTab with state: ${state.runtimeType}', tag: 'AllPostsTab');
-        
-        if (state is PostsLoading) {
-          return _buildLoadingState();
+        _logger.d('Building AllPostsTab with state: ${state.runtimeType}',
+            tag: 'AllPostsTab');
+
+        if (state is HomeInitial ||
+            (state is PostsLoading && state.currentPosts == null)) {
+          _logger.d('Building loading state, isFirstLoad: true',
+              tag: 'AllPostsTab');
+          return _buildLoadingState(isFirstLoad: true);
+        } else if (state is PostsLoading) {
+          _logger.d('Rebuilding for PostsLoading state', tag: 'AllPostsTab');
+          return _buildLoadingState(isFirstLoad: false);
         } else if (state is PostsLoaded) {
-          return _buildLoadedState(state);
+          return _buildPostsList(
+              _localPosts.isEmpty ? state.posts : _localPosts,
+              state.hasReachedMax,
+              state.isLoadingMore);
         } else if (state is PostsError) {
-          return _buildErrorState(state);
+          return ErrorMessageWidget(
+            message: state.message,
+            onRetry: _refreshPosts,
+          );
+        } else {
+          return const SizedBox.shrink();
         }
-        
-        // For any other state, show loading but don't trigger data fetching
-        // This prevents infinite loops with HomeInitial state
-        return _buildLoadingState();
       },
     );
   }
 
-  Widget _buildLoadingState() {
-    _logger.d('Building loading state, isFirstLoad: $_isFirstLoad', tag: 'AllPostsTab');
-    
+  void _updateLocalPostsFromState(List<Post> newPosts) {
+    // Create a map of existing posts by ID for quick lookup
+    final existingPostsMap = {for (var post in _localPosts) post.id: post};
+
+    // Update local posts list with new posts, preserving like state for existing posts
+    setState(() {
+      _localPosts = newPosts.map((newPost) {
+        // If we have this post locally and its like state is different from the new one,
+        // preserve our local like state (user's recent interactions)
+        final existingPost = existingPostsMap[newPost.id];
+        if (existingPost != null) {
+          return newPost.copyWith(
+            isLiked: existingPost.isLiked,
+            likeCount: existingPost.likeCount,
+          );
+        }
+        return newPost;
+      }).toList();
+    });
+  }
+
+  Widget _buildLoadingState({bool isFirstLoad = false}) {
+    _logger.d('Building loading state, isFirstLoad: $isFirstLoad',
+        tag: 'AllPostsTab');
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -289,7 +346,7 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
           const CircularProgressIndicator(),
           const SizedBox(height: 16),
           Text(
-            _isFirstLoad ? 'Loading posts...' : 'Refreshing...',
+            isFirstLoad ? 'Loading posts...' : 'Refreshing...',
             style: const TextStyle(fontSize: 16),
           ),
         ],
@@ -297,9 +354,8 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _buildLoadedState(PostsLoaded state) {
-    final posts = state.posts;
-    
+  Widget _buildPostsList(
+      List<Post> posts, bool hasReachedMax, bool isLoadingMore) {
     if (posts.isEmpty) {
       return Center(
         child: Column(
@@ -314,17 +370,17 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _fetchPosts,
+              onPressed: _refreshPosts,
               child: const Text('Refresh'),
             ),
           ],
         ),
       );
     }
-    
+
     return RefreshIndicator(
       onRefresh: () async {
-        _fetchPosts();
+        _refreshPosts();
       },
       child: Stack(
         children: [
@@ -332,11 +388,11 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 80), // Add padding for FAB
-            itemCount: posts.length + (state.hasReachedMax ? 0 : 1),
+            itemCount: posts.length + (hasReachedMax ? 0 : 1),
             itemBuilder: (context, index) {
               // Show loading indicator at the bottom when loading more
               if (index == posts.length) {
-                if (state.isLoadingMore) {
+                if (isLoadingMore) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
@@ -356,55 +412,64 @@ class _AllPostsTabState extends State<AllPostsTab> with AutomaticKeepAliveClient
                   );
                 }
               }
-              
+
               final post = posts[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
                 child: PostCard(
                   post: post,
-                  onLike: () {
-                    // Handle like action
-                    context.read<HomeBloc>().add(
-                      LikePost(
-                        postId: post.id,
-                        userId: post.userId,
-                        like: !post.isLiked,
+                  onComment: () {
+                    // Handle comment action
+                    // This is just a placeholder for now
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Comment feature coming soon!'),
+                        duration: Duration(seconds: 1),
                       ),
                     );
                   },
-                  onComment: () {
-                    // Show comment UI
+                  onLike: () {
+                    // Handle like action locally without using LikePost event
+                    // This is a temporary solution until the LikePost event handler is implemented
+                    final updatedPost = post.copyWith(
+                      isLiked: !post.isLiked,
+                      likeCount: post.isLiked
+                          ? post.likeCount - 1
+                          : post.likeCount + 1,
+                    );
+
+                    // Update the local posts list with the updated post
+                    setState(() {
+                      final index =
+                          _localPosts.indexWhere((p) => p.id == post.id);
+                      if (index != -1) {
+                        _localPosts[index] = updatedPost;
+                      }
+                    });
+
+                    // Show a temporary message for feedback
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Comments coming soon')),
+                      SnackBar(
+                        content: Text(updatedPost.isLiked
+                            ? 'Post liked'
+                            : 'Post unliked'),
+                        duration: const Duration(seconds: 1),
+                      ),
                     );
                   },
                 ),
               );
             },
           ),
-          
-          // Show a top loading indicator when refreshing
-          if (state.isLoadingMore)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: 4,
-                child: const LinearProgressIndicator(),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState(PostsError state) {
-    return ErrorMessageWidget(
-      message: 'Could not load posts: ${state.message}',
-      onRetry: () {
-        _fetchPosts();
-      },
-    );
+  void _refreshPosts() {
+    if (mounted) {
+      _fetchPosts();
+    }
   }
 }

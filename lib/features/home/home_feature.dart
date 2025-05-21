@@ -18,12 +18,8 @@ class HomeFeature {
       // Check if HomeBloc is already registered to prevent duplicate registration
       if (!_serviceLocator.isRegistered<HomeBloc>()) {
         HomeModule.init(_serviceLocator);
-        print('HomeFeature initialized successfully');
-      } else {
-        print('HomeBloc already registered, skipping initialization');
-      }
+      } else {}
     } catch (e) {
-      print('Error initializing HomeFeature: $e');
       // Continue execution even if there's an error to prevent app crashes
     }
   }
@@ -57,7 +53,7 @@ class HomeFeature {
     if (!_serviceLocator.isRegistered<HomeBloc>()) {
       HomeModule.init(_serviceLocator);
     }
-    
+
     // Use BlocProvider.value to reuse the existing instance
     return BlocProvider.value(
       value: _serviceLocator<HomeBloc>(),

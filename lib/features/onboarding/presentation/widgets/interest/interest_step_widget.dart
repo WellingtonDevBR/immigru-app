@@ -130,7 +130,7 @@ class _InterestStepWidgetState extends State<InterestStepWidget> {
                     itemCount: state.filteredInterests.length,
                     itemBuilder: (context, index) {
                       final interest = state.filteredInterests[index];
-                      final isSelected = state.selectedInterestIds.contains(interest.id);
+                      final isSelected = state.selectedInterestIds.contains(interest.id.toString());
                       
                       return InkWell(
                         onTap: () {

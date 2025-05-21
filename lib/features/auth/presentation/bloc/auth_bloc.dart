@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/auth/domain/entities/auth_error.dart';
 import 'package:immigru/features/auth/domain/usecases/login_usecase.dart';
