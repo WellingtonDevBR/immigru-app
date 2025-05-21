@@ -1,6 +1,6 @@
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Use case for retrieving migration steps
 class GetMigrationStepsUseCase {
@@ -15,7 +15,8 @@ class GetMigrationStepsUseCase {
     try {
       _logger.i('Getting migration steps', tag: 'GetMigrationStepsUseCase');
       final steps = await _repository.getMigrationSteps();
-      _logger.i('Retrieved ${steps.length} migration steps', tag: 'GetMigrationStepsUseCase');
+      _logger.i('Retrieved ${steps.length} migration steps',
+          tag: 'GetMigrationStepsUseCase');
       return steps;
     } catch (e, stackTrace) {
       _logger.e(

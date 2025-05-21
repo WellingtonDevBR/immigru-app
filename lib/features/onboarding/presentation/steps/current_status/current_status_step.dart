@@ -8,7 +8,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/current_status/cur
 import 'package:immigru/features/onboarding/presentation/common/base_onboarding_step.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_migration_helper.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_header.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the current immigration status selection step in onboarding

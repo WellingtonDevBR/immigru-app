@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// A manager class for handling onboarding step transitions
 ///
@@ -11,10 +11,10 @@ import 'package:immigru/new_core/logging/logger_interface.dart';
 class OnboardingStepManager {
   /// Page controller for the onboarding steps
   final PageController pageController;
-  
+
   /// Onboarding bloc for state management
   final OnboardingBloc onboardingBloc;
-  
+
   /// Logger for debugging
   final LoggerInterface logger;
 
@@ -54,7 +54,7 @@ class OnboardingStepManager {
     logger.i('Saving onboarding progress', tag: 'OnboardingStepManager');
     onboardingBloc.add(const OnboardingSaved());
   }
-  
+
   /// Animate to a specific step
   void animateToStep(int stepIndex) {
     if (pageController.hasClients) {
@@ -66,12 +66,12 @@ class OnboardingStepManager {
       );
     }
   }
-  
+
   /// Check if we can navigate to the next step based on current state
   bool canNavigateToNextStep(OnboardingState state) {
     return state.canMoveToNextStep && !state.isLastStep;
   }
-  
+
   /// Check if we can navigate to the previous step based on current state
   bool canNavigateToPreviousStep(OnboardingState state) {
     return state.currentStepIndex > 0;

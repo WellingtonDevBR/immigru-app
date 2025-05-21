@@ -4,8 +4,8 @@ import 'package:immigru/features/home/domain/entities/event.dart';
 import 'package:immigru/features/home/domain/entities/immi_grove.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/domain/repositories/home_repository.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/models/failure.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/models/failure.dart';
 
 /// Implementation of HomeRepository
 class HomeRepositoryImpl implements HomeRepository {
@@ -160,7 +160,8 @@ class HomeRepositoryImpl implements HomeRepository {
       );
       return Right(immiGroves);
     } catch (e) {
-      logger.e('Failed to get recommended ImmiGroves: $e', tag: 'HomeRepository');
+      logger.e('Failed to get recommended ImmiGroves: $e',
+          tag: 'HomeRepository');
       return Left(Failure(message: 'Failed to get recommended ImmiGroves'));
     }
   }

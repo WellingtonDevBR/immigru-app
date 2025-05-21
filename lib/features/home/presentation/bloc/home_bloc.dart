@@ -5,7 +5,7 @@ import 'package:immigru/features/home/domain/usecases/get_personalized_posts_use
 import 'package:immigru/features/home/domain/usecases/get_posts_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// BLoC for the home screen
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
@@ -152,7 +152,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     try {
       final currentState = state;
-      if (currentState is PersonalizedPostsLoaded && !currentState.hasReachedMax) {
+      if (currentState is PersonalizedPostsLoaded &&
+          !currentState.hasReachedMax) {
         final result = await getPersonalizedPostsUseCase(
           userId: event.userId,
           limit: _postsLimit,

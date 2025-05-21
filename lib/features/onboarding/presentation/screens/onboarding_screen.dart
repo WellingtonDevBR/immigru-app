@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/profession/profession_step_widget_new.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
@@ -17,8 +17,8 @@ import 'package:immigru/features/onboarding/presentation/steps/language/language
 import 'package:immigru/features/onboarding/presentation/steps/interest/interest_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step.dart';
 import 'package:get_it/get_it.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/di/service_locator.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Main onboarding screen for the feature-first architecture

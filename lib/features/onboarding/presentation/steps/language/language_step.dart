@@ -5,9 +5,9 @@ import 'package:immigru/features/onboarding/presentation/bloc/language/language_
 import 'package:immigru/features/onboarding/presentation/bloc/language/language_state.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import '../../widgets/language/language_step_widget.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Step for selecting languages in the onboarding flow
 class LanguageStep extends StatefulWidget {
@@ -54,10 +54,10 @@ class _LanguageStepState extends State<LanguageStep> {
           if (selectedCodes.isNotEmpty) {
             // Update the onboarding bloc with selected languages
             context.read<OnboardingBloc>().add(
-              LanguagesUpdated(selectedCodes),
-            );
+                  LanguagesUpdated(selectedCodes),
+                );
           }
-          
+
           // Only navigate when languages are saved successfully AND we're coming from the Next button
           if (state.saveSuccess && !_hasNavigated) {
             _hasNavigated = true;
@@ -72,18 +72,21 @@ class _LanguageStepState extends State<LanguageStep> {
               if (state.selectedLanguageCodes.isNotEmpty) {
                 // Convert selected ISO codes to language IDs
                 final selectedIds = state.selectedLanguageCodes
-                    .where((isoCode) => state.languageIdMap.containsKey(isoCode))
+                    .where(
+                        (isoCode) => state.languageIdMap.containsKey(isoCode))
                     .map((isoCode) => state.languageIdMap[isoCode]!)
                     .toList();
-                    
+
                 if (selectedIds.isNotEmpty) {
-                  widget.logger.i('LanguageStep: Saving languages with IDs: $selectedIds');
+                  widget.logger.i(
+                      'LanguageStep: Saving languages with IDs: $selectedIds');
                   // Trigger language saving in the bloc
                   context.read<LanguageBloc>().add(
-                    LanguagesSaved(selectedIds),
-                  );
+                        LanguagesSaved(selectedIds),
+                      );
                 } else {
-                  widget.logger.w('LanguageStep: No valid language IDs found to save');
+                  widget.logger
+                      .w('LanguageStep: No valid language IDs found to save');
                 }
               } else {
                 widget.logger.w('LanguageStep: No languages selected to save');

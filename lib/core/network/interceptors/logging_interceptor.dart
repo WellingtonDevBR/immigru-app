@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
-import 'package:immigru/new_core/network/interceptors/network_interceptor.dart';
-import 'package:immigru/new_core/logging/log_util.dart';
+import 'package:immigru/core/network/interceptors/network_interceptor.dart';
+import 'package:immigru/core/logging/log_util.dart';
 
 /// Interceptor that logs network requests and responses
 class LoggingInterceptor implements NetworkInterceptor {
@@ -16,7 +16,7 @@ class LoggingInterceptor implements NetworkInterceptor {
   Future<http.Response?> onResponse(http.Response response) async {
     final statusCode = response.statusCode;
     final url = response.request?.url.toString() ?? 'unknown';
-    
+
     if (statusCode >= 400) {
       LogUtil.e(
         'HTTP Response: $statusCode from $url',

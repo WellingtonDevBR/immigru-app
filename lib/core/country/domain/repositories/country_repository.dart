@@ -1,4 +1,4 @@
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 
 /// Repository interface for country-related operations in the new architecture
 abstract class CountryFeatureRepository {

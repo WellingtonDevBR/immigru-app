@@ -7,17 +7,17 @@ import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_state.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_step_modal.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_timeline_widget.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the migration journey step in onboarding
 class MigrationJourneyStepWidget extends StatelessWidget {
   /// Birth country of the user
   final String birthCountryId;
-  
+
   /// Birth country name of the user
   final String birthCountryName;
-  
+
   /// Callback when the migration journey is completed
   final Function(List<MigrationStep>) onMigrationJourneyCompleted;
 
@@ -55,10 +55,12 @@ class _MigrationJourneyStepContent extends StatefulWidget {
   });
 
   @override
-  State<_MigrationJourneyStepContent> createState() => _MigrationJourneyStepContentState();
+  State<_MigrationJourneyStepContent> createState() =>
+      _MigrationJourneyStepContentState();
 }
 
-class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepContent>
+class _MigrationJourneyStepContentState
+    extends State<_MigrationJourneyStepContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
@@ -94,56 +96,52 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
     Future.delayed(const Duration(milliseconds: 100), () {
       HapticFeedback.lightImpact();
     });
-    
+
     // Check if we need to add birth country as first step
     Future.delayed(const Duration(milliseconds: 300), () {
       _checkAndAddBirthCountryStep();
     });
   }
-  
+
   /// Check if birth country step exists, if not add it
   void _checkAndAddBirthCountryStep() {
     final bloc = context.read<MigrationJourneyBloc>();
     final state = bloc.state;
-    
-    // Check if birth country is provided
-    if (widget.birthCountryId.isNotEmpty && widget.birthCountryName.isNotEmpty) {
 
-      
+    // Check if birth country is provided
+    if (widget.birthCountryId.isNotEmpty &&
+        widget.birthCountryName.isNotEmpty) {
       // Check if we already have a birth country step
-      final hasBirthCountryStep = state.steps.any((step) => 
-        step.id.startsWith('birth_') || 
-        (step.countryId.toString() == widget.birthCountryId && step.order == 0));
-      
+      final hasBirthCountryStep = state.steps.any((step) =>
+          step.id.startsWith('birth_') ||
+          (step.countryId.toString() == widget.birthCountryId &&
+              step.order == 0));
+
       // If we don't have a birth country step, add it
       if (!hasBirthCountryStep) {
-
         _addBirthCountryStep();
       } else {
-
-        
         // Check if the birth country step has the correct data
         MigrationStep? birthStep;
         try {
           birthStep = state.steps.firstWhere(
-            (step) => step.id.startsWith('birth_') || 
-                      (step.countryId.toString() == widget.birthCountryId && step.order == 0),
+            (step) =>
+                step.id.startsWith('birth_') ||
+                (step.countryId.toString() == widget.birthCountryId &&
+                    step.order == 0),
           );
         } catch (e) {
           // No birth step found
           birthStep = null;
         }
-        
-        if (birthStep != null && 
-            (birthStep.countryName != widget.birthCountryName || 
-             birthStep.countryId.toString() != widget.birthCountryId)) {
 
+        if (birthStep != null &&
+            (birthStep.countryName != widget.birthCountryName ||
+                birthStep.countryId.toString() != widget.birthCountryId)) {
           _addBirthCountryStep(); // This will update the existing step
         }
       }
-    } else {
-
-    }
+    } else {}
   }
 
   @override
@@ -187,7 +185,8 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
                     _buildInstructions(theme, isDarkMode),
                     const SizedBox(height: 16),
                     Expanded(
-                      child: _buildMigrationTimeline(context, state, theme, isDarkMode),
+                      child: _buildMigrationTimeline(
+                          context, state, theme, isDarkMode),
                     ),
                     _buildAddStepButton(context, state, theme),
                     // Add more bottom padding for the footer buttons
@@ -203,13 +202,15 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
   }
 
   /// Build the header section with illustration
-  Widget _buildHeaderSection(BuildContext context, ThemeData theme, bool isDarkMode) {
+  Widget _buildHeaderSection(
+      BuildContext context, ThemeData theme, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -329,8 +330,10 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -366,7 +369,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryColor.withValues(alpha:0.2),
+              color: AppColors.primaryColor.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -374,7 +377,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
           gradient: LinearGradient(
             colors: [
               AppColors.primaryColor,
-              AppColors.primaryColor.withValues(alpha:0.7),
+              AppColors.primaryColor.withValues(alpha: 0.7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -394,7 +397,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha:0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -428,7 +431,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
   void _addBirthCountryStep() {
     // Get the bloc before adding the step
     final migrationJourneyBloc = BlocProvider.of<MigrationJourneyBloc>(context);
-    
+
     // Create a step for the birth country with a special ID format to identify it
     // The 'birth_' prefix helps us identify this as a special step that should be preserved
     final birthCountryStep = MigrationStep(
@@ -453,7 +456,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
   void _showAddStepModal(BuildContext context) {
     // Get the bloc before showing the modal
     final migrationJourneyBloc = BlocProvider.of<MigrationJourneyBloc>(context);
-    
+
     MigrationStepModal.show(
       context: context,
       onSave: (step) {
@@ -467,7 +470,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
   void _editStep(BuildContext context, MigrationStep step) {
     // Get the bloc before showing the modal
     final migrationJourneyBloc = BlocProvider.of<MigrationJourneyBloc>(context);
-    
+
     MigrationStepModal.show(
       context: context,
       step: step,
@@ -475,8 +478,8 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
       onSave: (updatedStep) {
         // Use the bloc captured from the parent context
         migrationJourneyBloc.add(
-              MigrationStepUpdated(step.id, updatedStep),
-            );
+          MigrationStepUpdated(step.id, updatedStep),
+        );
       },
     );
   }
@@ -485,7 +488,7 @@ class _MigrationJourneyStepContentState extends State<_MigrationJourneyStepConte
   void _removeStep(BuildContext context, MigrationStep step) {
     // Get the bloc before showing the dialog
     final migrationJourneyBloc = BlocProvider.of<MigrationJourneyBloc>(context);
-    
+
     // Show confirmation dialog
     showDialog(
       context: context,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/new_core/utils/input_validation.dart';
+import 'package:immigru/core/utils/input_validation.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';

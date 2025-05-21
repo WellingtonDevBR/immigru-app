@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 
 /// State for the birth country step
 class BirthCountryState extends Equatable {

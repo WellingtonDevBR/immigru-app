@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
 import '../data/datasources/interest_data_source.dart';
 import '../data/repositories/interest_repository_impl.dart';
 import '../domain/repositories/interest_repository.dart';

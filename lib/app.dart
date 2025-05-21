@@ -13,7 +13,7 @@ import 'package:immigru/features/onboarding/presentation/screens/onboarding_scre
 import 'package:immigru/features/welcome/welcome_feature.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:immigru/features/welcome/presentation/screens/welcome_screen.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_theme.dart';
 import 'package:immigru/shared/theme/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,7 +65,7 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
     // Initialize features
     _homeFeature.initialize();
     _welcomeFeature.initialize();
-    
+
     // Check authentication status on app start
     _authFeature.checkAuthStatus();
   }
@@ -85,9 +85,9 @@ class _ImmigruAppContentState extends State<_ImmigruAppContent> {
         ..._authFeature.getRoutes(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => BlocProvider<HomeBloc>(
-          create: (context) => sl<HomeBloc>(),
-          child: HomeScreen(),
-        ),
+              create: (context) => sl<HomeBloc>(),
+              child: HomeScreen(),
+            ),
       },
       onGenerateRoute: (settings) {
         // Try auth routes first

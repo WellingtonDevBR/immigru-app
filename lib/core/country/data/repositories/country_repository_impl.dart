@@ -1,7 +1,7 @@
-import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/new_core/country/domain/repositories/country_repository.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/repositories/country_repository.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Implementation of the CountryFeatureRepository for the new architecture
 class CountryRepositoryImpl implements CountryFeatureRepository {

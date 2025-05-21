@@ -9,8 +9,8 @@ import 'package:immigru/features/onboarding/presentation/bloc/current_status/cur
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/migration_journey/migration_journey_event.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_manager.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Helper class to facilitate migration from the old onboarding implementation to the new one
 ///
@@ -25,14 +25,15 @@ class OnboardingMigrationHelper {
     Duration navigationDelay = const Duration(milliseconds: 1000),
   }) {
     return (Country country) {
-      logger.i('Country selected: ${country.name} (${country.isoCode})', tag: 'OnboardingMigration');
-      
+      logger.i('Country selected: ${country.name} (${country.isoCode})',
+          tag: 'OnboardingMigration');
+
       // Get the onboarding bloc
       final onboardingBloc = context.read<OnboardingBloc>();
-      
+
       // Update the bloc with the selected country
       onboardingBloc.add(BirthCountryUpdated(country));
-      
+
       // Auto-navigate to the next step if enabled
       if (autoNavigate) {
         Future.delayed(navigationDelay, () {
@@ -53,17 +54,17 @@ class OnboardingMigrationHelper {
   }) {
     return (String statusId) {
       logger.i('Status selected: $statusId', tag: 'CurrentStatusStep');
-      
+
       // Get the onboarding bloc
       final onboardingBloc = context.read<OnboardingBloc>();
-      
+
       // Find the MigrationStatus that corresponds to the statusId
       final availableStatuses = MigrationStatus.getAvailableStatuses();
       final migrationStatus = availableStatuses.firstWhere(
         (status) => status.id == statusId,
         orElse: () => availableStatuses.first, // Default fallback
       );
-      
+
       // Update the bloc with the selected status
       if (context.mounted) {
         try {
@@ -75,7 +76,7 @@ class OnboardingMigrationHelper {
           onboardingBloc.add(CurrentStatusUpdated(statusId));
         }
       }
-      
+
       // Auto-navigate to the next step if enabled
       if (autoNavigate) {
         Future.delayed(navigationDelay, () {
@@ -95,11 +96,12 @@ class OnboardingMigrationHelper {
     Duration navigationDelay = const Duration(milliseconds: 2000),
   }) {
     return (List<MigrationStep> steps) {
-      logger.i('Migration journey completed with ${steps.length} steps', tag: 'MigrationJourneyStep');
-      
+      logger.i('Migration journey completed with ${steps.length} steps',
+          tag: 'MigrationJourneyStep');
+
       // Get the onboarding bloc
       final onboardingBloc = context.read<OnboardingBloc>();
-      
+
       if (context.mounted) {
         try {
           // Try to use the MigrationJourneyBloc if available
@@ -110,10 +112,10 @@ class OnboardingMigrationHelper {
           onboardingBloc.add(MigrationJourneyUpdated(steps));
         }
       }
-      
+
       // Save progress
       onboardingBloc.add(const OnboardingSaved());
-      
+
       // Auto-navigate to the next step if enabled
       if (autoNavigate) {
         Future.delayed(navigationDelay, () {
@@ -126,7 +128,8 @@ class OnboardingMigrationHelper {
   }
 
   /// Convert a migration journey completion callback to use the new architecture
-  static void Function(List<MigrationStep>) createMigrationJourneyCompletionHandler({
+  static void Function(List<MigrationStep>)
+      createMigrationJourneyCompletionHandler({
     required BuildContext context,
     required LoggerInterface logger,
     bool autoNavigate = true,

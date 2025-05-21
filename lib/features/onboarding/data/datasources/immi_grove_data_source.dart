@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show HttpMethod;
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 import '../models/immi_grove_model.dart';
 
 /// Data source interface for ImmiGrove operations
@@ -48,16 +48,19 @@ class ImmiGroveSupabaseDataSource implements ImmiGroveDataSource {
         _logger.i('ImmiGroveDataSource: Using cached recommended ImmiGroves');
         return _cachedRecommendedImmiGroves!;
       }
-      
-      _logger.i('ImmiGroveDataSource: Fetching recommended ImmiGroves from API');
-      _logger.d('ImmiGroveDataSource: Calling recommended-immigroves with limit=$limit');
-      
+
+      _logger
+          .i('ImmiGroveDataSource: Fetching recommended ImmiGroves from API');
+      _logger.d(
+          'ImmiGroveDataSource: Calling recommended-immigroves with limit=$limit');
+
       // Check if we have a valid session before making the API call
       if (!await _client.hasValidSession()) {
-        _logger.w('ImmiGroveDataSource: No valid session found, returning empty list');
+        _logger.w(
+            'ImmiGroveDataSource: No valid session found, returning empty list');
         return [];
       }
-      
+
       final response = await _client.invoke<dynamic>(
         'recommended-immigroves',
         body: {},
@@ -66,16 +69,16 @@ class ImmiGroveSupabaseDataSource implements ImmiGroveDataSource {
         },
         method: HttpMethod.get,
       );
-      
+
       _logger.d('ImmiGroveDataSource: Raw response: ${response.data}');
 
       if (response.isSuccess) {
         try {
           // Handle different response formats
           List<dynamic> immigrovesJson = [];
-          
+
           if (response.data is Map<String, dynamic>) {
-            // Standard format: {"data": [...]} 
+            // Standard format: {"data": [...]}
             final responseData = response.data as Map<String, dynamic>;
             immigrovesJson = responseData['data'] as List<dynamic>? ?? [];
           } else if (response.data is String) {
@@ -90,35 +93,39 @@ class ImmiGroveSupabaseDataSource implements ImmiGroveDataSource {
                   immigrovesJson = decodedData;
                 }
               } catch (e) {
-                _logger.e('ImmiGroveDataSource: Error parsing JSON string response', error: e);
+                _logger.e(
+                    'ImmiGroveDataSource: Error parsing JSON string response',
+                    error: e);
               }
             }
           } else if (response.data is List) {
             // Direct list format
             immigrovesJson = response.data as List<dynamic>;
           }
-          
-          _logger.i('ImmiGroveDataSource: Received ${immigrovesJson.length} recommended ImmiGroves from API');
-          
+
+          _logger.i(
+              'ImmiGroveDataSource: Received ${immigrovesJson.length} recommended ImmiGroves from API');
+
           if (immigrovesJson.isNotEmpty) {
             try {
               // Parse the response into ImmiGroveModel objects
               final immiGroves = immigrovesJson
-                  .map((json) => ImmiGroveModel.fromJson(json as Map<String, dynamic>))
+                  .map((json) =>
+                      ImmiGroveModel.fromJson(json as Map<String, dynamic>))
                   .toList();
-              
+
               // Cache the results
               _cachedRecommendedImmiGroves = immiGroves;
               _shouldRefreshCache = false;
-              
+
               return immiGroves;
             } catch (e, stackTrace) {
-              _logger.e('ImmiGroveDataSource: Error parsing ImmiGrove models', 
+              _logger.e('ImmiGroveDataSource: Error parsing ImmiGrove models',
                   error: e, stackTrace: stackTrace);
             }
           }
         } catch (e, stackTrace) {
-          _logger.e('ImmiGroveDataSource: Error parsing response data', 
+          _logger.e('ImmiGroveDataSource: Error parsing response data',
               error: e, stackTrace: stackTrace);
         }
       } else {

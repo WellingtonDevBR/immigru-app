@@ -6,7 +6,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/profession/profess
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_state.dart';
 import 'package:immigru/features/onboarding/presentation/common/index.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the profession selection step in onboarding
@@ -46,34 +46,35 @@ class _ProfessionStepContent extends BaseOnboardingStep {
   State<_ProfessionStepContent> createState() => _ProfessionStepContentState();
 }
 
-class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionStepContent>
+class _ProfessionStepContentState
+    extends BaseOnboardingStepState<_ProfessionStepContent>
     with SingleTickerProviderStateMixin {
   late TextEditingController _searchController;
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Track if a profession has been selected
   bool _professionSelected = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize search controller
     _searchController = TextEditingController();
-    
+
     // Setup animations
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _fadeInAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeIn,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -81,30 +82,30 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     // Start animations
     _animationController.forward();
-    
+
     // Add haptic feedback when screen appears
     Future.delayed(const Duration(milliseconds: 100), () {
       HapticFeedback.lightImpact();
     });
-    
+
     // Reset profession selection flag when coming back to this screen
     _professionSelected = false;
   }
-  
+
   @override
   void didUpdateWidget(covariant _ProfessionStepContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Reset animation when coming back to this screen
     if (!_animationController.isAnimating && _animationController.value == 0) {
       // Animation is at the beginning, restart it
       _animationController.forward();
     }
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -120,18 +121,20 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
     return BlocConsumer<ProfessionBloc, ProfessionState>(
       listener: (context, state) {
         // Handle profession selection
-        if (state.selectedProfession != null && state.status != ProfessionStatus.loading) {
+        if (state.selectedProfession != null &&
+            state.status != ProfessionStatus.loading) {
           // Make sure the animation is running if it's at 0
-          if (_animationController.value == 0 && !_animationController.isAnimating) {
+          if (_animationController.value == 0 &&
+              !_animationController.isAnimating) {
             _animationController.forward();
           }
-          
+
           // Only set _professionSelected if it's not already true
           if (!_professionSelected) {
             setState(() {
               _professionSelected = true;
             });
-            
+
             // Check if this is a manual selection (not from initialization)
             // Only trigger navigation for manual selections, not when coming back from language step
             if (state.selectionSource == SelectionSource.userAction) {
@@ -152,13 +155,14 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
       },
       builder: (context, state) {
         // Set initial selection if profession was provided
-        if (widget.selectedProfession != null && 
-            widget.selectedProfession!.isNotEmpty && 
-            state.selectedProfession == null && 
+        if (widget.selectedProfession != null &&
+            widget.selectedProfession!.isNotEmpty &&
+            state.selectedProfession == null &&
             state.status != ProfessionStatus.loading) {
           // Find matching profession in the list
           final matchingProfession = state.filteredProfessions
-              .where((profession) => profession.name == widget.selectedProfession)
+              .where(
+                  (profession) => profession.name == widget.selectedProfession)
               .toList();
 
           if (matchingProfession.isNotEmpty) {
@@ -190,7 +194,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primaryColor.withValues(alpha:0.7),
+                            AppColors.primaryColor.withValues(alpha: 0.7),
                             AppColors.primaryColor,
                           ],
                           begin: Alignment.topLeft,
@@ -199,7 +203,8 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryColor.withValues(alpha:0.3),
+                            color:
+                                AppColors.primaryColor.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -215,7 +220,8 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                               children: [
                                 Text(
                                   'What is your profession?',
-                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                  style:
+                                      theme.textTheme.headlineSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -224,13 +230,13 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                                 Text(
                                   'Select your profession or enter a custom one',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha:0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          
+
                           // Right side: Profession icon
                           Expanded(
                             flex: 2,
@@ -242,7 +248,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha:0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -260,7 +266,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                         ],
                       ),
                     ),
-                    
+
                     // Search bar
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
@@ -273,14 +279,17 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                             borderRadius: BorderRadius.circular(12.0),
                           ),
                           filled: true,
-                          fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+                          fillColor:
+                              isDarkMode ? Colors.grey[800] : Colors.grey[50],
                         ),
                         onChanged: (query) {
-                          context.read<ProfessionBloc>().add(SearchQueryChanged(query));
+                          context
+                              .read<ProfessionBloc>()
+                              .add(SearchQueryChanged(query));
                         },
                       ),
                     ),
-                    
+
                     // Professions list
                     Expanded(
                       child: state.status == ProfessionStatus.loading
@@ -288,7 +297,8 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CircularProgressIndicator(color: AppColors.primaryColor),
+                                  CircularProgressIndicator(
+                                      color: AppColors.primaryColor),
                                   const SizedBox(height: 16),
                                   Text(
                                     'Loading professions...',
@@ -299,7 +309,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
                             )
                           : _buildProfessionsList(context, state),
                     ),
-                    
+
                     // Custom profession button
                     if (state.showCustomInput)
                       Padding(
@@ -337,7 +347,7 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
       },
     );
   }
-  
+
   Widget _buildProfessionsList(BuildContext context, ProfessionState state) {
     return ListView.builder(
       padding: EdgeInsets.zero,
@@ -389,8 +399,9 @@ class _ProfessionStepContentState extends BaseOnboardingStepState<_ProfessionSte
       },
     );
   }
-  
-  Widget _buildCustomProfessionInput(BuildContext context, ProfessionState state) {
+
+  Widget _buildCustomProfessionInput(
+      BuildContext context, ProfessionState state) {
     final customProfessionController = TextEditingController();
     final industryController = TextEditingController();
 

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:immigru/new_core/logging/log_util.dart';
+import 'package:immigru/core/logging/log_util.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:immigru/new_core/config/google_auth_config.dart';
+import 'package:immigru/core/config/google_auth_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:immigru/features/auth/data/models/user_model.dart';
 import 'package:immigru/features/auth/domain/entities/auth_error.dart';

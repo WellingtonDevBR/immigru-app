@@ -1,5 +1,5 @@
-import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/new_core/country/domain/repositories/country_repository.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/repositories/country_repository.dart';
 
 /// Use case for getting all countries
 class GetCountriesUseCase {

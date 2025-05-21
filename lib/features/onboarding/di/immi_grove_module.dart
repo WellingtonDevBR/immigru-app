@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
 
 import '../data/datasources/immi_grove_data_source.dart';
 import '../data/repositories/immi_grove_repository_impl.dart';
@@ -36,19 +36,19 @@ class ImmiGroveModule {
     sl.registerLazySingleton(
       () => GetRecommendedImmiGrovesUseCase(sl<ImmiGroveRepository>()),
     );
-    
+
     sl.registerLazySingleton(
       () => JoinImmiGroveUseCase(sl<ImmiGroveRepository>()),
     );
-    
+
     sl.registerLazySingleton(
       () => LeaveImmiGroveUseCase(sl<ImmiGroveRepository>()),
     );
-    
+
     sl.registerLazySingleton(
       () => GetJoinedImmiGrovesUseCase(sl<ImmiGroveRepository>()),
     );
-    
+
     sl.registerLazySingleton(
       () => SaveSelectedImmiGrovesUseCase(sl<ImmiGroveRepository>()),
     );

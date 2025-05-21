@@ -10,17 +10,17 @@ import 'package:immigru/features/onboarding/presentation/common/onboarding_navig
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_header.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_step_modal.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_timeline_widget.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the migration journey step in onboarding
-/// 
+///
 /// This step allows users to add and edit their migration journey steps.
 /// It follows the new architecture pattern using the BaseOnboardingStep.
 class MigrationJourneyStep extends BaseOnboardingStep {
   /// The birth country ID of the user
   final String birthCountryId;
-  
+
   /// The birth country name of the user
   final String birthCountryName;
 
@@ -34,10 +34,11 @@ class MigrationJourneyStep extends BaseOnboardingStep {
   State<MigrationJourneyStep> createState() => _MigrationJourneyStepState();
 }
 
-class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourneyStep> {
+class _MigrationJourneyStepState
+    extends BaseOnboardingStepState<MigrationJourneyStep> {
   // Flag to track if the journey is complete
   bool _isJourneyComplete = false;
-  
+
   // Flag to track if saving is in progress
   bool _isSaving = false;
 
@@ -69,7 +70,7 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
             subtitle: 'Tell us about your migration journey so far.',
             icon: Icons.flight_takeoff,
           ),
-          
+
           // Migration journey content
           Expanded(
             child: BlocConsumer<MigrationJourneyBloc, MigrationJourneyState>(
@@ -91,16 +92,16 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
                     child: CircularProgressIndicator(),
                   );
                 }
-                
+
                 if (state.errorMessage != null) {
                   return _buildErrorState(context, state.errorMessage!);
                 }
-                
+
                 return _buildMigrationJourneyContent(context, state);
               },
             ),
           ),
-          
+
           // Navigation buttons
           BlocBuilder<MigrationJourneyBloc, MigrationJourneyState>(
             builder: (context, state) {
@@ -155,10 +156,11 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
     );
   }
 
-  Widget _buildMigrationJourneyContent(BuildContext context, MigrationJourneyState state) {
+  Widget _buildMigrationJourneyContent(
+      BuildContext context, MigrationJourneyState state) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -198,9 +200,9 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
             ],
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Migration timeline
         Expanded(
           child: state.steps.isEmpty
@@ -211,7 +213,7 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
                   onRemoveStep: (step) => _handleDeleteStep(context, step),
                 ),
         ),
-        
+
         // Add step button
         if (state.steps.isNotEmpty)
           Center(
@@ -228,7 +230,7 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -286,7 +288,9 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
       step: step,
       isEditing: true,
       onSave: (MigrationStep updatedStep) {
-        context.read<MigrationJourneyBloc>().add(MigrationStepUpdated(step.id, updatedStep));
+        context
+            .read<MigrationJourneyBloc>()
+            .add(MigrationStepUpdated(step.id, updatedStep));
       },
     );
   }
@@ -296,7 +300,8 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Step'),
-        content: const Text('Are you sure you want to delete this migration step?'),
+        content:
+            const Text('Are you sure you want to delete this migration step?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -304,7 +309,9 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
           ),
           TextButton(
             onPressed: () {
-              context.read<MigrationJourneyBloc>().add(MigrationStepRemoved(step.id));
+              context
+                  .read<MigrationJourneyBloc>()
+                  .add(MigrationStepRemoved(step.id));
               Navigator.of(context).pop();
             },
             child: const Text('Delete'),
@@ -314,7 +321,8 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
     );
   }
 
-  Future<void> _handleJourneyCompleted(BuildContext context, List<MigrationStep> steps) async {
+  Future<void> _handleJourneyCompleted(
+      BuildContext context, List<MigrationStep> steps) async {
     setState(() {
       _isSaving = true;
     });
@@ -322,34 +330,37 @@ class _MigrationJourneyStepState extends BaseOnboardingStepState<MigrationJourne
     try {
       // Store the bloc reference before the async operation
       final migrationJourneyBloc = context.read<MigrationJourneyBloc>();
-      
+
       // Save the migration steps
       migrationJourneyBloc.add(const MigrationStepsSaved());
-      
+
       // Update the onboarding bloc with the migration steps
       // Use the onboarding migration helper to handle the event
-      final migrationHandler = OnboardingMigrationHelper.createMigrationJourneyCompletionHandler(
+      final migrationHandler =
+          OnboardingMigrationHelper.createMigrationJourneyCompletionHandler(
         context: context,
         logger: logger,
         autoNavigate: false,
       );
       migrationHandler(steps);
-      
+
       // Add a small delay to ensure the save completes before moving to next step
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       // Navigate to the next step if still mounted
       if (mounted) {
         goToNextStep();
       }
     } catch (e) {
-      logger.e('Error saving migration journey', tag: 'MigrationJourney', error: e);
-      
+      logger.e('Error saving migration journey',
+          tag: 'MigrationJourney', error: e);
+
       // Show error snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to save migration journey. Please try again.'),
+            content:
+                Text('Failed to save migration journey. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );

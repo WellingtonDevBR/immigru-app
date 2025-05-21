@@ -7,8 +7,8 @@ import 'package:immigru/features/home/domain/usecases/get_events_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_personalized_posts_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_posts_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/api_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Module for home feature dependency injection
@@ -42,19 +42,19 @@ class HomeModule {
           () => GetPostsUseCase(sl<HomeRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<GetPersonalizedPostsUseCase>()) {
         sl.registerLazySingleton(
           () => GetPersonalizedPostsUseCase(sl<HomeRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<GetEventsUseCase>()) {
         sl.registerLazySingleton(
           () => GetEventsUseCase(sl<HomeRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<CreatePostUseCase>()) {
         sl.registerLazySingleton(
           () => CreatePostUseCase(sl<HomeRepository>()),

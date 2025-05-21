@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:immigru/new_core/network/interceptors/network_interceptor.dart';
-import 'package:immigru/new_core/network/models/api_response.dart';
-import 'package:immigru/new_core/network/models/request_options.dart';
+import 'package:immigru/core/network/interceptors/network_interceptor.dart';
+import 'package:immigru/core/network/models/api_response.dart';
+import 'package:immigru/core/network/models/request_options.dart';
 
 /// API client for making HTTP requests
 /// This class provides a clean interface for making HTTP requests
@@ -10,19 +10,19 @@ import 'package:immigru/new_core/network/models/request_options.dart';
 class ApiClient {
   final http.Client _client;
   final List<NetworkInterceptor> _interceptors;
-  
+
   /// Creates a new API client with the given interceptors
   ApiClient({
     http.Client? client,
     List<NetworkInterceptor>? interceptors,
-  }) : _client = client ?? http.Client(),
-       _interceptors = interceptors ?? [];
-  
+  })  : _client = client ?? http.Client(),
+        _interceptors = interceptors ?? [];
+
   /// Add an interceptor to the client
   void addInterceptor(NetworkInterceptor interceptor) {
     _interceptors.add(interceptor);
   }
-  
+
   /// Make a GET request to the given URL
   Future<ApiResponse<T>> get<T>(
     String url, {
@@ -31,11 +31,11 @@ class ApiClient {
     RequestOptions? options,
   }) async {
     var request = http.Request('GET', Uri.parse(url));
-    
+
     if (headers != null) {
       request.headers.addAll(headers);
     }
-    
+
     if (queryParameters != null) {
       final uri = Uri.parse(url).replace(queryParameters: queryParameters);
       // Create a new request with the updated URI
@@ -44,10 +44,10 @@ class ApiClient {
       newRequest.body = request.body;
       request = newRequest;
     }
-    
+
     return _executeRequest<T>(request, options);
   }
-  
+
   /// Make a POST request to the given URL
   Future<ApiResponse<T>> post<T>(
     String url, {
@@ -56,11 +56,11 @@ class ApiClient {
     RequestOptions? options,
   }) async {
     final request = http.Request('POST', Uri.parse(url));
-    
+
     if (headers != null) {
       request.headers.addAll(headers);
     }
-    
+
     if (body != null) {
       if (body is String) {
         request.body = body;
@@ -69,10 +69,10 @@ class ApiClient {
         request.headers['Content-Type'] = 'application/json';
       }
     }
-    
+
     return _executeRequest<T>(request, options);
   }
-  
+
   /// Make a PUT request to the given URL
   Future<ApiResponse<T>> put<T>(
     String url, {
@@ -81,11 +81,11 @@ class ApiClient {
     RequestOptions? options,
   }) async {
     final request = http.Request('PUT', Uri.parse(url));
-    
+
     if (headers != null) {
       request.headers.addAll(headers);
     }
-    
+
     if (body != null) {
       if (body is String) {
         request.body = body;
@@ -94,10 +94,10 @@ class ApiClient {
         request.headers['Content-Type'] = 'application/json';
       }
     }
-    
+
     return _executeRequest<T>(request, options);
   }
-  
+
   /// Make a DELETE request to the given URL
   Future<ApiResponse<T>> delete<T>(
     String url, {
@@ -106,11 +106,11 @@ class ApiClient {
     RequestOptions? options,
   }) async {
     final request = http.Request('DELETE', Uri.parse(url));
-    
+
     if (headers != null) {
       request.headers.addAll(headers);
     }
-    
+
     if (body != null) {
       if (body is String) {
         request.body = body;
@@ -119,10 +119,10 @@ class ApiClient {
         request.headers['Content-Type'] = 'application/json';
       }
     }
-    
+
     return _executeRequest<T>(request, options);
   }
-  
+
   /// Execute the given request with interceptors
   Future<ApiResponse<T>> _executeRequest<T>(
     http.Request request,
@@ -136,11 +136,11 @@ class ApiClient {
           request = interceptedRequest;
         }
       }
-      
+
       // Execute the request
       final streamedResponse = await _client.send(request);
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       // Apply response interceptors
       http.Response interceptedResponse = response;
       for (final interceptor in _interceptors) {
@@ -149,11 +149,11 @@ class ApiClient {
           interceptedResponse = intercepted;
         }
       }
-      
+
       // Parse the response
       final statusCode = interceptedResponse.statusCode;
       final responseBody = interceptedResponse.body;
-      
+
       if (statusCode >= 200 && statusCode < 300) {
         // Success response
         return ApiResponse<T>.success(
@@ -175,7 +175,7 @@ class ApiClient {
       for (final interceptor in _interceptors) {
         await interceptor.onError(error, stackTrace);
       }
-      
+
       // Return error response
       return ApiResponse<T>.error(
         statusCode: 0,
@@ -185,16 +185,16 @@ class ApiClient {
       );
     }
   }
-  
+
   /// Parse the response data based on the expected type
   T? _parseResponseData<T>(String responseBody) {
     if (responseBody.isEmpty) {
       return null;
     }
-    
+
     try {
       final dynamic jsonData = jsonDecode(responseBody);
-      
+
       if (T == String) {
         return responseBody as T;
       } else if (T == Map<String, dynamic>) {
@@ -214,7 +214,7 @@ class ApiClient {
       return null;
     }
   }
-  
+
   /// Close the client and release resources
   void close() {
     _client.close();

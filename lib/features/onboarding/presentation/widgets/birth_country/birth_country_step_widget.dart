@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_state.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 // No longer using the CountrySelector widget as we've built a custom implementation
 import 'package:cached_network_image/cached_network_image.dart';
@@ -45,37 +45,50 @@ class _BirthCountryStepContent extends StatefulWidget {
   });
 
   @override
-  State<_BirthCountryStepContent> createState() => _BirthCountryStepContentState();
+  State<_BirthCountryStepContent> createState() =>
+      _BirthCountryStepContentState();
 }
 
-class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with SingleTickerProviderStateMixin {
+class _BirthCountryStepContentState extends State<_BirthCountryStepContent>
+    with SingleTickerProviderStateMixin {
   late TextEditingController _searchController;
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Track if a country has been selected
   bool _countrySelected = false;
-  
+
   // Popular countries to highlight
-  final List<String> _popularCountryCodes = ['US', 'CA', 'GB', 'AU', 'BR', 'IN', 'CN', 'JP', 'DE', 'FR'];
-  
+  final List<String> _popularCountryCodes = [
+    'US',
+    'CA',
+    'GB',
+    'AU',
+    'BR',
+    'IN',
+    'CN',
+    'JP',
+    'DE',
+    'FR'
+  ];
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    
+
     // Setup animations
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _fadeInAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeIn,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -83,16 +96,16 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     // Start animations
     _animationController.forward();
-    
+
     // Add haptic feedback when screen appears
     Future.delayed(const Duration(milliseconds: 100), () {
       HapticFeedback.lightImpact();
     });
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -109,14 +122,16 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
     return BlocConsumer<BirthCountryBloc, BirthCountryState>(
       listener: (context, state) {
         // Handle country selection
-        if (state.selectedCountry != null && !state.isLoading && !_countrySelected) {
+        if (state.selectedCountry != null &&
+            !state.isLoading &&
+            !_countrySelected) {
           setState(() {
             _countrySelected = true;
           });
-          
+
           // Provide haptic feedback
           HapticFeedback.mediumImpact();
-          
+
           // Animate out before navigating
           _animationController.reverse().then((_) {
             // Notify parent about country selection
@@ -126,10 +141,10 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
       },
       builder: (context, state) {
         // Set initial selection if ID was provided
-        if (widget.selectedCountryId != null && 
-            widget.selectedCountryId!.isNotEmpty && 
-            state.selectedCountry == null && 
-            !state.isLoading && 
+        if (widget.selectedCountryId != null &&
+            widget.selectedCountryId!.isNotEmpty &&
+            state.selectedCountry == null &&
+            !state.isLoading &&
             state.countries.isNotEmpty) {
           final matchingCountries = state.countries
               .where((country) => country.isoCode == widget.selectedCountryId)
@@ -148,14 +163,16 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
         // Separate countries into popular and other
         List<Country> popularCountries = [];
         List<Country> otherCountries = [];
-        
+
         if (!state.isLoading && state.countries.isNotEmpty) {
           popularCountries = state.countries
-              .where((country) => _popularCountryCodes.contains(country.isoCode))
+              .where(
+                  (country) => _popularCountryCodes.contains(country.isoCode))
               .toList();
-          
+
           otherCountries = state.countries
-              .where((country) => !_popularCountryCodes.contains(country.isoCode))
+              .where(
+                  (country) => !_popularCountryCodes.contains(country.isoCode))
               .toList();
         }
 
@@ -171,30 +188,29 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    
+
                     // Progress indicator
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: LinearProgressIndicator(
                         value: 0.1, // First step
-                        backgroundColor: isDarkMode 
-                            ? Colors.grey[800] 
-                            : Colors.grey[200],
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[800] : Colors.grey[200],
                         color: AppColors.primaryColor,
                         borderRadius: BorderRadius.circular(10),
                         minHeight: 6,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Animated header with brand colors and illustration
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primaryColor.withValues(alpha:0.7),
+                            AppColors.primaryColor.withValues(alpha: 0.7),
                             AppColors.primaryColor,
                           ],
                           begin: Alignment.topLeft,
@@ -203,7 +219,8 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryColor.withValues(alpha:0.3),
+                            color:
+                                AppColors.primaryColor.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -219,7 +236,8 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                               children: [
                                 Text(
                                   'Where were you born?',
-                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                  style:
+                                      theme.textTheme.headlineSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -228,18 +246,19 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                                 Text(
                                   'This helps us personalize your experience',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha:0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          
+
                           // Right side: Globe illustration
                           Expanded(
                             flex: 2,
                             child: Transform.rotate(
-                              angle: -math.pi / 20, // Slight tilt for visual interest
+                              angle: -math.pi /
+                                  20, // Slight tilt for visual interest
                               child: Container(
                                 height: 100,
                                 decoration: BoxDecoration(
@@ -247,7 +266,8 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha:0.1),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -266,9 +286,9 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Search field
                     Container(
                       decoration: BoxDecoration(
@@ -276,7 +296,7 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha:0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -303,7 +323,8 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                                   onPressed: () {
                                     _searchController.clear();
                                     context.read<BirthCountryBloc>().add(
-                                          const BirthCountrySearchQueryChanged(''),
+                                          const BirthCountrySearchQueryChanged(
+                                              ''),
                                         );
                                   },
                                 )
@@ -311,16 +332,16 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Loading, error, or country list
                     Expanded(
                       child: _buildCountryList(
-                        state, 
-                        popularCountries, 
-                        otherCountries, 
-                        isDarkMode, 
+                        state,
+                        popularCountries,
+                        otherCountries,
+                        isDarkMode,
                         theme,
                         size,
                       ),
@@ -334,12 +355,12 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
       },
     );
   }
-  
+
   Widget _buildCountryList(
-    BirthCountryState state, 
-    List<Country> popularCountries, 
-    List<Country> otherCountries, 
-    bool isDarkMode, 
+    BirthCountryState state,
+    List<Country> popularCountries,
+    List<Country> otherCountries,
+    bool isDarkMode,
     ThemeData theme,
     Size size,
   ) {
@@ -360,7 +381,7 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
         ),
       );
     }
-    
+
     if (state.errorMessage != null) {
       return Center(
         child: Column(
@@ -389,15 +410,17 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
         ),
       );
     }
-    
+
     // No search results
     if (_searchController.text.isNotEmpty && state.filteredCountries.isEmpty) {
       return Center(
@@ -429,15 +452,15 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
         ),
       );
     }
-    
+
     // Country grid/list view
     final displayCountries = _searchController.text.isNotEmpty
         ? state.filteredCountries
         : [...popularCountries, ...otherCountries];
-    
+
     // Use grid for larger screens, list for smaller ones
     final isWideScreen = size.width > 600;
-    
+
     if (isWideScreen) {
       return GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -458,7 +481,7 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
         },
       );
     }
-    
+
     return ListView.builder(
       itemCount: _searchController.text.isEmpty && popularCountries.isNotEmpty
           ? displayCountries.length + 1 // +1 for the popular countries header
@@ -479,19 +502,20 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
               ),
             );
           }
-          
+
           // Adjust index to account for header
           final countryIndex = index - 1;
           if (countryIndex < displayCountries.length) {
             return _buildCountryCard(
               displayCountries[countryIndex],
-              state.selectedCountry?.isoCode == displayCountries[countryIndex].isoCode,
+              state.selectedCountry?.isoCode ==
+                  displayCountries[countryIndex].isoCode,
               isDarkMode,
               theme,
             );
           }
         }
-        
+
         // Regular list without header
         return _buildCountryCard(
           displayCountries[index],
@@ -502,14 +526,15 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
       },
     );
   }
-  
-  Widget _buildCountryCard(Country country, bool isSelected, bool isDarkMode, ThemeData theme) {
+
+  Widget _buildCountryCard(
+      Country country, bool isSelected, bool isDarkMode, ThemeData theme) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primaryColor.withValues(alpha:isDarkMode ? 0.3 : 0.1)
+            ? AppColors.primaryColor.withValues(alpha: isDarkMode ? 0.3 : 0.1)
             : isDarkMode
                 ? Colors.grey[850]
                 : Colors.white,
@@ -525,14 +550,14 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: AppColors.primaryColor.withValues(alpha:0.3),
+                  color: AppColors.primaryColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -544,7 +569,7 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
             context.read<BirthCountryBloc>().add(
                   BirthCountrySelected(country),
                 );
-            
+
             // Provide haptic feedback
             HapticFeedback.selectionClick();
           }
@@ -566,12 +591,14 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                         placeholder: (context, url) => Container(
                           width: 36,
                           height: 24,
-                          color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                          color:
+                              isDarkMode ? Colors.grey[700] : Colors.grey[300],
                         ),
                         errorWidget: (context, url, error) => Container(
                           width: 36,
                           height: 24,
-                          color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                          color:
+                              isDarkMode ? Colors.grey[700] : Colors.grey[300],
                           child: Center(
                             child: Text(
                               country.isoCode.substring(0, 2),
@@ -597,13 +624,14 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                       ),
               ),
               const SizedBox(width: 16),
-              
+
               // Country name
               Expanded(
                 child: Text(
                   country.name,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                     color: isSelected
                         ? AppColors.primaryColor
                         : isDarkMode
@@ -612,7 +640,7 @@ class _BirthCountryStepContentState extends State<_BirthCountryStepContent> with
                   ),
                 ),
               ),
-              
+
               // Selection indicator
               if (isSelected)
                 Container(

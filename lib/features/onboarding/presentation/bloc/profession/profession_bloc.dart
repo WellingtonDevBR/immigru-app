@@ -4,7 +4,7 @@ import 'package:immigru/features/onboarding/presentation/bloc/profession/profess
 import 'package:immigru/features/onboarding/presentation/bloc/profession/profession_state.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// BLoC for managing profession selection in the onboarding process
 class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
@@ -50,18 +50,22 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
     Emitter<ProfessionState> emit,
   ) {
     _logger.i('ProfessionBloc: Initializing profession step');
-    
+
     // Get the selected profession from the onboarding bloc if available
     final onboardingState = _onboardingBloc.state;
     final selectedProfession = onboardingState.profession != null
-        ? Profession(name: onboardingState.profession!, industry: onboardingState.industry)
+        ? Profession(
+            name: onboardingState.profession!,
+            industry: onboardingState.industry)
         : null;
-    
+
     emit(state.copyWith(
       status: ProfessionStatus.loaded,
       selectedProfession: selectedProfession,
       // Use system source when initializing with existing data
-      selectionSource: selectedProfession != null ? SelectionSource.system : SelectionSource.initial,
+      selectionSource: selectedProfession != null
+          ? SelectionSource.system
+          : SelectionSource.initial,
       availableProfessions: _commonProfessions,
       filteredProfessions: _commonProfessions,
     ));
@@ -73,20 +77,20 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
     Emitter<ProfessionState> emit,
   ) {
     _logger.i('ProfessionBloc: Profession selected: ${event.profession.name}');
-    
+
     emit(state.copyWith(
       selectedProfession: event.profession,
       status: ProfessionStatus.saving,
       // Mark this as a user action (manual selection)
       selectionSource: SelectionSource.userAction,
     ));
-    
+
     // Update the onboarding bloc with the selected profession
     _onboardingBloc.add(ProfessionUpdated(
       event.profession.name,
       industry: event.profession.industry,
     ));
-    
+
     emit(state.copyWith(
       status: ProfessionStatus.saved,
       // Keep the userAction source
@@ -100,7 +104,7 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
     Emitter<ProfessionState> emit,
   ) {
     _logger.i('ProfessionBloc: Custom profession entered: ${event.profession}');
-    
+
     if (event.profession.trim().isEmpty) {
       emit(state.copyWith(
         status: ProfessionStatus.error,
@@ -108,13 +112,13 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
       ));
       return;
     }
-    
+
     final customProfession = Profession(
       name: event.profession.trim(),
       industry: event.industry?.trim(),
       isCustom: true,
     );
-    
+
     add(ProfessionSelected(customProfession));
   }
 
@@ -124,7 +128,7 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
     Emitter<ProfessionState> emit,
   ) {
     _logger.i('ProfessionBloc: Search query changed: ${event.query}');
-    
+
     if (event.query.isEmpty) {
       emit(state.copyWith(
         searchQuery: '',
@@ -150,7 +154,7 @@ class ProfessionBloc extends Bloc<ProfessionEvent, ProfessionState> {
     Emitter<ProfessionState> emit,
   ) {
     _logger.i('ProfessionBloc: Show custom input toggled: ${event.show}');
-    
+
     emit(state.copyWith(
       showCustomInput: event.show,
     ));

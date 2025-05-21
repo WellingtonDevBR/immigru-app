@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
-import 'package:immigru/new_core/logging/logger_provider.dart';
-import 'package:immigru/new_core/logging/unified_logger.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_provider.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Logging module for dependency injection
 /// Registers all logging-related dependencies

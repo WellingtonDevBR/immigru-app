@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/country_selector.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/visa_selector.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Modal for adding or editing a migration step
@@ -42,17 +42,19 @@ class _MigrationStepModalContent extends StatefulWidget {
   });
 
   @override
-  State<_MigrationStepModalContent> createState() => _MigrationStepModalContentState();
+  State<_MigrationStepModalContent> createState() =>
+      _MigrationStepModalContentState();
 }
 
-class _MigrationStepModalContentState extends State<_MigrationStepModalContent> {
+class _MigrationStepModalContentState
+    extends State<_MigrationStepModalContent> {
   // Form key
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
-  
+
   // Selected values
   Country? _selectedCountry;
   Visa? _selectedVisa;
@@ -60,60 +62,53 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
   DateTime? _endDate;
   bool _isCurrentLocation = false;
   bool _isTargetCountry = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize values if editing
     if (widget.isEditing && widget.step != null) {
       _initializeValues();
     }
   }
-  
+
   @override
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
     super.dispose();
   }
-  
+
   /// Initialize values from the step
   void _initializeValues() {
     final step = widget.step!;
-    
+
     // Set dates
     _startDate = step.startDate;
     _endDate = step.endDate;
-    
+
     if (_startDate != null) {
       _startDateController.text = DateFormat('MMM yyyy').format(_startDate!);
     }
-    
+
     if (_endDate != null) {
       _endDateController.text = DateFormat('MMM yyyy').format(_endDate!);
     }
-    
+
     // Set flags
     _isCurrentLocation = step.isCurrentLocation;
     _isTargetCountry = step.isTargetCountry;
-    
+
     // Log the step data for debugging
-
-
-
   }
-  
 
-  
-
-  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
-    
+
     return Container(
       padding: EdgeInsets.only(
         bottom: mediaQuery.viewInsets.bottom,
@@ -156,15 +151,15 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Country selector
                 _buildCountrySelector(theme, isDarkMode),
                 const SizedBox(height: 16),
-                
+
                 // Visa type selector
                 _buildVisaTypeSelector(theme, isDarkMode),
                 const SizedBox(height: 16),
-                
+
                 // Date range
                 Row(
                   children: [
@@ -191,11 +186,11 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Current location checkbox
                 _buildCurrentLocationCheckbox(theme, isDarkMode),
                 const SizedBox(height: 24),
-                
+
                 // Save button
                 SizedBox(
                   width: double.infinity,
@@ -205,7 +200,8 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
                       backgroundColor: AppColors.primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(widget.isEditing ? 'Update' : 'Add'),
                   ),
@@ -217,16 +213,11 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       ),
     );
   }
-  
+
   /// Build the country selector
   Widget _buildCountrySelector(ThemeData theme, bool isDarkMode) {
     // Debug log for country selection
     if (widget.isEditing && widget.step != null) {
-
-
-
-
-      
       // CRITICAL: For countries with missing codes, set a default code based on the country name
       String countryCode = widget.step!.countryCode;
       if (countryCode.isEmpty) {
@@ -244,54 +235,44 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         } else if (countryName == 'brazil') {
           countryCode = 'BR';
         }
-
       }
-      
+
       return CountrySelector(
         // Pass the derived country code to the selector when editing
         selectedCountryCode: countryCode.isNotEmpty ? countryCode : null,
         onCountrySelected: (country) {
-
           setState(() {
             _selectedCountry = country;
           });
         },
       );
     }
-    
+
     // For new steps, just show the regular selector
     return CountrySelector(
       onCountrySelected: (country) {
-
         setState(() {
           _selectedCountry = country;
         });
       },
     );
   }
-  
+
   /// Build the visa type selector
   Widget _buildVisaTypeSelector(ThemeData theme, bool isDarkMode) {
     // Debug log for visa selection
     if (widget.isEditing && widget.step != null) {
-
-
-
-      
       // CRITICAL: For Australia, we know the visa IDs
       // This is a special case to handle Australia's Student Visa
-      if (widget.step!.countryName.toLowerCase() == 'australia' && 
+      if (widget.step!.countryName.toLowerCase() == 'australia' &&
           widget.step!.visaTypeName.toLowerCase() == 'student visa') {
-
-        
         // For Australia, Student Visa has ID 102
         int visaId = 102;
-        
+
         return VisaSelector(
           countryId: widget.step!.countryId,
           selectedVisaId: visaId,
           onVisaSelected: (visa) {
-
             setState(() {
               _selectedVisa = visa;
             });
@@ -299,35 +280,31 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         );
       }
     }
-    
+
     // Only show visa selector if a country is selected
     if (_selectedCountry == null) {
       // If we're editing, try to use the country ID from the step
       if (widget.isEditing && widget.step != null) {
-
-
-        
         // CRITICAL: For Australia, we know the visa IDs
         int visaId = widget.step!.visaTypeId;
-        
+
         // Special case for Australia's Student Visa
-        if (widget.step!.countryName.toLowerCase() == 'australia' && 
+        if (widget.step!.countryName.toLowerCase() == 'australia' &&
             widget.step!.visaTypeName.toLowerCase() == 'student visa') {
           visaId = 102; // Student Visa ID for Australia
         }
-        
+
         return VisaSelector(
           countryId: widget.step!.countryId,
           selectedVisaId: visaId,
           onVisaSelected: (visa) {
-
             setState(() {
               _selectedVisa = visa;
             });
           },
         );
       }
-      
+
       // If not editing or no step, show the placeholder
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,32 +337,33 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         ],
       );
     }
-    
+
     // CRITICAL: For Australia, we know the visa IDs
-    int visaId = widget.isEditing && widget.step != null ? widget.step!.visaTypeId : 0;
-    
+    int visaId =
+        widget.isEditing && widget.step != null ? widget.step!.visaTypeId : 0;
+
     // Special case for Australia's Student Visa
-    if (widget.isEditing && widget.step != null && 
-        widget.step!.countryName.toLowerCase() == 'australia' && 
+    if (widget.isEditing &&
+        widget.step != null &&
+        widget.step!.countryName.toLowerCase() == 'australia' &&
         widget.step!.visaTypeName.toLowerCase() == 'student visa') {
       visaId = 102; // Student Visa ID for Australia
     }
-    
+
     return VisaSelector(
       countryId: _selectedCountry!.id,
       // Pass the visa ID directly when editing
       selectedVisaId: visaId > 0 ? visaId : null,
       onVisaSelected: (visa) {
-
         setState(() {
           _selectedVisa = visa;
         });
       },
     );
   }
-  
+
   // We no longer need this method as we're passing the visa ID directly to the VisaSelector
-  
+
   /// Build a date field
   Widget _buildDateField({
     required String label,
@@ -432,7 +410,8 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
                 color: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             suffixIcon: Icon(
               Icons.calendar_today,
               color: enabled
@@ -456,7 +435,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       ],
     );
   }
-  
+
   /// Build the target country checkbox
   Widget _buildCurrentLocationCheckbox(ThemeData theme, bool isDarkMode) {
     return Column(
@@ -471,24 +450,23 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
               onChanged: (value) {
                 setState(() {
                   _isTargetCountry = value ?? false;
-                  
+
                   if (_isTargetCountry) {
                     // Target countries are always in the future and can't be current location
                     _isCurrentLocation = false;
-                    
+
                     // For target countries, ensure the start date is in the future
                     final now = DateTime.now();
                     if (_startDate == null || _startDate!.isBefore(now)) {
                       // Default to 1 month in the future
                       _startDate = DateTime(now.year, now.month + 1, 1);
-                      _startDateController.text = DateFormat('MMM yyyy').format(_startDate!);
+                      _startDateController.text =
+                          DateFormat('MMM yyyy').format(_startDate!);
                     }
-                    
+
                     // Target countries don't have an end date
                     _endDate = null;
                     _endDateController.clear();
-                    
-
                   }
                 });
               },
@@ -505,7 +483,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
             ),
           ],
         ),
-        
+
         // Add explanation text for target country
         if (_isTargetCountry)
           Padding(
@@ -521,14 +499,15 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       ],
     );
   }
-  
+
   /// Select a date
-  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
+  Future<void> _selectDate(BuildContext context,
+      {required bool isStartDate}) async {
     final now = DateTime.now();
     DateTime initialDate;
     DateTime firstDate;
     DateTime lastDate;
-    
+
     if (_isTargetCountry) {
       // For target countries, only allow future dates
       // Set initial date to 1 month in the future if not already set or if it's in the past
@@ -536,30 +515,26 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         initialDate = _startDate != null && _startDate!.isAfter(now)
             ? _startDate!
             : DateTime(now.year, now.month + 1, 1);
-        
+
         // For target countries, first date should be tomorrow
         firstDate = DateTime(now.year, now.month, now.day + 1);
         // Allow dates up to year 2100 for target countries
-        lastDate = DateTime(2100);  
+        lastDate = DateTime(2100);
       } else {
         // End date for target countries shouldn't be selectable
         return;
       }
     } else {
       // For regular countries (past or current)
-      initialDate = isStartDate
-          ? (_startDate ?? now)
-          : (_endDate ?? now);
-      
+      initialDate = isStartDate ? (_startDate ?? now) : (_endDate ?? now);
+
       // Allow dates from 1900 up to today for past/current countries
       firstDate = DateTime(1900);
       lastDate = now;
     }
-    
+
     // Log date selection parameters
 
-
-    
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -578,7 +553,7 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStartDate) {
@@ -591,24 +566,24 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
       });
     }
   }
-  
+
   /// Save the step
   void _saveStep() {
-    if (_formKey.currentState!.validate() && 
-        _selectedCountry != null && 
+    if (_formKey.currentState!.validate() &&
+        _selectedCountry != null &&
         _selectedVisa != null) {
-      
       // Provide haptic feedback
       HapticFeedback.mediumImpact();
-      
+
       // Generate a unique ID for new steps
-      final stepId = widget.step?.id ?? 'step_${DateTime.now().millisecondsSinceEpoch}';
-      
+      final stepId =
+          widget.step?.id ?? 'step_${DateTime.now().millisecondsSinceEpoch}';
+
       // Ensure date fields are properly set based on current/target status
       DateTime? finalStartDate = _startDate;
       DateTime? finalEndDate = _endDate;
       bool isCurrent = false;
-      
+
       // Handle target country logic
       if (_isTargetCountry) {
         // Target countries are always in the future
@@ -617,10 +592,10 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
           // Default to 1 month in the future
           finalStartDate = DateTime(now.year, now.month + 1, 1);
         }
-        
+
         // Target countries don't have an end date
         finalEndDate = null;
-        
+
         // Target countries are never current
         isCurrent = false;
       } else {
@@ -632,20 +607,17 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
           // If end date is in the future, it's current
           isCurrent = finalEndDate.isAfter(DateTime.now());
         }
-        
+
         // If it's marked as current but has an end date in the past, fix it
-        if (isCurrent && finalEndDate != null && finalEndDate.isBefore(DateTime.now())) {
+        if (isCurrent &&
+            finalEndDate != null &&
+            finalEndDate.isBefore(DateTime.now())) {
           finalEndDate = null;
         }
       }
-      
+
       // Log the data being saved
 
-
-
-
-
-      
       // Create the step with all the required data
       final step = MigrationStep(
         id: stepId,
@@ -661,13 +633,12 @@ class _MigrationStepModalContentState extends State<_MigrationStepModalContent> 
         // For new steps, assign a higher order than existing steps
         order: widget.step?.order ?? (widget.isEditing ? 0 : 99),
       );
-      
+
       // Log the final step object
 
-      
       // Save the step
       widget.onSave(step);
-      
+
       // Close the modal
       Navigator.of(context).pop();
     } else {

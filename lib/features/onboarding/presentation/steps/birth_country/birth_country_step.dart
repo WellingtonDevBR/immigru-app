@@ -7,13 +7,13 @@ import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birt
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/common/base_onboarding_step.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_header.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Widget for the birth country selection step in onboarding
-/// 
+///
 /// This step allows users to select their birth country from a searchable list.
 /// It follows the new architecture pattern using the BaseOnboardingStep.
 class BirthCountryStep extends BaseOnboardingStep {
@@ -29,18 +29,19 @@ class BirthCountryStep extends BaseOnboardingStep {
   State<BirthCountryStep> createState() => _BirthCountryStepState();
 }
 
-class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> with SingleTickerProviderStateMixin {
+class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep>
+    with SingleTickerProviderStateMixin {
   // Search controller
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   // Animation controller for search box
   late AnimationController _animationController;
   late Animation<double> _animation;
-  
+
   // Selected country
   Country? _selectedCountry;
-  
+
   // Flags for UI state
   bool _isSearching = false;
   String _searchQuery = '';
@@ -48,18 +49,18 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    
+
     _animation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    
+
     // Add listener to search controller
     _searchController.addListener(() {
       setState(() {
@@ -79,14 +80,14 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
   /// Handle country selection
   void _handleCountrySelected(Country country) {
     HapticFeedback.selectionClick();
-    
+
     setState(() {
       _selectedCountry = country;
     });
-    
+
     // Update the onboarding bloc with the selected country
     addOnboardingEvent(BirthCountryUpdated(country));
-    
+
     // Add a visual feedback before moving to next step
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -95,7 +96,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
         duration: const Duration(milliseconds: 800),
       ),
     );
-    
+
     // Automatically trigger next step after a short delay
     Future.delayed(const Duration(milliseconds: 1000), () {
       // Check if widget is still mounted before proceeding
@@ -136,7 +137,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
   Widget _buildContent(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -145,10 +146,11 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
           // Header
           const OnboardingStepHeader(
             title: 'Where were you born?',
-            subtitle: 'Select your country of birth to help us personalize your experience.',
+            subtitle:
+                'Select your country of birth to help us personalize your experience.',
             icon: Icons.public,
           ),
-          
+
           // Info box
           Container(
             padding: const EdgeInsets.all(16),
@@ -174,14 +176,14 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Search bar
           _buildSearchBar(isDarkMode, theme),
-          
+
           const SizedBox(height: 16),
-          
+
           // Country list
           Expanded(
             child: BlocBuilder<BirthCountryBloc, BirthCountryState>(
@@ -191,7 +193,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                     child: CircularProgressIndicator(),
                   );
                 }
-                
+
                 if (state.errorMessage != null) {
                   return Center(
                     child: Column(
@@ -226,7 +228,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                     ),
                   );
                 }
-                
+
                 // Filter countries based on search query
                 final filteredCountries = _searchQuery.isEmpty
                     ? state.countries
@@ -235,7 +237,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                             .toLowerCase()
                             .contains(_searchQuery.toLowerCase()))
                         .toList();
-                
+
                 if (filteredCountries.isEmpty) {
                   return Center(
                     child: Column(
@@ -244,7 +246,8 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                         Icon(
                           Icons.search_off,
                           size: 48,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          color:
+                              isDarkMode ? Colors.grey[400] : Colors.grey[600],
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -260,15 +263,17 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                     ),
                   );
                 }
-                
+
                 return ListView.builder(
                   itemCount: filteredCountries.length,
                   itemBuilder: (context, index) {
                     final country = filteredCountries[index];
-                    final isSelected = widget.selectedCountryId == country.isoCode ||
-                        _selectedCountry?.isoCode == country.isoCode;
-                    
-                    return _buildCountryItem(country, isSelected, isDarkMode, theme);
+                    final isSelected =
+                        widget.selectedCountryId == country.isoCode ||
+                            _selectedCountry?.isoCode == country.isoCode;
+
+                    return _buildCountryItem(
+                        country, isSelected, isDarkMode, theme);
                   },
                 );
               },
@@ -352,7 +357,8 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
     );
   }
 
-  Widget _buildCountryItem(Country country, bool isSelected, bool isDarkMode, ThemeData theme) {
+  Widget _buildCountryItem(
+      Country country, bool isSelected, bool isDarkMode, ThemeData theme) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
       color: isSelected
@@ -364,9 +370,7 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isSelected
-              ? AppColors.primaryColor
-              : Colors.transparent,
+          color: isSelected ? AppColors.primaryColor : Colors.transparent,
           width: isSelected ? 2 : 0,
         ),
       ),
@@ -381,7 +385,8 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: CachedNetworkImage(
-                  imageUrl: 'https://flagcdn.com/w80/${country.isoCode.toLowerCase()}.png',
+                  imageUrl:
+                      'https://flagcdn.com/w80/${country.isoCode.toLowerCase()}.png',
                   width: 40,
                   height: 30,
                   fit: BoxFit.cover,
@@ -399,17 +404,18 @@ class _BirthCountryStepState extends BaseOnboardingStepState<BirthCountryStep> w
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Country name
               Expanded(
                 child: Text(
                   country.name,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
-              
+
               // Selection indicator
               if (isSelected)
                 Icon(

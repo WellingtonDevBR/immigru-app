@@ -1,4 +1,4 @@
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 import '../../domain/entities/immi_grove.dart';
 import '../../domain/repositories/immi_grove_repository.dart';
 import '../datasources/immi_grove_data_source.dart';

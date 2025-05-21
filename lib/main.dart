@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:immigru/app.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const bool useNewArchitecture = true;

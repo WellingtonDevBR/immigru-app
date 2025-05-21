@@ -3,8 +3,8 @@ import 'package:immigru/features/onboarding/domain/entities/migration_step.dart'
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/features/onboarding/presentation/common/onboarding_step_manager.dart';
 import 'package:immigru/features/onboarding/presentation/steps/immi_grove/immi_grove_step.dart';
 import 'package:immigru/features/onboarding/presentation/steps/interest/interest_step.dart';
@@ -13,7 +13,7 @@ import 'package:immigru/features/onboarding/presentation/steps/profession/profes
 import 'package:immigru/features/onboarding/presentation/widgets/birth_country/birth_country_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/current_status/current_status_step_widget.dart';
 import 'package:immigru/features/onboarding/presentation/widgets/migration_journey/migration_journey_step_widget.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 
 /// Factory class for creating onboarding step widgets
 ///
@@ -84,7 +84,7 @@ class OnboardingStepFactory {
             });
           },
         );
-        
+
       case 4:
         // Language step
         return LanguageStep(
@@ -92,10 +92,10 @@ class OnboardingStepFactory {
           onLanguagesSelected: (List<String> languages) {
             // Update languages in the onboarding bloc
             stepManager.onboardingBloc.add(LanguagesUpdated(languages));
-            
+
             // Save languages directly
             stepManager.onboardingBloc.add(LanguagesSaveRequested(languages));
-            
+
             // Add a small delay to ensure the save completes before moving to next step
             Future.delayed(const Duration(milliseconds: 300), () {
               stepManager.goToNextStep();
@@ -103,19 +103,19 @@ class OnboardingStepFactory {
           },
           logger: ServiceLocator.instance<LoggerInterface>(),
         );
-        
+
       case 5:
         // Interest step
         return InterestStep(
-          selectedInterests: state.interests.isNotEmpty 
-              ? state.interests.map((e) => e).toList() 
+          selectedInterests: state.interests.isNotEmpty
+              ? state.interests.map((e) => e).toList()
               : <String>[],
           onInterestsSelected: (List<String> interests) {
             // Update interests in the onboarding bloc
             stepManager.onboardingBloc.add(InterestsUpdated(
               interests,
             ));
-            
+
             // Add a small delay to ensure the save completes before moving to next step
             Future.delayed(const Duration(milliseconds: 300), () {
               stepManager.goToNextStep();
@@ -123,7 +123,7 @@ class OnboardingStepFactory {
           },
           logger: ServiceLocator.instance<LoggerInterface>(),
         );
-        
+
       case 6:
         // ImmiGrove step
         return ImmiGroveStep(
@@ -131,7 +131,7 @@ class OnboardingStepFactory {
           onImmiGrovesSelected: (List<String> immiGroveIds) {
             // Update ImmiGroves in the onboarding bloc
             stepManager.onboardingBloc.add(ImmiGrovesUpdated(immiGroveIds));
-            
+
             // Add a small delay to ensure the save completes before moving to next step
             Future.delayed(const Duration(milliseconds: 300), () {
               stepManager.goToNextStep();

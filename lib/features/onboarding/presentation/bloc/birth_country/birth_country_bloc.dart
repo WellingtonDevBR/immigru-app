@@ -1,10 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 import 'package:immigru/features/onboarding/domain/usecases/update_birth_country_usecase.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/birth_country/birth_country_state.dart';
-import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/country/domain/usecases/get_countries_usecase.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// BLoC for managing the birth country step in onboarding
 class BirthCountryBloc extends Bloc<BirthCountryEvent, BirthCountryState> {
@@ -101,7 +101,8 @@ class BirthCountryBloc extends Bloc<BirthCountryEvent, BirthCountryState> {
 
       _logger.i('Fetching countries from repository', tag: 'BirthCountry');
       final countries = await _getCountriesUseCase();
-      _logger.i('Received ${countries.length} countries from repository', tag: 'BirthCountry');
+      _logger.i('Received ${countries.length} countries from repository',
+          tag: 'BirthCountry');
 
       if (countries.isEmpty) {
         _logger.w('No countries returned from repository', tag: 'BirthCountry');
@@ -114,13 +115,16 @@ class BirthCountryBloc extends Bloc<BirthCountryEvent, BirthCountryState> {
 
       // Apply any existing search filter
       final filteredCountries = _filterCountries(countries, state.searchQuery);
-      _logger.i('Filtered to ${filteredCountries.length} countries based on search query: "${state.searchQuery}"', tag: 'BirthCountry');
+      _logger.i(
+          'Filtered to ${filteredCountries.length} countries based on search query: "${state.searchQuery}"',
+          tag: 'BirthCountry');
 
       // Log some sample countries to verify data format
       if (countries.isNotEmpty) {
         final sampleCountry = countries.first;
         _logger.i(
-          'Sample country: ${sampleCountry.name} (${sampleCountry.isoCode}), ' 'Flag URL: ${sampleCountry.flagUrl.isNotEmpty ? "Valid" : "Empty"}',
+          'Sample country: ${sampleCountry.name} (${sampleCountry.isoCode}), '
+          'Flag URL: ${sampleCountry.flagUrl.isNotEmpty ? "Valid" : "Empty"}',
           tag: 'BirthCountry',
         );
       }

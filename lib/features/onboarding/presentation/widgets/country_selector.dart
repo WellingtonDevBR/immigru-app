@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
-import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/usecases/get_countries_usecase.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -9,7 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 class CountrySelector extends StatefulWidget {
   /// Currently selected country
   final Country? selectedCountry;
-  
+
   /// ISO code of the country to select (alternative to selectedCountry)
   final String? selectedCountryCode;
 
@@ -50,28 +50,39 @@ class _CountrySelectorState extends State<CountrySelector> {
   // Selected country
   Country? _selectedCountry;
   bool _showSelector = false;
-  
+
   // Search controller
   late TextEditingController _searchController;
-  
+
   // Popular countries (top 10 most common)
   List<Country> _popularCountries = [];
   List<Country> _otherCountries = [];
-  
+
   // ISO codes of popular countries
   final List<String> _popularCountryCodes = [
-    'US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IT', 'ES', 'BR', 'IN', 'JP'
+    'US',
+    'GB',
+    'CA',
+    'AU',
+    'DE',
+    'FR',
+    'IT',
+    'ES',
+    'BR',
+    'IN',
+    'JP'
   ];
 
   @override
   void initState() {
     super.initState();
     _selectedCountry = widget.selectedCountry;
-    _showSelector = _selectedCountry == null; // Show selector if no country is selected
+    _showSelector =
+        _selectedCountry == null; // Show selector if no country is selected
     _searchController = TextEditingController();
     _searchController.addListener(_onSearchChanged);
     _loadCountries();
-    
+
     // If we have a country code, try to find the country once countries are loaded
     if (widget.selectedCountryCode != null) {
       // We'll handle this in the _loadCountries callback
@@ -86,46 +97,47 @@ class _CountrySelectorState extends State<CountrySelector> {
         _selectedCountry = widget.selectedCountry;
       });
     }
-    
+
     // Handle country code changes
-    if (oldWidget.selectedCountryCode != widget.selectedCountryCode && 
-        widget.selectedCountryCode != null && 
+    if (oldWidget.selectedCountryCode != widget.selectedCountryCode &&
+        widget.selectedCountryCode != null &&
         _countries.isNotEmpty) {
       // Find country by code when countries are loaded
       _findAndSelectCountryByCode(widget.selectedCountryCode!);
     }
   }
-  
+
   @override
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
-  
+
   void _onSearchChanged() {
     _filterCountries(_searchController.text);
   }
-  
+
   void _filterCountries(String query) {
     final searchQuery = query.toLowerCase().trim();
-    
+
     if (searchQuery.isEmpty) {
       setState(() {
         _filteredCountries = _countries;
       });
     } else {
       setState(() {
-        _filteredCountries = _countries.where((country) => 
-          country.name.toLowerCase().contains(searchQuery) ||
-          (country.isoCode.toLowerCase().contains(searchQuery))
-        ).toList();
+        _filteredCountries = _countries
+            .where((country) =>
+                country.name.toLowerCase().contains(searchQuery) ||
+                (country.isoCode.toLowerCase().contains(searchQuery)))
+            .toList();
       });
     }
-    
+
     _separateCountries();
   }
-  
+
   void _separateCountries() {
     // Separate into popular and other countries
     _popularCountries = _filteredCountries
@@ -147,15 +159,14 @@ class _CountrySelectorState extends State<CountrySelector> {
   /// Load countries from the repository
   Future<void> _loadCountries() async {
     try {
-      final getCountriesUseCase = ServiceLocator.instance<GetCountriesUseCase>();
+      final getCountriesUseCase =
+          ServiceLocator.instance<GetCountriesUseCase>();
       final countries = await getCountriesUseCase();
-      
 
-      
       // Separate popular countries
       final popular = <Country>[];
       final others = <Country>[];
-      
+
       for (final country in countries) {
         if (_popularCountryCodes.contains(country.isoCode)) {
           popular.add(country);
@@ -163,11 +174,11 @@ class _CountrySelectorState extends State<CountrySelector> {
           others.add(country);
         }
       }
-      
+
       // Sort both lists by name
       popular.sort((a, b) => a.name.compareTo(b.name));
       others.sort((a, b) => a.name.compareTo(b.name));
-      
+
       setState(() {
         _countries = countries;
         _popularCountries = popular;
@@ -175,7 +186,7 @@ class _CountrySelectorState extends State<CountrySelector> {
         _filteredCountries = countries;
         _isLoading = false;
       });
-      
+
       // If we have a country code, find and select the country
       if (widget.selectedCountryCode != null) {
         _findAndSelectCountryByCode(widget.selectedCountryCode!);
@@ -187,46 +198,45 @@ class _CountrySelectorState extends State<CountrySelector> {
       });
     }
   }
-  
+
   /// Find a country by its ISO code and select it
   void _findAndSelectCountryByCode(String isoCode) {
     if (_countries.isEmpty) {
-
       return;
     }
-    
+
     try {
       // Try exact match first (case insensitive)
-      final exactMatches = _countries.where(
-        (c) => c.isoCode.toLowerCase() == isoCode.toLowerCase()
-      ).toList();
-      
+      final exactMatches = _countries
+          .where((c) => c.isoCode.toLowerCase() == isoCode.toLowerCase())
+          .toList();
+
       if (exactMatches.isNotEmpty) {
         final country = exactMatches.first;
 
         _selectCountry(country);
         return;
       }
-      
+
       // Try partial match
-      final partialMatches = _countries.where(
-        (c) => c.isoCode.toLowerCase().contains(isoCode.toLowerCase()) || 
-               isoCode.toLowerCase().contains(c.isoCode.toLowerCase())
-      ).toList();
-      
+      final partialMatches = _countries
+          .where((c) =>
+              c.isoCode.toLowerCase().contains(isoCode.toLowerCase()) ||
+              isoCode.toLowerCase().contains(c.isoCode.toLowerCase()))
+          .toList();
+
       if (partialMatches.isNotEmpty) {
         final country = partialMatches.first;
 
         _selectCountry(country);
         return;
       }
-      
+
       // Try matching by country ID (some codes might be IDs)
       if (int.tryParse(isoCode) != null) {
-        final idMatches = _countries.where(
-          (c) => c.id == int.parse(isoCode)
-        ).toList();
-        
+        final idMatches =
+            _countries.where((c) => c.id == int.parse(isoCode)).toList();
+
         if (idMatches.isNotEmpty) {
           final country = idMatches.first;
 
@@ -234,25 +244,24 @@ class _CountrySelectorState extends State<CountrySelector> {
           return;
         }
       }
-      
+
       // If all else fails, use the first country
 
       _selectCountry(_countries.first);
     } catch (e) {
-
       if (_countries.isNotEmpty) {
         _selectCountry(_countries.first);
       }
     }
   }
-  
+
   /// Helper method to select a country and notify the parent
   void _selectCountry(Country country) {
     setState(() {
       _selectedCountry = country;
       _showSelector = false;
     });
-    
+
     // Notify the parent widget
     widget.onCountrySelected(country);
   }
@@ -339,7 +348,7 @@ class _CountrySelectorState extends State<CountrySelector> {
       ],
     );
   }
-  
+
   Widget _buildSelectedCountryDisplay(ThemeData theme, bool isDarkMode) {
     return GestureDetector(
       onTap: () {
@@ -364,7 +373,7 @@ class _CountrySelectorState extends State<CountrySelector> {
             // Country flag
             _buildCountryFlag(_selectedCountry!, isDarkMode, size: 32),
             const SizedBox(width: 12),
-            
+
             // Country name
             Expanded(
               child: Text(
@@ -375,7 +384,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                 ),
               ),
             ),
-            
+
             // Edit button
             Icon(
               Icons.edit,
@@ -387,7 +396,7 @@ class _CountrySelectorState extends State<CountrySelector> {
       ),
     );
   }
-  
+
   Widget _buildCountrySelector(ThemeData theme, bool isDarkMode) {
     return Column(
       children: [
@@ -416,18 +425,17 @@ class _CountrySelectorState extends State<CountrySelector> {
               borderSide: BorderSide(color: AppColors.primaryColor),
             ),
             suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: AppColors.primaryColor),
-                  onPressed: () {
-                    _searchController.clear();
-                  },
-                )
-              : null,
+                ? IconButton(
+                    icon: Icon(Icons.clear, color: AppColors.primaryColor),
+                    onPressed: () {
+                      _searchController.clear();
+                    },
+                  )
+                : null,
           ),
         ),
         const SizedBox(height: 12),
-        
-          
+
         // Country list
         Container(
           height: 250,
@@ -439,61 +447,69 @@ class _CountrySelectorState extends State<CountrySelector> {
             ),
           ),
           child: _filteredCountries.isEmpty
-            ? Center(
-                child: Text(
-                  'No countries found',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isDarkMode ? Colors.white70 : Colors.grey[700],
+              ? Center(
+                  child: Text(
+                    'No countries found',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                    ),
                   ),
-                ),
-              )
-            : ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: [
-                  // Popular countries section
-                  if (_popularCountries.isNotEmpty && _searchController.text.isEmpty) ...[                    
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        'Popular Countries',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                )
+              : ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: [
+                    // Popular countries section
+                    if (_popularCountries.isNotEmpty &&
+                        _searchController.text.isEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Text(
+                          'Popular Countries',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color:
+                                isDarkMode ? Colors.white70 : Colors.grey[700],
+                          ),
                         ),
                       ),
-                    ),
-                    ..._popularCountries.map((country) => _buildCountryItem(country, isDarkMode, theme)),
-                    
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Divider(),
-                    ),
-                    
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        'All Countries',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                      ..._popularCountries.map((country) =>
+                          _buildCountryItem(country, isDarkMode, theme)),
+                      const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Divider(),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Text(
+                          'All Countries',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color:
+                                isDarkMode ? Colors.white70 : Colors.grey[700],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+
+                    // All countries or search results
+                    ...(_searchController.text.isEmpty
+                            ? _otherCountries
+                            : _filteredCountries)
+                        .map((country) =>
+                            _buildCountryItem(country, isDarkMode, theme)),
                   ],
-                  
-                  // All countries or search results
-                  ...(_searchController.text.isEmpty ? _otherCountries : _filteredCountries)
-                    .map((country) => _buildCountryItem(country, isDarkMode, theme)),
-                ],
-              ),
+                ),
         ),
       ],
     );
   }
-  
+
   Widget _buildCountryItem(Country country, bool isDarkMode, ThemeData theme) {
     final isSelected = _selectedCountry?.id == country.id;
-    
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -505,16 +521,16 @@ class _CountrySelectorState extends State<CountrySelector> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected 
-            ? AppColors.primaryColor.withValues(alpha:0.1) 
-            : Colors.transparent,
+          color: isSelected
+              ? AppColors.primaryColor.withValues(alpha: 0.1)
+              : Colors.transparent,
         ),
         child: Row(
           children: [
             // Country flag
             _buildCountryFlag(country, isDarkMode),
             const SizedBox(width: 12),
-            
+
             // Country name
             Expanded(
               child: Text(
@@ -522,12 +538,14 @@ class _CountrySelectorState extends State<CountrySelector> {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
-                    ? AppColors.primaryColor
-                    : isDarkMode ? Colors.white : Colors.black87,
+                      ? AppColors.primaryColor
+                      : isDarkMode
+                          ? Colors.white
+                          : Colors.black87,
                 ),
               ),
             ),
-            
+
             // Selection indicator
             if (isSelected)
               Icon(
@@ -540,10 +558,12 @@ class _CountrySelectorState extends State<CountrySelector> {
       ),
     );
   }
-  
-  Widget _buildCountryFlag(Country country, bool isDarkMode, {double size = 24}) {
-    final flagUrl = 'https://flagcdn.com/w80/${country.isoCode.toLowerCase()}.png';
-    
+
+  Widget _buildCountryFlag(Country country, bool isDarkMode,
+      {double size = 24}) {
+    final flagUrl =
+        'https://flagcdn.com/w80/${country.isoCode.toLowerCase()}.png';
+
     return Container(
       width: size,
       height: size * 0.75, // Standard flag aspect ratio
@@ -551,7 +571,7 @@ class _CountrySelectorState extends State<CountrySelector> {
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),

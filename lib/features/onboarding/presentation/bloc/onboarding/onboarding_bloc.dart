@@ -5,7 +5,7 @@ import 'package:immigru/features/onboarding/domain/repositories/onboarding_repos
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/immi_grove_events.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/onboarding/onboarding_state.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// BLoC for managing the overall onboarding flow
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
@@ -280,7 +280,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         'Skipping direct language save in OnboardingBloc to avoid conflicts',
         tag: 'Onboarding',
       );
-      
+
       // Also save to the general repository for consistency
       await _repository.saveStepData('languages', {
         'languages': event.languages,
@@ -339,15 +339,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             'Duplicate key detected, retrying after delay',
             tag: 'Onboarding',
           );
-          
+
           // Add a small delay before retrying
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           // Try again with the same data
           await _repository.saveStepData('interests', {
             'interests': event.interests,
           });
-          
+
           _logger.i(
             'Interests data saved successfully on retry',
             tag: 'Onboarding',
@@ -380,23 +380,27 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   ) {
     // Check if auto-navigation should be prevented
     if (state.preventAutoNavigation) {
-      _logger.i('Auto-navigation prevented by preventAutoNavigation flag', tag: 'Onboarding');
-      
+      _logger.i('Auto-navigation prevented by preventAutoNavigation flag',
+          tag: 'Onboarding');
+
       // Reset the flag but don't navigate
       emit(state.copyWith(preventAutoNavigation: false));
       return;
     }
-    
+
     // Get forceNavigation from the event
     bool forceNavigation = event.forceNavigation;
     // Special case: Always allow navigation from migration journey (step 2) to profession (step 3)
     if (state.currentStepIndex == 2) {
       forceNavigation = true;
-      _logger.i('Forcing navigation from migration journey to profession step', tag: 'Onboarding');
+      _logger.i('Forcing navigation from migration journey to profession step',
+          tag: 'Onboarding');
     }
 
     // For debugging: Log the current state and navigation conditions
-    _logger.i('Current step: ${state.currentStepIndex}, canMoveToNextStep: ${state.canMoveToNextStep}, forceNavigation: $forceNavigation', tag: 'Onboarding');
+    _logger.i(
+        'Current step: ${state.currentStepIndex}, canMoveToNextStep: ${state.canMoveToNextStep}, forceNavigation: $forceNavigation',
+        tag: 'Onboarding');
 
     if (state.canMoveToNextStep || forceNavigation) {
       final nextStepIndex = state.currentStepIndex + 1;
@@ -414,10 +418,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
                 (nextStepIndex == 2 &&
                     state.migrationSteps
                         .isNotEmpty) || // Allow moving to next step if migration steps are added
-                (nextStepIndex == 3) || // Always allow moving to profession step
+                (nextStepIndex ==
+                    3) || // Always allow moving to profession step
                 (nextStepIndex == 4) || // Always allow moving to language step
                 (nextStepIndex == 5) || // Always allow moving to interest step
-                (nextStepIndex == 6)    // Always allow moving to immi grove step
+                (nextStepIndex == 6) // Always allow moving to immi grove step
             ));
 
         // Log navigation for debugging
@@ -441,26 +446,32 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     if (state.currentStepIndex > 0) {
       // Calculate previous step index
       int prevIndex = state.currentStepIndex - 1;
-      
+
       // Special case handling for specific steps
       bool preventAutoNavigation = false;
-      
+
       // Special case: ensure language step (4) goes back to profession step (3)
       if (state.currentStepIndex == 4) {
         prevIndex = 3;
         preventAutoNavigation = true;
-        _logger.i('Special case: Going back from language step to profession step', tag: 'Onboarding');
+        _logger.i(
+            'Special case: Going back from language step to profession step',
+            tag: 'Onboarding');
       }
-      
+
       // Special case: ensure ImmiGrove step (6) goes back to Interest step (5)
       else if (state.currentStepIndex == 6) {
         prevIndex = 5;
-        _logger.i('Special case: Going back from ImmiGrove step to Interest step', tag: 'Onboarding');
+        _logger.i(
+            'Special case: Going back from ImmiGrove step to Interest step',
+            tag: 'Onboarding');
       }
-      
+
       // Log the navigation for debugging
-      _logger.i('Navigating back from step ${state.currentStepIndex} to step $prevIndex', tag: 'Onboarding');
-      
+      _logger.i(
+          'Navigating back from step ${state.currentStepIndex} to step $prevIndex',
+          tag: 'Onboarding');
+
       emit(state.copyWith(
         currentStepIndex: prevIndex,
         isLastStep: false,
@@ -579,17 +590,19 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     try {
-      _logger.i('Saving languages directly from OnboardingBloc: ${event.languageCodes}', tag: 'Onboarding');
-      
+      _logger.i(
+          'Saving languages directly from OnboardingBloc: ${event.languageCodes}',
+          tag: 'Onboarding');
+
       // First, get all languages to map codes to IDs
       final allLanguages = await _languageRepository.getLanguages();
-      
+
       // Create a map of language codes to IDs
       final Map<String, int> codeToIdMap = {};
       for (final language in allLanguages) {
         codeToIdMap[language.isoCode.toLowerCase()] = language.id;
       }
-      
+
       // Convert language codes to IDs
       final List<int> languageIds = [];
       for (final code in event.languageCodes) {
@@ -598,19 +611,23 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           languageIds.add(id);
         }
       }
-      
+
       if (languageIds.isEmpty) {
-        _logger.w('No valid language IDs found from codes: ${event.languageCodes}', tag: 'Onboarding');
+        _logger.w(
+            'No valid language IDs found from codes: ${event.languageCodes}',
+            tag: 'Onboarding');
         return;
       }
-      
-      _logger.i('OnboardingBloc: Converted language codes to IDs: $languageIds', tag: 'Onboarding');
-      
+
+      _logger.i('OnboardingBloc: Converted language codes to IDs: $languageIds',
+          tag: 'Onboarding');
+
       // Save the language IDs using the repository
       final success = await _languageRepository.saveUserLanguages(languageIds);
-      
+
       if (success) {
-        _logger.i('Languages saved successfully: $languageIds', tag: 'Onboarding');
+        _logger.i('Languages saved successfully: $languageIds',
+            tag: 'Onboarding');
       } else {
         _logger.w('Failed to save languages: $languageIds', tag: 'Onboarding');
       }
@@ -623,21 +640,23 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       );
     }
   }
-  
+
   /// Handle ImmiGroves updated event
   Future<void> _onImmiGrovesUpdated(
     ImmiGrovesUpdated event,
     Emitter<OnboardingState> emit,
   ) async {
     try {
-      _logger.i('Updating selected ImmiGroves: ${event.immiGroveIds}', tag: 'Onboarding');
-      
+      _logger.i('Updating selected ImmiGroves: ${event.immiGroveIds}',
+          tag: 'Onboarding');
+
       // Update the state with the selected ImmiGrove IDs
       emit(state.copyWith(
         immiGroveIds: event.immiGroveIds,
       ));
-      
-      _logger.i('ImmiGroves updated in state: ${state.immiGroveIds}', tag: 'Onboarding');
+
+      _logger.i('ImmiGroves updated in state: ${state.immiGroveIds}',
+          tag: 'Onboarding');
     } catch (e, stackTrace) {
       _logger.e(
         'Error updating ImmiGroves',
@@ -647,7 +666,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       );
     }
   }
-  
+
   /// Handle ImmiGroves save request event
   Future<void> _onImmiGrovesSaveRequested(
     ImmiGrovesSaveRequested event,
@@ -655,10 +674,10 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   ) async {
     try {
       _logger.i('Saving ImmiGroves: ${event.immiGroveIds}', tag: 'Onboarding');
-      
+
       // Save the ImmiGrove IDs using the repository
       await _immiGroveRepository.saveSelectedImmiGroves(event.immiGroveIds);
-      
+
       _logger.i('ImmiGroves saved successfully', tag: 'Onboarding');
     } catch (e, stackTrace) {
       _logger.e(

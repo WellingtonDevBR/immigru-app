@@ -6,8 +6,8 @@ import 'package:immigru/features/onboarding/domain/usecases/get_languages_usecas
 import 'package:immigru/features/onboarding/domain/usecases/get_user_languages_usecase.dart';
 import 'package:immigru/features/onboarding/domain/usecases/save_user_languages_usecase.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/language/language_bloc.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
 
 /// Register all dependencies for the language feature
 void registerLanguageModule(GetIt sl) {
@@ -31,11 +31,11 @@ void registerLanguageModule(GetIt sl) {
   sl.registerLazySingleton(
     () => GetLanguagesUseCase(sl<LanguageRepository>()),
   );
-  
+
   sl.registerLazySingleton(
     () => GetUserLanguagesUseCase(sl<LanguageRepository>()),
   );
-  
+
   sl.registerLazySingleton(
     () => SaveUserLanguagesUseCase(sl<LanguageRepository>()),
   );

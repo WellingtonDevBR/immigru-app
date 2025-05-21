@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/domain/repositories/home_repository.dart';
-import 'package:immigru/new_core/network/models/failure.dart';
+import 'package:immigru/core/network/models/failure.dart';
 
 /// Use case for creating a new post
 class CreatePostUseCase {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:immigru/shared/widgets/loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -88,8 +88,19 @@ class _CountrySelectorState extends State<CountrySelector> {
   /// Filter countries based on search query and separate into popular and other categories
   void _filterCountries() {
     // Popular country codes (can be customized)
-    const popularCountryCodes = ['US', 'CA', 'GB', 'AU', 'BR', 'IN', 'CN', 'JP', 'DE', 'FR'];
-    
+    const popularCountryCodes = [
+      'US',
+      'CA',
+      'GB',
+      'AU',
+      'BR',
+      'IN',
+      'CN',
+      'JP',
+      'DE',
+      'FR'
+    ];
+
     if (_searchQuery.isEmpty) {
       _filteredCountries = List.from(widget.countries);
     } else {
@@ -202,7 +213,8 @@ class _CountrySelectorState extends State<CountrySelector> {
                         ),
                       ),
                       ..._popularCountries.map(
-                        (country) => _buildCountryItem(country, isDarkMode, theme),
+                        (country) =>
+                            _buildCountryItem(country, isDarkMode, theme),
                       ),
                       const Divider(),
                     ],
@@ -223,7 +235,8 @@ class _CountrySelectorState extends State<CountrySelector> {
                         ),
                       ),
                       ..._otherCountries.map(
-                        (country) => _buildCountryItem(country, isDarkMode, theme),
+                        (country) =>
+                            _buildCountryItem(country, isDarkMode, theme),
                       ),
                     ],
                   ],
@@ -236,7 +249,7 @@ class _CountrySelectorState extends State<CountrySelector> {
   /// Build a country item widget
   Widget _buildCountryItem(Country country, bool isDarkMode, ThemeData theme) {
     final isSelected = widget.selectedCountry?.isoCode == country.isoCode;
-    
+
     return ListTile(
       leading: country.flagUrl.isNotEmpty
           ? CachedNetworkImage(

@@ -1,7 +1,7 @@
 import 'package:immigru/features/onboarding/domain/entities/visa.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Model class for Visa entity to handle JSON conversion
 class VisaModel extends Visa {
@@ -60,12 +60,12 @@ class VisaRepositoryImpl implements VisaRepository {
   Future<List<Visa>> getVisas() async {
     try {
       _logger.i('Fetching all visas', tag: 'VisaRepository');
-      
+
       final response = await _edgeFunctionClient.invoke(
         'get-visas',
         body: {},
       );
-      
+
       if (!response.isSuccess || response.data == null) {
         _logger.e(
           'Failed to load visas: ${response.message}',
@@ -73,7 +73,7 @@ class VisaRepositoryImpl implements VisaRepository {
         );
         return _getDefaultVisas();
       }
-      
+
       final List<dynamic> visasJson = response.data;
       return visasJson.map((json) => VisaModel.fromJson(json)).toList();
     } catch (e, stackTrace) {
@@ -91,14 +91,14 @@ class VisaRepositoryImpl implements VisaRepository {
   Future<List<Visa>> getVisasForCountry(int countryId) async {
     try {
       _logger.i('Fetching visas for country $countryId', tag: 'VisaRepository');
-      
+
       // The edge function expects countryId as a query parameter, not in the body
       final response = await _edgeFunctionClient.invoke(
         'get-countries-with-visas',
         params: {'countryId': countryId.toString()},
         body: {},
       );
-      
+
       if (!response.isSuccess || response.data == null) {
         _logger.e(
           'Failed to load visas for country $countryId: ${response.message}',
@@ -106,9 +106,9 @@ class VisaRepositoryImpl implements VisaRepository {
         );
         return _getCountrySpecificVisas(countryId);
       }
-      
+
       final responseData = response.data as Map<String, dynamic>;
-      
+
       if (responseData['error'] != null && responseData['error'] != 'null') {
         _logger.e(
           'Error in response: ${responseData['error']}',
@@ -116,7 +116,7 @@ class VisaRepositoryImpl implements VisaRepository {
         );
         return _getCountrySpecificVisas(countryId);
       }
-      
+
       if (responseData['data'] == null) {
         _logger.w(
           'No visa data found for country $countryId',
@@ -124,7 +124,7 @@ class VisaRepositoryImpl implements VisaRepository {
         );
         return _getCountrySpecificVisas(countryId);
       }
-      
+
       final List<dynamic> visasJson = responseData['data'];
       if (visasJson.isEmpty) {
         _logger.w(
@@ -133,7 +133,7 @@ class VisaRepositoryImpl implements VisaRepository {
         );
         return _getCountrySpecificVisas(countryId);
       }
-      
+
       return visasJson.map((json) => VisaModel.fromJson(json)).toList();
     } catch (e, stackTrace) {
       _logger.e(
@@ -150,7 +150,7 @@ class VisaRepositoryImpl implements VisaRepository {
   Future<Visa?> getVisaById(int visaId) async {
     try {
       _logger.i('Fetching visa with ID $visaId', tag: 'VisaRepository');
-      
+
       final visas = await getVisas();
       return visas.firstWhere(
         (visa) => visa.id == visaId,
@@ -169,8 +169,9 @@ class VisaRepositoryImpl implements VisaRepository {
 
   @override
   List<Visa> getFallbackVisaOptions(int countryId) {
-    _logger.i('Using fallback visa options for country $countryId', tag: 'VisaRepository');
-    
+    _logger.i('Using fallback visa options for country $countryId',
+        tag: 'VisaRepository');
+
     return [
       VisaModel(
         id: 1001,
@@ -262,55 +263,61 @@ class VisaRepositoryImpl implements VisaRepository {
       ),
     ];
   }
-  
+
   /// Get country-specific visas or fallback to generic options
   List<Visa> _getCountrySpecificVisas(int countryId) {
-    _logger.i('Getting country-specific visas for country $countryId', tag: 'VisaRepository');
-    
+    _logger.i('Getting country-specific visas for country $countryId',
+        tag: 'VisaRepository');
+
     // First check if we have specific visas for this country
     final countrySpecificVisas = _getDefaultVisas()
         .where((visa) => visa.countryId == countryId)
         .toList();
-    
+
     // If we have specific visas for this country, return them
     if (countrySpecificVisas.isNotEmpty) {
-      _logger.i('Found ${countrySpecificVisas.length} specific visas for country $countryId', tag: 'VisaRepository');
+      _logger.i(
+          'Found ${countrySpecificVisas.length} specific visas for country $countryId',
+          tag: 'VisaRepository');
       return countrySpecificVisas;
     }
-    
+
     // Otherwise, return generic visas with the country ID updated
-    _logger.i('No specific visas found for country $countryId, using generic visas', tag: 'VisaRepository');
+    _logger.i(
+        'No specific visas found for country $countryId, using generic visas',
+        tag: 'VisaRepository');
     final genericVisas = _getDefaultVisas()
-        .where((visa) => visa.countryId == 0) // Generic visas have countryId = 0
+        .where(
+            (visa) => visa.countryId == 0) // Generic visas have countryId = 0
         .map((visa) {
-          // Create a copy with the requested country ID
-          return VisaModel(
-            id: visa.id,
-            countryId: countryId,
-            name: visa.name,
-            visaCode: visa.visaCode,
-            type: visa.type,
-            pathwayToPR: visa.pathwayToPR,
-            allowsWork: visa.allowsWork,
-            description: visa.description,
-            isCommon: visa.isCommon,
-          );
-        })
-        .toList();
-    
+      // Create a copy with the requested country ID
+      return VisaModel(
+        id: visa.id,
+        countryId: countryId,
+        name: visa.name,
+        visaCode: visa.visaCode,
+        type: visa.type,
+        pathwayToPR: visa.pathwayToPR,
+        allowsWork: visa.allowsWork,
+        description: visa.description,
+        isCommon: visa.isCommon,
+      );
+    }).toList();
+
     // If we still don't have visas, use the fallback options
     if (genericVisas.isEmpty) {
-      _logger.i('No generic visas found, using fallback options', tag: 'VisaRepository');
+      _logger.i('No generic visas found, using fallback options',
+          tag: 'VisaRepository');
       return getFallbackVisaOptions(countryId);
     }
-    
+
     return genericVisas;
   }
-  
+
   /// Get default visas for all supported countries
   List<Visa> _getDefaultVisas() {
     _logger.i('Getting default visas', tag: 'VisaRepository');
-    
+
     return [
       // Australia
       VisaModel(
@@ -321,7 +328,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
-        description: 'This visa allows you to stay in Australia to study full-time in a recognized education institution.',
+        description:
+            'This visa allows you to stay in Australia to study full-time in a recognized education institution.',
         isCommon: true,
       ),
       VisaModel(
@@ -332,18 +340,20 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
-        description: 'This visa lets an employer sponsor a skilled worker to fill a position they cannot find a suitably skilled Australian to fill.',
+        description:
+            'This visa lets an employer sponsor a skilled worker to fill a position they cannot find a suitably skilled Australian to fill.',
         isCommon: true,
       ),
       VisaModel(
-        id: 3, 
-        name: 'Skilled Independent Visa (Subclass 189)', 
-        countryId: 13, 
-        visaCode: '189', 
-        type: 'Skilled Migration', 
-        pathwayToPR: true, 
-        allowsWork: true, 
-        description: 'For invited workers and New Zealand citizens with skills to fill positions needed in Australia.', 
+        id: 3,
+        name: 'Skilled Independent Visa (Subclass 189)',
+        countryId: 13,
+        visaCode: '189',
+        type: 'Skilled Migration',
+        pathwayToPR: true,
+        allowsWork: true,
+        description:
+            'For invited workers and New Zealand citizens with skills to fill positions needed in Australia.',
         isCommon: true,
       ),
       VisaModel(
@@ -365,7 +375,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Work and Holiday',
         pathwayToPR: false,
         allowsWork: true,
-        description: 'For young adults who want to work and travel in Australia for up to a year.',
+        description:
+            'For young adults who want to work and travel in Australia for up to a year.',
         isCommon: true,
       ),
       VisaModel(
@@ -379,7 +390,7 @@ class VisaRepositoryImpl implements VisaRepository {
         description: 'Permanent residency or citizenship status.',
         isCommon: true,
       ),
-      
+
       // USA
       VisaModel(
         id: 20,
@@ -389,7 +400,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
-        description: 'For workers in specialty occupations that require theoretical or technical expertise.',
+        description:
+            'For workers in specialty occupations that require theoretical or technical expertise.',
         isCommon: true,
       ),
       VisaModel(
@@ -400,7 +412,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
-        description: 'For academic students admitted to a SEVP-certified school.',
+        description:
+            'For academic students admitted to a SEVP-certified school.',
         isCommon: true,
       ),
       VisaModel(
@@ -411,7 +424,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Tourist',
         pathwayToPR: false,
         allowsWork: false,
-        description: 'For tourism, vacation, visiting family, medical treatment.',
+        description:
+            'For tourism, vacation, visiting family, medical treatment.',
         isCommon: true,
       ),
       VisaModel(
@@ -425,7 +439,7 @@ class VisaRepositoryImpl implements VisaRepository {
         description: 'Permanent residency or citizenship status.',
         isCommon: true,
       ),
-      
+
       // UK
       VisaModel(
         id: 30,
@@ -435,7 +449,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
-        description: 'This visa has replaced the Tier 2 (General) work visa. You can apply for a Skilled Worker visa if you have been offered a skilled job in the UK.',
+        description:
+            'This visa has replaced the Tier 2 (General) work visa. You can apply for a Skilled Worker visa if you have been offered a skilled job in the UK.',
         isCommon: true,
       ),
       VisaModel(
@@ -446,7 +461,8 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Student',
         pathwayToPR: false,
         allowsWork: true,
-        description: 'This visa has replaced the Tier 4 (General) student visa. You can apply for a Student visa to study in the UK if you are 16 or over.',
+        description:
+            'This visa has replaced the Tier 4 (General) student visa. You can apply for a Student visa to study in the UK if you are 16 or over.',
         isCommon: true,
       ),
       VisaModel(
@@ -457,10 +473,11 @@ class VisaRepositoryImpl implements VisaRepository {
         type: 'Work',
         pathwayToPR: true,
         allowsWork: true,
-        description: 'This visa has replaced the Tier 1 (Exceptional Talent) visa. It is for people who can show they have exceptional talent or exceptional promise in academia or research, arts and culture, or digital technology.',
+        description:
+            'This visa has replaced the Tier 1 (Exceptional Talent) visa. It is for people who can show they have exceptional talent or exceptional promise in academia or research, arts and culture, or digital technology.',
         isCommon: true,
       ),
-      
+
       // Generic visas for any country
       VisaModel(
         id: 40,

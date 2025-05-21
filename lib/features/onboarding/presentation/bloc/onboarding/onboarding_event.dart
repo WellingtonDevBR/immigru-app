@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 
 /// Base class for onboarding events
 abstract class OnboardingEvent extends Equatable {
@@ -29,9 +29,9 @@ class BirthCountryUpdated extends OnboardingEvent {
 class NextStepRequested extends OnboardingEvent {
   /// Whether to force navigation even if canMoveToNextStep is false
   final bool forceNavigation;
-  
+
   const NextStepRequested({this.forceNavigation = false});
-  
+
   @override
   List<Object?> get props => [forceNavigation];
 }

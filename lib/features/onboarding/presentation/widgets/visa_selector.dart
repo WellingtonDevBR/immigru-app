@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:immigru/features/onboarding/domain/repositories/visa_repository.dart';
 import 'package:immigru/features/onboarding/domain/entities/visa.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
-import 'package:immigru/new_core/logging/log_util.dart';
+import 'package:immigru/core/logging/log_util.dart';
 
 /// A dropdown widget for selecting a visa type
 class VisaSelector extends StatefulWidget {

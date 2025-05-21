@@ -4,9 +4,9 @@ import 'package:immigru/features/onboarding/domain/entities/immi_grove.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_bloc.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/immi_grove/immi_grove_state.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Widget for the ImmiGroves recommendation step in the onboarding process
 class ImmiGroveStep extends StatefulWidget {
@@ -54,7 +54,8 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
         listener: (context, state) {
           if (state.status == ImmiGroveStatus.saved && !_hasNavigated) {
             _hasNavigated = true;
-            widget.logger.i('ImmiGroveStep: Saving selected ImmiGroves: ${state.selectedImmiGroveIds}');
+            widget.logger.i(
+                'ImmiGroveStep: Saving selected ImmiGroves: ${state.selectedImmiGroveIds}');
             widget.onImmiGrovesSelected(state.selectedImmiGroveIds.toList());
           }
         },
@@ -66,7 +67,8 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
 
           if (state.errorMessage != null &&
               state.recommendedImmiGroves.isEmpty) {
-            widget.logger.e('ImmiGroveStep: Error loading ImmiGroves: ${state.errorMessage}');
+            widget.logger.e(
+                'ImmiGroveStep: Error loading ImmiGroves: ${state.errorMessage}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -195,7 +197,7 @@ class _ImmiGroveStepState extends State<ImmiGroveStep> {
                   },
                 ),
         ),
-        
+
         // We don't need a Finish button here since we already have one at the bottom
       ],
     );

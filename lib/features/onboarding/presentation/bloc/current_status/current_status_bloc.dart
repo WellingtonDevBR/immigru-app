@@ -3,7 +3,7 @@ import 'package:immigru/features/onboarding/domain/entities/migration_status.dar
 import 'package:immigru/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_event.dart';
 import 'package:immigru/features/onboarding/presentation/bloc/current_status/current_status_state.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// BLoC for managing the current status step
 class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
@@ -28,24 +28,26 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
   ) async {
     try {
       emit(state.copyWith(isLoading: true, errorMessage: null));
-      
+
       // Load existing onboarding data to check for previously selected status
       final onboardingData = await _repository.getOnboardingData();
-      
+
       // Find the matching status in our available statuses
       MigrationStatus? selectedStatus;
-      if (onboardingData != null && onboardingData.currentStatus != null && onboardingData.currentStatus!.isNotEmpty) {
+      if (onboardingData != null &&
+          onboardingData.currentStatus != null &&
+          onboardingData.currentStatus!.isNotEmpty) {
         selectedStatus = state.availableStatuses.firstWhere(
           (status) => status.id == onboardingData.currentStatus,
           orElse: () => state.availableStatuses.first,
         );
       }
-      
+
       _logger.i(
         'Initialized with status: ${selectedStatus?.id ?? 'none'}',
         tag: 'CurrentStatusBloc',
       );
-      
+
       emit(state.copyWith(
         selectedStatus: selectedStatus,
         isLoading: false,
@@ -57,7 +59,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to load current status data',
@@ -74,24 +76,24 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
       'Status selected: ${event.status.id}',
       tag: 'CurrentStatusBloc',
     );
-    
+
     emit(state.copyWith(
       selectedStatus: event.status,
       errorMessage: null,
       isSaving: true,
     ));
-    
+
     try {
       // Save the selected status to UserProfile.MigrationStage immediately
       await _repository.saveStepData('currentStatus', {
         'currentStatus': event.status.id,
       });
-      
+
       _logger.i(
         'Successfully saved current status: ${event.status.id}',
         tag: 'CurrentStatusBloc',
       );
-      
+
       emit(state.copyWith(isSaving: false));
     } catch (e, stackTrace) {
       _logger.e(
@@ -100,7 +102,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       emit(state.copyWith(
         errorMessage: 'Failed to save current status. Please try again.',
         isSaving: false,
@@ -119,7 +121,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
         'Attempted to save without selecting a status',
         tag: 'CurrentStatusBloc',
       );
-      
+
       emit(state.copyWith(
         errorMessage: 'Please select your current status',
       ));
@@ -128,17 +130,17 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
 
     try {
       emit(state.copyWith(isSaving: true, errorMessage: null));
-      
+
       // Save the selected status to onboarding data
       await _repository.saveStepData('currentStatus', {
         'currentStatus': state.selectedStatus!.id,
       });
-      
+
       _logger.i(
         'Successfully saved current status: ${state.selectedStatus!.id}',
         tag: 'CurrentStatusBloc',
       );
-      
+
       emit(state.copyWith(isSaving: false));
     } catch (e, stackTrace) {
       _logger.e(
@@ -147,7 +149,7 @@ class CurrentStatusBloc extends Bloc<CurrentStatusEvent, CurrentStatusState> {
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       emit(state.copyWith(
         isSaving: false,
         errorMessage: 'Failed to save your current status',

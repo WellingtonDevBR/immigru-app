@@ -4,7 +4,7 @@ import 'package:immigru/features/auth/presentation/screens/login_screen.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_event.dart';
 import 'package:immigru/features/welcome/presentation/bloc/welcome_state.dart';
-import 'package:immigru/new_core/di/service_locator.dart';
+import 'package:immigru/core/di/service_locator.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
 /// Welcome screen that serves as the entry point to the app
@@ -15,7 +15,8 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late AnimationController _planeAnimationController;
   late Animation<double> _fadeInAnimation;
@@ -83,15 +84,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     );
     _planeRotationAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: -0.05, end: 0.05).chain(CurveTween(curve: Curves.easeOutCubic)),
+        tween: Tween<double>(begin: -0.05, end: 0.05)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 40,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.05, end: -0.05).chain(CurveTween(curve: Curves.easeInCubic)),
+        tween: Tween<double>(begin: 0.05, end: -0.05)
+            .chain(CurveTween(curve: Curves.easeInCubic)),
         weight: 40,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: -0.05, end: 0.0).chain(CurveTween(curve: Curves.easeOutCubic)),
+        tween: Tween<double>(begin: -0.05, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 20,
       ),
     ]).animate(_planeAnimationController);
@@ -114,7 +118,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ServiceLocator.instance<WelcomeBloc>()..add(const WelcomeInitialized()),
+      create: (_) => ServiceLocator.instance<WelcomeBloc>()
+        ..add(const WelcomeInitialized()),
       child: BlocConsumer<WelcomeBloc, WelcomeState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
@@ -178,7 +183,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                                       opacity: _fadeInAnimation,
                                       child: CustomPaint(
                                         painter: _ConnectionsPainter(
-                                          color: AppColors.primaryColor.withValues(alpha:0.3),
+                                          color: AppColors.primaryColor
+                                              .withValues(alpha: 0.3),
                                         ),
                                       ),
                                     ),
@@ -195,11 +201,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                                         builder: (context, child) {
                                           return Transform.translate(
                                             offset: Offset(
-                                              150 * _planePositionAnimation.value,
-                                              -20 * _planePositionAnimation.value,
+                                              150 *
+                                                  _planePositionAnimation.value,
+                                              -20 *
+                                                  _planePositionAnimation.value,
                                             ),
                                             child: Transform.rotate(
-                                              angle: _planeRotationAnimation.value,
+                                              angle:
+                                                  _planeRotationAnimation.value,
                                               child: Icon(
                                                 Icons.flight_takeoff,
                                                 size: 48,
@@ -251,7 +260,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryColor,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32, vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -319,11 +329,11 @@ class _ConnectionsPainter extends CustomPainter {
   Path _createDashedPath(Path path, double dashLength, double dashSpace) {
     final dashedPath = Path();
     final metrics = path.computeMetrics().toList();
-    
+
     for (final metric in metrics) {
       double distance = 0;
       bool draw = true;
-      
+
       while (distance < metric.length) {
         final len = draw ? dashLength : dashSpace;
         if (distance + len > metric.length) {
@@ -342,7 +352,7 @@ class _ConnectionsPainter extends CustomPainter {
         }
       }
     }
-    
+
     return dashedPath;
   }
 

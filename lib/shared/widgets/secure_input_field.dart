@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:immigru/features/auth/presentation/widgets/password_requirements_widget.dart';
-import 'package:immigru/new_core/utils/input_validation.dart';
+import 'package:immigru/core/utils/input_validation.dart';
 import 'package:immigru/shared/theme/app_text_styles.dart';
 
 /// Type of input field

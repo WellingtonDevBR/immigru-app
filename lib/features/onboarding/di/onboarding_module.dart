@@ -27,11 +27,12 @@ import 'package:immigru/features/onboarding/di/language_module.dart';
 import 'package:immigru/features/onboarding/di/interest_module.dart';
 import 'package:immigru/features/onboarding/di/immi_grove_module.dart';
 import 'package:immigru/features/onboarding/domain/repositories/immi_grove_repository.dart';
-import 'package:immigru/new_core/country/domain/usecases/get_countries_usecase.dart' as new_arch;
-import 'package:immigru/new_core/di/service_locator.dart';
-import 'package:immigru/new_core/logging/logger_provider.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
-import 'package:immigru/new_core/network/edge_function_client.dart';
+import 'package:immigru/core/country/domain/usecases/get_countries_usecase.dart'
+    as new_arch;
+import 'package:immigru/core/di/service_locator.dart';
+import 'package:immigru/core/logging/logger_provider.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
+import 'package:immigru/core/network/edge_function_client.dart';
 
 /// Onboarding module for dependency injection
 /// Registers all onboarding feature dependencies
@@ -45,7 +46,7 @@ class OnboardingModule {
         instanceName: 'onboarding_logger',
       );
     }
-    
+
     // Register data sources
     if (!sl.isRegistered<OnboardingDataSource>()) {
       sl.registerLazySingleton<OnboardingDataSource>(
@@ -55,7 +56,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register repositories
     if (!sl.isRegistered<OnboardingRepository>()) {
       sl.registerLazySingleton<OnboardingRepository>(
@@ -65,7 +66,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register Migration Journey Repository
     if (!sl.isRegistered<MigrationJourneyRepository>()) {
       sl.registerLazySingleton<MigrationJourneyRepository>(
@@ -75,7 +76,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register Visa Repository
     if (!sl.isRegistered<VisaRepository>()) {
       sl.registerLazySingleton<VisaRepository>(
@@ -85,29 +86,30 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Also register as old VisaRepository for backward compatibility
     if (!sl.isRegistered<VisaRepository>()) {
       sl.registerLazySingleton<VisaRepository>(
         () => sl<VisaRepository>() as dynamic,
       );
     }
-    
+
     // Register with specific instance name for fallback access
-    if (!sl.isRegistered<VisaRepository>(instanceName: 'domain_visa_repository')) {
+    if (!sl.isRegistered<VisaRepository>(
+        instanceName: 'domain_visa_repository')) {
       sl.registerLazySingleton<VisaRepository>(
         () => sl<VisaRepository>(),
         instanceName: 'domain_visa_repository',
       );
     }
-    
+
     // Also register as OnboardingRepository for backward compatibility
     if (!sl.isRegistered<OnboardingRepository>()) {
       sl.registerLazySingleton<OnboardingRepository>(
         () => sl<OnboardingRepository>() as dynamic,
       );
     }
-    
+
     // Register use cases
     if (!sl.isRegistered<UpdateBirthCountryUseCase>()) {
       sl.registerFactory<UpdateBirthCountryUseCase>(
@@ -116,7 +118,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<GetOnboardingDataUseCase>()) {
       sl.registerFactory<GetOnboardingDataUseCase>(
         () => GetOnboardingDataUseCase(
@@ -124,7 +126,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<SaveOnboardingDataUseCase>()) {
       sl.registerFactory<SaveOnboardingDataUseCase>(
         () => SaveOnboardingDataUseCase(
@@ -132,7 +134,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<CheckOnboardingStatusUseCase>()) {
       sl.registerFactory<CheckOnboardingStatusUseCase>(
         () => CheckOnboardingStatusUseCase(
@@ -140,7 +142,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<CompleteOnboardingUseCase>()) {
       sl.registerFactory<CompleteOnboardingUseCase>(
         () => CompleteOnboardingUseCase(
@@ -148,7 +150,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register Migration Journey Use Cases
     if (!sl.isRegistered<GetMigrationStepsUseCase>()) {
       sl.registerFactory<GetMigrationStepsUseCase>(
@@ -158,7 +160,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<SaveMigrationStepsUseCase>()) {
       sl.registerFactory<SaveMigrationStepsUseCase>(
         () => SaveMigrationStepsUseCase(
@@ -167,7 +169,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<AddMigrationStepUseCase>()) {
       sl.registerFactory<AddMigrationStepUseCase>(
         () => AddMigrationStepUseCase(
@@ -176,7 +178,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<UpdateMigrationStepUseCase>()) {
       sl.registerFactory<UpdateMigrationStepUseCase>(
         () => UpdateMigrationStepUseCase(
@@ -185,7 +187,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     if (!sl.isRegistered<RemoveMigrationStepUseCase>()) {
       sl.registerFactory<RemoveMigrationStepUseCase>(
         () => RemoveMigrationStepUseCase(
@@ -194,18 +196,19 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register BirthCountryBloc
     if (!sl.isRegistered<BirthCountryBloc>()) {
       sl.registerFactory<BirthCountryBloc>(
         () => BirthCountryBloc(
-          getCountriesUseCase: ServiceLocator.instance<new_arch.GetCountriesUseCase>(),
+          getCountriesUseCase:
+              ServiceLocator.instance<new_arch.GetCountriesUseCase>(),
           updateBirthCountryUseCase: sl<UpdateBirthCountryUseCase>(),
           logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
         ),
       );
     }
-    
+
     // Register UpdateCurrentStatusUseCase
     if (!sl.isRegistered<UpdateCurrentStatusUseCase>()) {
       sl.registerFactory<UpdateCurrentStatusUseCase>(
@@ -216,7 +219,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register CurrentStatusBloc
     if (!sl.isRegistered<CurrentStatusBloc>()) {
       sl.registerFactory<CurrentStatusBloc>(
@@ -226,7 +229,7 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register MigrationJourneyBloc
     if (!sl.isRegistered<MigrationJourneyBloc>()) {
       sl.registerFactory<MigrationJourneyBloc>(
@@ -240,35 +243,37 @@ class OnboardingModule {
         ),
       );
     }
-    
+
     // Register domain use cases with specific instance names
-    if (!sl.isRegistered<GetOnboardingDataUseCase>(instanceName: 'domain_get_onboarding_data')) {
+    if (!sl.isRegistered<GetOnboardingDataUseCase>(
+        instanceName: 'domain_get_onboarding_data')) {
       sl.registerLazySingleton<GetOnboardingDataUseCase>(
         () => GetOnboardingDataUseCase(sl<OnboardingRepository>()),
         instanceName: 'domain_get_onboarding_data',
       );
     }
-    
-    if (!sl.isRegistered<SaveOnboardingDataUseCase>(instanceName: 'domain_save_onboarding_data')) {
+
+    if (!sl.isRegistered<SaveOnboardingDataUseCase>(
+        instanceName: 'domain_save_onboarding_data')) {
       sl.registerLazySingleton<SaveOnboardingDataUseCase>(
         () => SaveOnboardingDataUseCase(sl<OnboardingRepository>()),
         instanceName: 'domain_save_onboarding_data',
       );
     }
-    
+
     // Register regular use cases without instance names for direct injection
     if (!sl.isRegistered<GetOnboardingDataUseCase>()) {
       sl.registerLazySingleton<GetOnboardingDataUseCase>(
         () => GetOnboardingDataUseCase(sl<OnboardingRepository>()),
       );
     }
-    
+
     if (!sl.isRegistered<SaveOnboardingDataUseCase>()) {
       sl.registerLazySingleton<SaveOnboardingDataUseCase>(
         () => SaveOnboardingDataUseCase(sl<OnboardingRepository>()),
       );
     }
-    
+
     // Register OnboardingBloc
     if (!sl.isRegistered<OnboardingBloc>()) {
       sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(
@@ -278,7 +283,7 @@ class OnboardingModule {
             logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
           ));
     }
-    
+
     // Register ProfessionBloc
     if (!sl.isRegistered<ProfessionBloc>()) {
       sl.registerFactory<ProfessionBloc>(() => ProfessionBloc(
@@ -286,13 +291,13 @@ class OnboardingModule {
             logger: sl<LoggerInterface>(instanceName: 'onboarding_logger'),
           ));
     }
-    
+
     // Register language module dependencies
     registerLanguageModule(sl);
-    
+
     // Register interest module dependencies
     registerInterestDependencies(sl);
-    
+
     // Register ImmiGrove module dependencies
     ImmiGroveModule.register(sl);
   }

@@ -1,6 +1,6 @@
 import 'package:immigru/features/onboarding/domain/repositories/migration_journey_repository.dart';
 import 'package:immigru/features/onboarding/domain/entities/migration_step.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Use case for removing a migration step
 class RemoveMigrationStepUseCase {
@@ -17,7 +17,7 @@ class RemoveMigrationStepUseCase {
         'Removing migration step ID: $id',
         tag: 'RemoveMigrationStepUseCase',
       );
-      
+
       final updatedSteps = await _repository.removeMigrationStep(id);
       _logger.i(
         'Migration step removed successfully. Total steps: ${updatedSteps.length}',

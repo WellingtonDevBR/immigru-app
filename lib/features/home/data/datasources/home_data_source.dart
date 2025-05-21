@@ -1,7 +1,7 @@
 import 'package:immigru/features/home/data/models/event_model.dart';
 import 'package:immigru/features/home/data/models/immi_grove_model.dart';
 import 'package:immigru/features/home/data/models/post_model.dart';
-import 'package:immigru/new_core/network/api_client.dart';
+import 'package:immigru/core/network/api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Data source for home screen data
@@ -126,14 +126,14 @@ class HomeDataSourceImpl implements HomeDataSource {
       return response.map<PostModel>((json) {
         // Extract user data from the joined UserProfile
         final userData = json['UserProfile'] as Map<String, dynamic>?;
-        
+
         // Create a new JSON object with flattened structure
         final flattenedJson = {
           ...json,
           'user_name': userData?['user_name'],
           'user_avatar': userData?['avatar_url'],
         };
-        
+
         return PostModel.fromJson(flattenedJson);
       }).toList();
     } catch (e) {
@@ -207,7 +207,7 @@ class HomeDataSourceImpl implements HomeDataSource {
 
       // Execute the query
       final response = await query;
-      
+
       return EventModel.fromJsonList(response);
     } catch (e) {
       // Return empty list on error (will be handled by repository)
@@ -223,13 +223,17 @@ class HomeDataSourceImpl implements HomeDataSource {
     String? imageUrl,
   }) async {
     try {
-      final response = await supabase.from('Post').insert({
-        'user_id': userId,
-        'content': content,
-        'category': category,
-        'image_url': imageUrl,
-        'created_at': DateTime.now().toIso8601String(),
-      }).select().single();
+      final response = await supabase
+          .from('Post')
+          .insert({
+            'user_id': userId,
+            'content': content,
+            'category': category,
+            'image_url': imageUrl,
+            'created_at': DateTime.now().toIso8601String(),
+          })
+          .select()
+          .single();
 
       return PostModel.fromJson(response);
     } catch (e) {
@@ -308,18 +312,18 @@ class HomeDataSourceImpl implements HomeDataSource {
 
       // Execute the query
       final response = await dbQuery;
-      
+
       return response.map<ImmiGroveModel>((json) {
         // Add isJoined flag based on UserImmiGrove join
-        final isJoined = json['UserImmiGrove'] != null && 
-                        (json['UserImmiGrove'] as List).isNotEmpty;
-        
+        final isJoined = json['UserImmiGrove'] != null &&
+            (json['UserImmiGrove'] as List).isNotEmpty;
+
         // Create a new JSON object with the isJoined flag
         final enrichedJson = {
           ...json,
           'is_joined': isJoined,
         };
-        
+
         return ImmiGroveModel.fromJson(enrichedJson);
       }).toList();
     } catch (e) {
@@ -333,7 +337,7 @@ class HomeDataSourceImpl implements HomeDataSource {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return [];
-      
+
       final response = await supabase.rpc(
         'get_recommended_immi_groves',
         params: {
@@ -341,8 +345,10 @@ class HomeDataSourceImpl implements HomeDataSource {
           'limit_count': limit,
         },
       );
-      
-      return response.map<ImmiGroveModel>((json) => ImmiGroveModel.fromJson(json)).toList();
+
+      return response
+          .map<ImmiGroveModel>((json) => ImmiGroveModel.fromJson(json))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -362,7 +368,7 @@ class HomeDataSourceImpl implements HomeDataSource {
           'user_id': userId,
           'joined_at': DateTime.now().toIso8601String(),
         });
-        
+
         // Increment member count
         await supabase.rpc(
           'increment_immi_grove_member_count',
@@ -378,7 +384,7 @@ class HomeDataSourceImpl implements HomeDataSource {
             .delete()
             .eq('immi_grove_id', immiGroveId)
             .eq('user_id', userId);
-            
+
         // Decrement member count
         await supabase.rpc(
           'increment_immi_grove_member_count',

@@ -1,7 +1,7 @@
 import '../../domain/entities/language.dart';
 import '../../domain/repositories/language_repository.dart';
 import '../datasources/language_data_source.dart';
-import 'package:immigru/new_core/logging/logger_interface.dart';
+import 'package:immigru/core/logging/logger_interface.dart';
 
 /// Implementation of the LanguageRepository interface
 class LanguageRepositoryImpl implements LanguageRepository {

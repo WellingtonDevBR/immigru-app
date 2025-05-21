@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:immigru/new_core/country/domain/entities/country.dart';
+import 'package:immigru/core/country/domain/entities/country.dart';
 
 /// Base class for birth country events
 abstract class BirthCountryEvent extends Equatable {
