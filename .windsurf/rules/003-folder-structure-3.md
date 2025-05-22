@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 lib/
 ├── core
 │   ├── config
@@ -104,6 +108,8 @@ lib/
         ├── country_selector.dart
         ├── error_display.dart
         ├── error_message_widget.dart
+        ├── grove_like_button.dart
         ├── loading_indicator.dart
         ├── pulsing_fab.dart
-        └── secure_input_field.dart
+        ├── secure_input_field.dart
+        └── seed_comment_button.dart

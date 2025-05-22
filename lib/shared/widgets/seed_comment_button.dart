@@ -296,7 +296,7 @@ class SeedPainter extends CustomPainter {
     canvas.drawLine(center, stemTop, stemPaint);
 
     // Draw leaves
-    final leafPaint = Paint()..color = sproutColor.withOpacity(0.9);
+    final leafPaint = Paint()..color = sproutColor.withValues(alpha:0.9);
 
     // Left leaf
     if (sproutValue > 0.3) {
@@ -354,7 +354,7 @@ class SeedPainter extends CustomPainter {
   }
 
   void _drawSproutParticles(Canvas canvas, Size size, Offset center) {
-    final particlePaint = Paint()..color = sproutColor.withOpacity(0.7);
+    final particlePaint = Paint()..color = sproutColor.withValues(alpha:0.7);
 
     for (final particle in sproutParticles) {
       // Calculate particle progress based on sprout value and particle delay
@@ -376,7 +376,7 @@ class SeedPainter extends CustomPainter {
         particleOffset,
         particle.size * particleProgress,
         particlePaint
-          ..color = sproutColor.withOpacity(0.7 * (1 - particleProgress)),
+          ..color = sproutColor.withValues(alpha:0.7 * (1 - particleProgress)),
       );
     }
   }

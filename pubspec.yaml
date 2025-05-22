@@ -49,6 +49,9 @@ dependencies:
   url_launcher: ^6.1.12
   path_provider: ^2.1.1
   image_picker: ^1.0.4
+  permission_handler: ^11.0.1
+  device_info_plus: ^9.0.2
+  flutter_keyboard_visibility: ^6.0.0
   path: ^1.8.3
   uuid: ^4.2.1
 

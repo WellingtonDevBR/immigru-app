@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_bloc.dart';
+import 'package:immigru/features/home/presentation/screens/post_creation_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
@@ -9,23 +11,19 @@ import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
-import 'package:immigru/features/home/presentation/screens/post_creation_screen.dart';
 import 'package:immigru/features/home/presentation/widgets/app_bar_widget.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/all_posts_tab.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/immi_groves_tab.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/notifications_tab.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
+import 'package:immigru/shared/theme/theme_provider.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 
-/// Modern home screen for the Immigru app
 class HomeScreen extends StatefulWidget {
-  /// Constructor
   const HomeScreen({super.key, this.user});
 
-  /// User data
   final User? user;
 
-  // ✅ Singleton key and instance
   static final GlobalKey _singletonKey =
       GlobalKey(debugLabel: 'HomeScreenSingleton');
   static final HomeScreen singleton = HomeScreen(key: _singletonKey);
@@ -36,7 +34,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  // Use a regular instance key since the widget is now a singleton
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _logger = UnifiedLogger();
 
@@ -46,44 +43,33 @@ class _HomeScreenState extends State<HomeScreen>
   bool hasUnreadNotifications = true;
   int unreadMessageCount = 3;
 
-  // Category selection for posts
   String _selectedCategory = 'All';
 
-  // Flag to track if posts have been initialized in this instance
   bool _hasInitializedData = false;
 
-  // Flag to prevent multiple initialization calls
   bool _isInitializing = false;
 
-  // Flag to track if a loading timeout has been set
   bool _hasSetLoadingTimeout = false;
 
-  // Flag to track if we're currently navigating to prevent UI freezes
   bool _isNavigating = false;
 
   @override
-  bool get wantKeepAlive => true; // Keep the state alive when switching tabs
+  bool get wantKeepAlive => true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Additional initialization if needed when dependencies change
   }
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize page controller
     _pageController = PageController(initialPage: _selectedIndex);
 
     _logger.d('Home screen created with key: ${widget.key}', tag: 'HomeScreen');
 
-    // Prevent multiple initializations with a more robust approach
-    // Use a single post-frame callback to ensure we only initialize once
-    // after the widget is fully built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Only initialize if we're not already initializing, navigating, or initialized
       if (mounted &&
           !_isInitializing &&
           !_isNavigating &&
@@ -97,9 +83,7 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // Safe initialization method with locking to prevent multiple calls
   void _initializeOnce() {
-    // Guard against multiple initialization attempts with a more robust check
     if (_isInitializing || !mounted || _isNavigating || _hasInitializedData) {
       _logger.d(
           'HOME SCREEN: Skipping initialization - already initialized or navigating',
@@ -112,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen>
     _logger.d('HOME SCREEN: Starting initialization', tag: 'HomeScreen');
 
     try {
-      // Check the current state of the HomeBloc
       final homeBloc = context.read<HomeBloc>();
       final currentState = homeBloc.state;
 
@@ -120,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen>
           'HOME SCREEN: Initializing with state: ${currentState.runtimeType}',
           tag: 'HomeScreen');
 
-      // Only initialize if we're in initial state or if we haven't initialized before
       if (currentState is HomeInitial || !_hasInitializedData) {
         _hasInitializedData = true;
         _logger.d('HOME SCREEN: First initialization, fetching initial data',
@@ -372,49 +354,41 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  /// Show post creation modal that slides up from the bottom
   void _showPostCreationModal() {
-    if (widget.user == null) {
+    final authBloc = BlocProvider.of<AuthBloc>(context);
+    final authState = authBloc.state;
+    final currentUser = authState.user ?? widget.user;
+
+    if (currentUser == null) {
+      authBloc.add(AuthRefreshUserEvent());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to create a post')),
+        const SnackBar(content: Text('Preparing post creation...')),
       );
       return;
     }
 
-    _logger.d('Opening post creation modal', tag: 'HomeScreen');
-    HapticFeedback.mediumImpact();
-
-    // Use a custom animation for the modal to slide up from the bottom
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      transitionAnimationController: AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 400),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7, // Start with more screen coverage
-        minChildSize: 0.4, // Minimum size when dragged down
-        maxChildSize: 0.95, // Almost full screen when expanded
-        builder: (_, controller) => PostCreationScreen(
-          user: widget.user!,
-          scrollController: controller,
+      useSafeArea: true,
+      builder: (context) {
+        return _PostCreationModalWrapper(
+          user: currentUser,
           onPost: (content, category, imageUrl) {
             BlocProvider.of<HomeBloc>(context).add(
               CreatePost(
                 content: content,
-                userId: widget.user!.id,
+                userId: currentUser.id,
                 category: category,
                 imageUrl: imageUrl,
               ),
             );
-            // Add haptic feedback on post submission
             HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -508,6 +482,49 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.pop(context);
                 // Navigate to settings screen
               },
+            ),
+            // Theme selection
+            ExpansionTile(
+              leading: const Icon(Icons.brightness_6),
+              title: const Text('Theme'),
+              children: [
+                RadioListTile<ThemeMode>(
+                  title: const Text('Light'),
+                  value: ThemeMode.light,
+                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
+                  onChanged: (ThemeMode? value) {
+                    if (value != null) {
+                      Provider.of<ThemeProvider>(context, listen: false)
+                          .setThemeMode(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Dark'),
+                  value: ThemeMode.dark,
+                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
+                  onChanged: (ThemeMode? value) {
+                    if (value != null) {
+                      Provider.of<ThemeProvider>(context, listen: false)
+                          .setThemeMode(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('System'),
+                  value: ThemeMode.system,
+                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
+                  onChanged: (ThemeMode? value) {
+                    if (value != null) {
+                      Provider.of<ThemeProvider>(context, listen: false)
+                          .setThemeMode(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
             ),
             const Divider(),
             // Always show sign-out button
@@ -793,5 +810,57 @@ class _HomeScreenState extends State<HomeScreen>
         },
       ),
     ); // <-- Closing BlocListener
+  }
+}
+
+class _PostCreationModalWrapper extends StatelessWidget {
+  final User user;
+  final Function(String, String, String?) onPost;
+
+  const _PostCreationModalWrapper({
+    required this.user,
+    required this.onPost,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    // Adapt the onPost callback to handle the new PostMedia list parameter
+    void handlePost(String content, String category, List<dynamic> media) {
+      // For backward compatibility, we extract the first media URL if available
+      final String? firstMediaUrl = media.isNotEmpty ? media.first.path : null;
+      onPost(content, category, firstMediaUrl);
+    }
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      curve: Curves.easeOut,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxHeight: 400, // prevents it from taking full screen
+            minHeight: 250,
+          ),
+          // Provide the PostCreationBloc to the PostCreationScreen
+          child: BlocProvider(
+            create: (context) => PostCreationBloc(),
+            child: PostCreationScreen(
+              user: user,
+              scrollController: ScrollController(),
+              onPost: handlePost,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

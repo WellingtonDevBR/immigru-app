@@ -1,0 +1,207 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
+import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_bloc.dart';
+import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_event.dart';
+import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_state.dart';
+
+/// Widget for displaying selected media items in a horizontal list
+class SelectedMediaListWidget extends StatelessWidget {
+  const SelectedMediaListWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PostCreationBloc, PostCreationState>(
+      buildWhen: (previous, current) => previous.media != current.media,
+      builder: (context, state) {
+        if (state.media.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return SizedBox(
+          height: 60,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: state.media.length,
+            itemBuilder: (context, index) {
+              final media = state.media[index];
+              return _MediaChip(media: media);
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A compact representation of a selected media item
+class _MediaChip extends StatelessWidget {
+  final PostMedia media;
+
+  const _MediaChip({required this.media});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    
+    // Extract filename from path
+    final fileName = media.name.length > 15 
+        ? '${media.name.substring(0, 12)}...' 
+        : media.name;
+    
+    // Determine if it's an image or video
+    final isVideo = media.type == MediaType.video;
+    
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Thumbnail
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(7),
+                bottomLeft: Radius.circular(7),
+              ),
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: _buildThumbnail(media.path, isVideo),
+              ),
+            ),
+            
+            // Filename and type icon
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    isVideo ? Icons.videocam : Icons.image,
+                    size: 16,
+                    color: isVideo 
+                        ? Colors.blue 
+                        : Colors.green,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    fileName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Remove button
+            GestureDetector(
+              onTap: () {
+                context.read<PostCreationBloc>().add(MediaRemoved(media.id));
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(7),
+                    bottomRight: Radius.circular(7),
+                  ),
+                ),
+                child: Icon(
+                  Icons.close,
+                  size: 14,
+                  color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Build a thumbnail for the media item
+  Widget _buildThumbnail(String path, bool isVideo) {
+    try {
+      if (path.startsWith('http')) {
+        // Network image
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              path,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return _buildErrorThumbnail();
+              },
+            ),
+            if (isVideo)
+              const Center(
+                child: Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+          ],
+        );
+      } else {
+        // Local file
+        final file = File(path);
+        if (!file.existsSync()) {
+          return _buildErrorThumbnail();
+        }
+        
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return _buildErrorThumbnail();
+              },
+            ),
+            if (isVideo)
+              const Center(
+                child: Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+          ],
+        );
+      }
+    } catch (e) {
+      return _buildErrorThumbnail();
+    }
+  }
+  
+  /// Build a placeholder for when the thumbnail can't be loaded
+  Widget _buildErrorThumbnail() {
+    return Container(
+      color: Colors.grey[800],
+      child: const Center(
+        child: Icon(
+          Icons.broken_image,
+          color: Colors.white54,
+          size: 20,
+        ),
+      ),
+    );
+  }
+}
