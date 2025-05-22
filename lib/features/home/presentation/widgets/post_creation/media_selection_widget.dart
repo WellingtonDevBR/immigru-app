@@ -18,9 +18,6 @@ class MediaSelectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
     return Row(
       children: [
         _buildMediaButton(
@@ -62,9 +59,9 @@ class MediaSelectionWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -169,8 +166,9 @@ class MediaSelectionWidget extends StatelessWidget {
   Future<void> _getImageFromSource(
       BuildContext context, ImageSource source) async {
     try {
-      _logger.d('Attempting to pick image from ${source.name}', tag: 'MediaSelectionWidget');
-      
+      _logger.d('Attempting to pick image from ${source.name}',
+          tag: 'MediaSelectionWidget');
+
       // Show loading indicator
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       scaffoldMessenger.showSnackBar(
@@ -179,34 +177,37 @@ class MediaSelectionWidget extends StatelessWidget {
           duration: Duration(seconds: 1),
         ),
       );
-      
+
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: source,
         imageQuality: 70, // Slightly lower quality to reduce file size
-        maxWidth: 1200,   // Limit max dimensions to avoid huge images
+        maxWidth: 1200, // Limit max dimensions to avoid huge images
         maxHeight: 1200,
       );
 
       if (pickedFile != null) {
-        _logger.d('Image picked: ${pickedFile.path}', tag: 'MediaSelectionWidget');
-        
+        _logger.d('Image picked: ${pickedFile.path}',
+            tag: 'MediaSelectionWidget');
+
         // Verify the file exists before adding to state
         final file = File(pickedFile.path);
         final exists = await file.exists();
         _logger.d('File exists: $exists', tag: 'MediaSelectionWidget');
-        
+
         if (exists) {
           final fileSize = await file.length();
-          _logger.d('Image file size: $fileSize bytes', tag: 'MediaSelectionWidget');
+          _logger.d('Image file size: $fileSize bytes',
+              tag: 'MediaSelectionWidget');
 
           // Create a PostMediaModel from the picked file
           final media = PostMediaModel.fromPath(pickedFile.path);
-          _logger.d('Created media model: ${media.name} (${media.path})', tag: 'MediaSelectionWidget');
+          _logger.d('Created media model: ${media.name} (${media.path})',
+              tag: 'MediaSelectionWidget');
 
           // Add the media to the bloc
           if (context.mounted) {
             context.read<PostCreationBloc>().add(MediaAdded(media));
-            
+
             // Show success message
             scaffoldMessenger.showSnackBar(
               SnackBar(
@@ -215,17 +216,19 @@ class MediaSelectionWidget extends StatelessWidget {
                 duration: const Duration(seconds: 1),
               ),
             );
-            
+
             // Log the current state after a short delay
             Future.delayed(const Duration(milliseconds: 500), () {
               if (context.mounted) {
                 final state = context.read<PostCreationBloc>().state;
-                _logger.d('Current media count in state: ${state.media.length}', tag: 'MediaSelectionWidget');
+                _logger.d('Current media count in state: ${state.media.length}',
+                    tag: 'MediaSelectionWidget');
               }
             });
           }
         } else {
-          _logger.e('Image file does not exist: ${pickedFile.path}', tag: 'MediaSelectionWidget');
+          _logger.e('Image file does not exist: ${pickedFile.path}',
+              tag: 'MediaSelectionWidget');
           if (context.mounted) {
             scaffoldMessenger.showSnackBar(
               const SnackBar(
@@ -263,8 +266,9 @@ class MediaSelectionWidget extends StatelessWidget {
   Future<void> _getVideoFromSource(
       BuildContext context, ImageSource source) async {
     try {
-      _logger.d('Attempting to pick video from ${source.name}', tag: 'MediaSelectionWidget');
-      
+      _logger.d('Attempting to pick video from ${source.name}',
+          tag: 'MediaSelectionWidget');
+
       // Show loading indicator
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       scaffoldMessenger.showSnackBar(
@@ -273,27 +277,30 @@ class MediaSelectionWidget extends StatelessWidget {
           duration: Duration(seconds: 1),
         ),
       );
-      
+
       final XFile? pickedFile = await _imagePicker.pickVideo(
         source: source,
         maxDuration: const Duration(minutes: 2), // Reduced from 5 to 2 minutes
       );
 
       if (pickedFile != null) {
-        _logger.d('Video picked: ${pickedFile.path}', tag: 'MediaSelectionWidget');
-        
+        _logger.d('Video picked: ${pickedFile.path}',
+            tag: 'MediaSelectionWidget');
+
         // Verify the file exists before adding to state
         final file = File(pickedFile.path);
         final exists = await file.exists();
         _logger.d('File exists: $exists', tag: 'MediaSelectionWidget');
-        
+
         if (exists) {
           final fileSize = await file.length();
-          _logger.d('Video file size: $fileSize bytes', tag: 'MediaSelectionWidget');
+          _logger.d('Video file size: $fileSize bytes',
+              tag: 'MediaSelectionWidget');
 
           // Check if video is too large (>30MB instead of 50MB)
           if (fileSize > 30 * 1024 * 1024) {
-            _logger.w('Video file too large: $fileSize bytes', tag: 'MediaSelectionWidget');
+            _logger.w('Video file too large: $fileSize bytes',
+                tag: 'MediaSelectionWidget');
             if (context.mounted) {
               scaffoldMessenger.showSnackBar(
                 const SnackBar(
@@ -307,12 +314,13 @@ class MediaSelectionWidget extends StatelessWidget {
 
           // Create a PostMediaModel from the picked file
           final media = PostMediaModel.fromPath(pickedFile.path);
-          _logger.d('Created media model: ${media.name} (${media.path})', tag: 'MediaSelectionWidget');
+          _logger.d('Created media model: ${media.name} (${media.path})',
+              tag: 'MediaSelectionWidget');
 
           // Add the media to the bloc
           if (context.mounted) {
             context.read<PostCreationBloc>().add(MediaAdded(media));
-            
+
             // Show success message
             scaffoldMessenger.showSnackBar(
               SnackBar(
@@ -321,17 +329,19 @@ class MediaSelectionWidget extends StatelessWidget {
                 duration: const Duration(seconds: 1),
               ),
             );
-            
+
             // Log the current state after a short delay
             Future.delayed(const Duration(milliseconds: 500), () {
               if (context.mounted) {
                 final state = context.read<PostCreationBloc>().state;
-                _logger.d('Current media count in state: ${state.media.length}', tag: 'MediaSelectionWidget');
+                _logger.d('Current media count in state: ${state.media.length}',
+                    tag: 'MediaSelectionWidget');
               }
             });
           }
         } else {
-          _logger.e('Video file does not exist: ${pickedFile.path}', tag: 'MediaSelectionWidget');
+          _logger.e('Video file does not exist: ${pickedFile.path}',
+              tag: 'MediaSelectionWidget');
           if (context.mounted) {
             scaffoldMessenger.showSnackBar(
               const SnackBar(

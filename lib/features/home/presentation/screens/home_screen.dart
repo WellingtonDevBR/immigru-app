@@ -825,7 +825,6 @@ class _PostCreationModalWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     // Adapt the onPost callback to handle the new PostMedia list parameter
