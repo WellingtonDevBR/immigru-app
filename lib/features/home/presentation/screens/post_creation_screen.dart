@@ -213,16 +213,21 @@ class _PostCreationScreenState extends State<PostCreationScreen>
         }
       });
     }
-
-    // Create a controller that updates the BLoC when text changes
-    final controller = TextEditingController(text: state.content);
-    controller.addListener(() {
-      if (controller.text != state.content) {
-        context.read<PostCreationBloc>().add(
-              PostContentChanged(controller.text),
-            );
-      }
-    });
+    
+    // Create a text controller with the current content
+    // We'll use a special approach to handle text input
+    final controller = TextEditingController();
+    
+    // Set the initial text value
+    controller.text = state.content;
+    
+    // Set cursor position at the end
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: controller.text.length),
+    );
+    
+    // Create a local variable to track text input
+    String inputText = state.content;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,30 +263,43 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                 horizontal: 16,
                 vertical: 12,
               ),
-              child: TextField(
-                controller: controller,
-                focusNode: _focusNode,
-                maxLines: null,
-                minLines: 4,
-                maxLength: 500,
-                maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                textCapitalization: TextCapitalization.sentences,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                decoration: InputDecoration.collapsed(
-                  hintText: "What's on your mind?",
-                  hintStyle: TextStyle(
-                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              child: Directionality(
+                // Force LTR text direction for the entire field
+                textDirection: TextDirection.ltr,
+                child: TextField(
+                  controller: controller,
+                  focusNode: _focusNode,
+                  maxLines: null,
+                  minLines: 4,
+                  maxLength: 500,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                  textCapitalization: TextCapitalization.sentences,
+                  textDirection: TextDirection.ltr,
+                  // Process each character as it's typed
+                  onChanged: (value) {
+                    // Log the value to debug
+                    _logger.d('Text input: $value', tag: 'PostCreationScreen');
+                    context.read<PostCreationBloc>().add(
+                          PostContentChanged(value),
+                        );
+                  },
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
+                  decoration: InputDecoration.collapsed(
+                    hintText: "What's on your mind?",
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                  // Remove the built-in counter
+                  buildCounter: (context,
+                          {required currentLength,
+                          required isFocused,
+                          maxLength}) =>
+                      null,
                 ),
-                // Remove the built-in counter
-                buildCounter: (context,
-                        {required currentLength,
-                        required isFocused,
-                        maxLength}) =>
-                    null,
               ),
             ),
           ),

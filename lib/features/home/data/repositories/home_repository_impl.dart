@@ -3,6 +3,7 @@ import 'package:immigru/features/home/data/datasources/home_data_source.dart';
 import 'package:immigru/features/home/domain/entities/event.dart';
 import 'package:immigru/features/home/domain/entities/immi_grove.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/features/home/domain/entities/post_comment.dart';
 import 'package:immigru/features/home/domain/repositories/home_repository.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
 import 'package:immigru/core/network/models/failure.dart';
@@ -19,13 +20,23 @@ class HomeRepositoryImpl implements HomeRepository {
 
   @override
   Future<Either<Failure, List<Post>>> getPosts({
+    String filter = 'all',
     String? category,
+    String? userId,
+    String? immigroveId,
+    bool excludeCurrentUser = false,
+    String? currentUserId,
     int limit = 20,
     int offset = 0,
   }) async {
     try {
       final posts = await dataSource.getPosts(
+        filter: filter,
         category: category,
+        userId: userId,
+        immigroveId: immigroveId,
+        excludeCurrentUser: excludeCurrentUser,
+        currentUserId: currentUserId,
         limit: limit,
         offset: offset,
       );
@@ -120,14 +131,54 @@ class HomeRepositoryImpl implements HomeRepository {
     required String userId,
   }) async {
     try {
-      final result = await dataSource.registerForEvent(
+      await dataSource.registerForEvent(
         eventId: eventId,
         userId: userId,
       );
-      return Right(result);
+      return const Right(true);
     } catch (e) {
       logger.e('Failed to register for event: $e', tag: 'HomeRepository');
       return Left(Failure(message: 'Failed to register for event'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<PostComment>>> getComments({
+    required String postId,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final comments = await dataSource.getComments(
+        postId: postId,
+        limit: limit,
+        offset: offset,
+      );
+      return Right(comments);
+    } catch (e) {
+      logger.e('Failed to get comments: $e', tag: 'HomeRepository');
+      return Left(Failure(message: 'Failed to get comments'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PostComment>> createComment({
+    required String postId,
+    required String userId,
+    required String content,
+    String? parentCommentId,
+  }) async {
+    try {
+      final comment = await dataSource.createComment(
+        postId: postId,
+        userId: userId,
+        content: content,
+        parentCommentId: parentCommentId,
+      );
+      return Right(comment);
+    } catch (e) {
+      logger.e('Failed to create comment: $e', tag: 'HomeRepository');
+      return Left(Failure(message: 'Failed to create comment'));
     }
   }
 

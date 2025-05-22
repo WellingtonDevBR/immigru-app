@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_bloc.dart';
 import 'package:immigru/features/home/presentation/screens/post_creation_screen.dart';
 import 'package:provider/provider.dart';
@@ -222,7 +224,16 @@ class _HomeScreenState extends State<HomeScreen>
 
         // Force a refresh to ensure we get fresh data
         if (!homeBloc.isClosed) {
-          homeBloc.add(FetchPosts(category: _selectedCategory, refresh: true));
+          // Get the current user ID for filtering
+          final String? currentUserId = widget.user?.id;
+          
+          // Use enhanced filtering options
+          homeBloc.add(FetchPosts(
+            filter: 'all',  // Default filter for the main feed
+            category: _selectedCategory,
+            currentUserId: currentUserId,
+            refresh: true,
+          ));
         }
 
         // Set a timeout to ensure we don't get stuck in loading state
@@ -367,25 +378,39 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
+    // Capture the HomeBloc before opening the modal
+    final homeBloc = BlocProvider.of<HomeBloc>(context);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useSafeArea: true,
-      builder: (context) {
+      builder: (modalContext) {
         return _PostCreationModalWrapper(
           user: currentUser,
-          onPost: (content, category, imageUrl) {
-            BlocProvider.of<HomeBloc>(context).add(
+          homeBloc: homeBloc, // Pass the HomeBloc to the wrapper
+          onPost: (content, category, mediaItems) {
+            // Extract the first media URL if available for backward compatibility with HomeBloc
+            final String? firstMediaUrl = mediaItems.isNotEmpty ? mediaItems.first.path : null;
+            
+            // Create the post using the captured HomeBloc
+            homeBloc.add(
               CreatePost(
                 content: content,
                 userId: currentUser.id,
                 category: category,
-                imageUrl: imageUrl,
+                imageUrl: firstMediaUrl,
               ),
             );
+            
             HapticFeedback.mediumImpact();
-            Navigator.pop(context);
+            Navigator.pop(modalContext);
+            
+            // Show a success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Post created successfully!')),
+            );
           },
         );
       },
@@ -815,10 +840,12 @@ class _HomeScreenState extends State<HomeScreen>
 
 class _PostCreationModalWrapper extends StatelessWidget {
   final User user;
-  final Function(String, String, String?) onPost;
+  final HomeBloc homeBloc;
+  final Function(String, String, List<PostMedia>) onPost;
 
   const _PostCreationModalWrapper({
     required this.user,
+    required this.homeBloc,
     required this.onPost,
   });
 
@@ -827,11 +854,9 @@ class _PostCreationModalWrapper extends StatelessWidget {
     final theme = Theme.of(context);
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    // Adapt the onPost callback to handle the new PostMedia list parameter
-    void handlePost(String content, String category, List<dynamic> media) {
-      // For backward compatibility, we extract the first media URL if available
-      final String? firstMediaUrl = media.isNotEmpty ? media.first.path : null;
-      onPost(content, category, firstMediaUrl);
+    // Pass the onPost callback directly to the PostCreationScreen
+    void handlePost(String content, String category, List<PostMedia> media) {
+      onPost(content, category, media);
     }
 
     return AnimatedPadding(
@@ -849,9 +874,16 @@ class _PostCreationModalWrapper extends StatelessWidget {
             maxHeight: 400, // prevents it from taking full screen
             minHeight: 250,
           ),
-          // Provide the PostCreationBloc to the PostCreationScreen
-          child: BlocProvider(
-            create: (context) => PostCreationBloc(),
+          // Provide both the HomeBloc and PostCreationBloc to the PostCreationScreen
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(
+                value: homeBloc,
+              ),
+              BlocProvider(
+                create: (context) => GetIt.instance<PostCreationBloc>(),
+              ),
+            ],
             child: PostCreationScreen(
               user: user,
               scrollController: ScrollController(),

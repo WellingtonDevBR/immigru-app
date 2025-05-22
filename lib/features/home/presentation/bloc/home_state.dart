@@ -46,6 +46,21 @@ class PostsLoaded extends HomeState {
   /// Selected category
   final String selectedCategory;
 
+  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
+  final String filter;
+
+  /// Optional user ID to filter posts by
+  final String? userId;
+
+  /// Optional ImmiGrove ID to filter posts by
+  final String? immigroveId;
+
+  /// Whether to exclude the current user's posts
+  final bool excludeCurrentUser;
+
+  /// ID of the current user (needed for some filters)
+  final String? currentUserId;
+
   /// Whether more posts are being loaded (pagination)
   final bool isLoadingMore;
 
@@ -54,6 +69,11 @@ class PostsLoaded extends HomeState {
     required this.posts,
     required this.hasReachedMax,
     required this.selectedCategory,
+    this.filter = 'all',
+    this.userId,
+    this.immigroveId,
+    this.excludeCurrentUser = false,
+    this.currentUserId,
     this.isLoadingMore = false,
   });
 
@@ -62,18 +82,38 @@ class PostsLoaded extends HomeState {
     List<Post>? posts,
     bool? hasReachedMax,
     String? selectedCategory,
+    String? filter,
+    String? userId,
+    String? immigroveId,
+    bool? excludeCurrentUser,
+    String? currentUserId,
     bool? isLoadingMore,
   }) {
     return PostsLoaded(
       posts: posts ?? this.posts,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      filter: filter ?? this.filter,
+      userId: userId ?? this.userId,
+      immigroveId: immigroveId ?? this.immigroveId,
+      excludeCurrentUser: excludeCurrentUser ?? this.excludeCurrentUser,
+      currentUserId: currentUserId ?? this.currentUserId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
   @override
-  List<Object?> get props => [posts, hasReachedMax, selectedCategory, isLoadingMore];
+  List<Object?> get props => [
+    posts, 
+    hasReachedMax, 
+    selectedCategory, 
+    filter,
+    userId,
+    immigroveId,
+    excludeCurrentUser,
+    currentUserId,
+    isLoadingMore
+  ];
 }
 
 /// Error state for posts

@@ -10,21 +10,76 @@ abstract class HomeEvent extends Equatable {
 
 /// Event to fetch posts
 class FetchPosts extends HomeEvent {
+  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
+  final String filter;
+  /// Optional category filter
   final String? category;
+  /// Optional user ID to filter posts by
+  final String? userId;
+  /// Optional ImmiGrove ID to filter posts by
+  final String? immigroveId;
+  /// Whether to exclude the current user's posts
+  final bool excludeCurrentUser;
+  /// ID of the current user (needed for some filters)
+  final String? currentUserId;
+  /// Whether to refresh the posts
   final bool refresh;
 
   const FetchPosts({
+    this.filter = 'all',
     this.category,
+    this.userId,
+    this.immigroveId,
+    this.excludeCurrentUser = false,
+    this.currentUserId,
     this.refresh = false,
   });
 
   @override
-  List<Object?> get props => [category, refresh];
+  List<Object?> get props => [
+    filter,
+    category,
+    userId,
+    immigroveId,
+    excludeCurrentUser,
+    currentUserId,
+    refresh,
+  ];
 }
 
 /// Event to fetch more posts (pagination)
 class FetchMorePosts extends HomeEvent {
-  const FetchMorePosts();
+  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
+  final String filter;
+  /// Optional category filter
+  final String? category;
+  /// Optional user ID to filter posts by
+  final String? userId;
+  /// Optional ImmiGrove ID to filter posts by
+  final String? immigroveId;
+  /// Whether to exclude the current user's posts
+  final bool excludeCurrentUser;
+  /// ID of the current user (needed for some filters)
+  final String? currentUserId;
+
+  const FetchMorePosts({
+    this.filter = 'all',
+    this.category,
+    this.userId,
+    this.immigroveId,
+    this.excludeCurrentUser = false,
+    this.currentUserId,
+  });
+
+  @override
+  List<Object?> get props => [
+    filter,
+    category,
+    userId,
+    immigroveId,
+    excludeCurrentUser,
+    currentUserId,
+  ];
 }
 
 /// Event to fetch personalized posts

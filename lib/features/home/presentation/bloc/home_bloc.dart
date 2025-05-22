@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 import 'package:immigru/features/home/domain/usecases/create_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_events_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_personalized_posts_usecase.dart';
@@ -74,7 +75,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // Add a timeout to the API call to prevent UI freezing
       final result = await Future.any([
         getPostsUseCase(
+          filter: event.filter,
           category: category,
+          userId: event.userId,
+          immigroveId: event.immigroveId,
+          excludeCurrentUser: event.excludeCurrentUser,
+          currentUserId: event.currentUserId,
           limit: _postsLimit,
           offset: 0,
         ),
@@ -93,11 +99,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         (posts) {
           logger.d('Fetched ${posts.length} posts', tag: 'HomeBloc');
           
-          // Create the loaded state
+          // Create the loaded state with all filter parameters
           final loadedState = PostsLoaded(
             posts: posts,
             hasReachedMax: posts.length < _postsLimit,
             selectedCategory: category,
+            filter: event.filter,
+            userId: event.userId,
+            immigroveId: event.immigroveId,
+            excludeCurrentUser: event.excludeCurrentUser,
+            currentUserId: event.currentUserId,
             isLoadingMore: false,
           );
           
@@ -145,17 +156,27 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         return;
       }
 
-      // Emit a loading indicator state while preserving current posts
+      // Emit a loading indicator state while preserving current posts and filter parameters
       emit(PostsLoaded(
         posts: currentState.posts,
         hasReachedMax: false,
         selectedCategory: currentState.selectedCategory,
+        filter: currentState.filter,
+        userId: currentState.userId,
+        immigroveId: currentState.immigroveId,
+        excludeCurrentUser: currentState.excludeCurrentUser,
+        currentUserId: currentState.currentUserId,
         isLoadingMore: true, // Add this flag to the state
       ));
 
       // Fetch more posts with proper offset
       final result = await getPostsUseCase(
+        filter: event.filter,
         category: currentState.selectedCategory,
+        userId: event.userId,
+        immigroveId: event.immigroveId,
+        excludeCurrentUser: event.excludeCurrentUser,
+        currentUserId: event.currentUserId,
         limit: _postsLimit,
         offset: currentState.posts.length,
       );
@@ -180,11 +201,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             return;
           }
 
-          // Emit new state with combined posts
+          // Emit new state with combined posts and preserved filter parameters
           emit(PostsLoaded(
             posts: [...currentState.posts, ...newPosts],
             hasReachedMax: newPosts.length < _postsLimit,
             selectedCategory: currentState.selectedCategory,
+            filter: currentState.filter,
+            userId: currentState.userId,
+            immigroveId: currentState.immigroveId,
+            excludeCurrentUser: currentState.excludeCurrentUser,
+            currentUserId: currentState.currentUserId,
             isLoadingMore: false,
           ));
         },
@@ -347,11 +373,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       emit(const PostCreating());
 
+      // Convert imageUrl to media list if provided
+      final List<PostMedia> media = [];
+      if (event.imageUrl != null) {
+        media.add(PostMedia(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          path: event.imageUrl!,
+          name: 'image_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          type: MediaType.image,
+          createdAt: DateTime.now(),
+        ));
+      }
+      
       final result = await createPostUseCase(
         content: event.content,
         userId: event.userId,
         category: event.category,
-        imageUrl: event.imageUrl,
+        media: media,
       );
 
       result.fold(

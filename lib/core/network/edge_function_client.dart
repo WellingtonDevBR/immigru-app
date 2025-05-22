@@ -39,6 +39,10 @@ class EdgeFunctionClient {
         debugPrint('EdgeFunctionClient: No auth token available');
       }
       
+      // Log the request details for debugging
+      debugPrint('EdgeFunctionClient: Invoking function: $url');
+      debugPrint('EdgeFunctionClient: Request body: $body');
+      
       // Invoke the edge function with authentication
       final response = await _client.functions.invoke(
         url,
@@ -46,6 +50,10 @@ class EdgeFunctionClient {
         method: method,
         headers: headers,
       );
+      
+      // Log the response for debugging
+      debugPrint('EdgeFunctionClient: Response status: ${response.status}');
+      debugPrint('EdgeFunctionClient: Response data: ${response.data}');
       
       // Parse the response data
       final responseData = response.data;

@@ -5,9 +5,11 @@ import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
+import 'package:immigru/features/home/presentation/screens/post_comments_screen.dart';
 import 'package:immigru/features/home/presentation/widgets/post_card.dart';
 import 'package:immigru/shared/widgets/error_message_widget.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// "All Posts" tab showing posts with category filtering
 class AllPostsTab extends StatefulWidget {
@@ -91,7 +93,12 @@ class _AllPostsTabState extends State<AllPostsTab>
       final state = context.read<HomeBloc>().state;
 
       if (state is PostsLoaded && !state.hasReachedMax) {
-        _loadMorePosts();
+        // Add a small delay to prevent multiple calls when scrolling quickly
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && !_isLoadingMore) {
+            _loadMorePosts();
+          }
+        });
       }
     }
   }
@@ -129,18 +136,39 @@ class _AllPostsTabState extends State<AllPostsTab>
         return;
       }
 
-      homeBloc.add(FetchMorePosts());
+      // Always exclude current user's posts when loading more
+      final supabase = Supabase.instance.client;
+      final currentUserId = supabase.auth.currentUser?.id;
+      
+      homeBloc.add(FetchMorePosts(
+        filter: currentState.filter,
+        category: currentState.selectedCategory,
+        userId: currentState.userId,
+        immigroveId: currentState.immigroveId,
+        excludeCurrentUser: true, // Always exclude current user's posts
+        currentUserId: currentUserId, // Pass current user ID
+      ));
+      
+      // Start a timeout to prevent getting stuck in loading state
+      _startLoadingMoreTimeout();
     } catch (e) {
       _logger.e('Error loading more posts: $e', tag: 'AllPostsTab');
       _isLoadingMore = false; // Reset flag immediately on error
     }
-
-    // Reset loading flag after a delay to prevent rapid consecutive calls
-    // Using a longer delay to ensure the request has time to complete
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        _isLoadingMore = false;
-        _logger.d('Reset loading flag', tag: 'AllPostsTab');
+  }
+  
+  // Start a timeout specifically for loading more posts
+  void _startLoadingMoreTimeout() {
+    // Cancel any existing timer first
+    _loadingTimeoutTimer?.cancel();
+    
+    // Set a new timer that will force reset the loading state after 5 seconds
+    _loadingTimeoutTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && _isLoadingMore) {
+        setState(() {
+          _isLoadingMore = false;
+          _logger.d('Reset loading flag via timeout', tag: 'AllPostsTab');
+        });
       }
     });
   }
@@ -155,9 +183,9 @@ class _AllPostsTabState extends State<AllPostsTab>
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.offset;
 
-    // Only trigger when we're at 80% of the way down to give more time for loading
-    // This helps prevent multiple triggers when scrolling quickly
-    return currentScroll >= (maxScroll * 0.8);
+    // Consider we're at the bottom when we're within 200 pixels of the end
+    // This is more reliable than using a percentage
+    return maxScroll - currentScroll <= 200;
   }
 
   void _fetchPosts() {
@@ -187,22 +215,34 @@ class _AllPostsTabState extends State<AllPostsTab>
         return;
       }
 
-      // If we're in a loaded state and just refreshing, use the current category
+      // If we're in a loaded state and just refreshing, use the current filter parameters
       if (currentState is PostsLoaded) {
         _logger.d(
-            'Refreshing posts with existing category: ${currentState.selectedCategory}',
+            'Refreshing posts with existing filter: ${currentState.filter}, category: ${currentState.selectedCategory}',
             tag: 'AllPostsTab');
         homeBloc.add(FetchPosts(
+          filter: currentState.filter,
           category: currentState.selectedCategory,
+          userId: currentState.userId,
+          immigroveId: currentState.immigroveId,
+          excludeCurrentUser: currentState.excludeCurrentUser,
+          currentUserId: currentState.currentUserId,
           refresh: true,
         ));
       } else {
-        // For other states, use the widget's category
+        // For other states, use the widget's category with default filter
         _logger.d(
             'Fetching posts with widget category: ${widget.selectedCategory}',
             tag: 'AllPostsTab');
+        // Get the current user ID from Supabase
+        final supabase = Supabase.instance.client;
+        final currentUserId = supabase.auth.currentUser?.id;
+        
         homeBloc.add(FetchPosts(
+          filter: 'all',  // Default filter for the main feed
           category: widget.selectedCategory,
+          excludeCurrentUser: true,  // Exclude current user's posts
+          currentUserId: currentUserId,  // Pass current user ID
           refresh: true,
         ));
       }
@@ -239,7 +279,10 @@ class _AllPostsTabState extends State<AllPostsTab>
       },
       listener: (context, state) {
         if (state is PostsLoaded) {
+          // Always reset loading flag when posts are loaded
           _isLoadingMore = false;
+          _loadingTimeoutTimer?.cancel(); // Cancel any pending timeout
+          
           _logger.d('Posts loaded successfully: ${state.posts.length} posts',
               tag: 'AllPostsTab');
 
@@ -250,11 +293,17 @@ class _AllPostsTabState extends State<AllPostsTab>
               _localPosts = List.from(state.posts);
             });
           } else {
+            // Check if this is a pagination update (more posts added)
+            if (state.posts.length > _localPosts.length) {
+              _logger.d('Pagination update detected, adding ${state.posts.length - _localPosts.length} new posts',
+                  tag: 'AllPostsTab');
+            }
             // Merge new posts with our local state
             _updateLocalPostsFromState(state.posts);
           }
         } else if (state is PostsError) {
           _isLoadingMore = false;
+          _loadingTimeoutTimer?.cancel(); // Cancel any pending timeout
           _logger.e('Post loading error: ${state.message}', tag: 'AllPostsTab');
 
           // Show error message to user
@@ -390,7 +439,6 @@ class _AllPostsTabState extends State<AllPostsTab>
             padding: const EdgeInsets.only(bottom: 80), // Add padding for FAB
             itemCount: posts.length + (hasReachedMax ? 0 : 1),
             itemBuilder: (context, index) {
-              // Show loading indicator at the bottom when loading more
               if (index == posts.length) {
                 if (isLoadingMore) {
                   return const Center(
@@ -400,12 +448,16 @@ class _AllPostsTabState extends State<AllPostsTab>
                     ),
                   );
                 } else {
-                  // Show "Load More" button instead of automatic loading
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: OutlinedButton(
-                        onPressed: _loadMorePosts,
+                        onPressed: () {
+                          setState(() {
+                            _isLoadingMore = false;
+                          });
+                          _loadMorePosts();
+                        },
                         child: const Text('Load More'),
                       ),
                     ),
@@ -420,14 +472,27 @@ class _AllPostsTabState extends State<AllPostsTab>
                 child: PostCard(
                   post: post,
                   onComment: () {
-                    // Handle comment action
-                    // This is just a placeholder for now
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Comment feature coming soon!'),
-                        duration: Duration(seconds: 1),
+                    // Navigate to the comments screen
+                    final currentState = context.read<HomeBloc>().state;
+                    String userId = '';
+                    
+                    // Get the current user ID from the state if available
+                    if (currentState is PostsLoaded && currentState.currentUserId != null) {
+                      userId = currentState.currentUserId!;
+                    }
+                    
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PostCommentsScreen(
+                          post: post,
+                          userId: userId,
+                        ),
                       ),
-                    );
+                    ).then((_) {
+                      // Refresh posts when returning from comments screen
+                      // to get updated comment counts
+                      _refreshPosts();
+                    });
                   },
                   onLike: () {
                     // Handle like action locally without using LikePost event

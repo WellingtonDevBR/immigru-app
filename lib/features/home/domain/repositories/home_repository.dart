@@ -2,17 +2,28 @@ import 'package:dartz/dartz.dart';
 import 'package:immigru/features/home/domain/entities/event.dart';
 import 'package:immigru/features/home/domain/entities/immi_grove.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/features/home/domain/entities/post_comment.dart';
 import 'package:immigru/core/network/models/failure.dart';
 
 /// Repository interface for home screen data
 abstract class HomeRepository {
   /// Get posts for the home feed
   ///
+  /// [filter] - Filter type: 'all', 'user', 'following', 'my-immigroves'
   /// [category] - Optional category filter
+  /// [userId] - Optional user ID to filter posts by
+  /// [immigroveId] - Optional ImmiGrove ID to filter posts by
+  /// [excludeCurrentUser] - Whether to exclude the current user's posts
+  /// [currentUserId] - ID of the current user (needed for some filters)
   /// [limit] - Maximum number of posts to return
   /// [offset] - Pagination offset
   Future<Either<Failure, List<Post>>> getPosts({
+    String filter = 'all',
     String? category,
+    String? userId,
+    String? immigroveId,
+    bool excludeCurrentUser = false,
+    String? currentUserId,
     int limit = 20,
     int offset = 0,
   });
@@ -99,5 +110,29 @@ abstract class HomeRepository {
   Future<Either<Failure, bool>> registerForEvent({
     required String eventId,
     required String userId,
+  });
+  
+  /// Get comments for a post
+  /// 
+  /// [postId] - ID of the post to get comments for
+  /// [limit] - Maximum number of comments to return
+  /// [offset] - Pagination offset
+  Future<Either<Failure, List<PostComment>>> getComments({
+    required String postId,
+    int limit = 20,
+    int offset = 0,
+  });
+  
+  /// Create a new comment on a post
+  /// 
+  /// [postId] - ID of the post to comment on
+  /// [userId] - ID of the user creating the comment
+  /// [content] - Content of the comment
+  /// [parentCommentId] - Optional ID of the parent comment (for replies)
+  Future<Either<Failure, PostComment>> createComment({
+    required String postId,
+    required String userId,
+    required String content,
+    String? parentCommentId,
   });
 }

@@ -33,6 +33,15 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     _isLiked = widget.post.isLiked;
   }
+  
+  /// Validates if the provided URL is a valid image URL
+  bool _isValidImageUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    if (url == 'custom') return false; // Filter out invalid 'custom' URL
+    
+    // Basic URL validation
+    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/');
+  }
 
   @override
   void didUpdateWidget(PostCard oldWidget) {
@@ -67,10 +76,10 @@ class _PostCardState extends State<PostCard> {
                 // User avatar
                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: widget.post.userAvatar != null
+                  backgroundImage: _isValidImageUrl(widget.post.userAvatar)
                       ? NetworkImage(widget.post.userAvatar!)
                       : null,
-                  child: widget.post.userAvatar == null
+                  child: !_isValidImageUrl(widget.post.userAvatar)
                       ? Text(
                           widget.post.userName?[0] ?? 'U',
                           style: const TextStyle(fontSize: 16),
@@ -138,7 +147,7 @@ class _PostCardState extends State<PostCard> {
               ),
             ),
           // Post image if available
-          if (widget.post.imageUrl != null)
+          if (_isValidImageUrl(widget.post.imageUrl))
             Container(
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 400),

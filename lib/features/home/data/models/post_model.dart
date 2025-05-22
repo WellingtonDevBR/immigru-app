@@ -1,4 +1,5 @@
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/features/home/data/models/author_model.dart';
 
 /// Model class for Post entity
 class PostModel extends Post {
@@ -15,10 +16,21 @@ class PostModel extends Post {
     super.commentCount = 0,
     super.isLiked = false,
     super.location,
+    super.author,
   });
 
   /// Create a PostModel from JSON
   factory PostModel.fromJson(Map<String, dynamic> json) {
+    // Create author if user data is available
+    AuthorModel? authorModel;
+    if (json['user_id'] != null) {
+      authorModel = AuthorModel(
+        id: json['user_id']?.toString() ?? '',
+        displayName: json['user_name']?.toString(),
+        avatarUrl: json['user_avatar']?.toString(),
+      );
+    }
+    
     return PostModel(
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString() ?? '',
@@ -38,12 +50,13 @@ class PostModel extends Post {
           : 0,
       isLiked: json['is_liked'] != null ? json['is_liked'] as bool : false,
       location: json['location']?.toString(),
+      author: authorModel,
     );
   }
 
   /// Convert PostModel to JSON
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'id': id,
       'user_id': userId,
       'user_name': userName,
@@ -57,6 +70,12 @@ class PostModel extends Post {
       'is_liked': isLiked,
       'location': location,
     };
+    
+    // Author data is already included in the model
+    // We don't need to add it separately to the JSON output
+    // as it would duplicate information already present
+    
+    return data;
   }
 
   /// Create a list of PostModels from a list of JSON objects

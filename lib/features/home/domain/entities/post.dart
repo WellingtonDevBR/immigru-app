@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:immigru/features/home/domain/entities/author.dart';
 
 /// Entity representing a post in the home feed
 class Post extends Equatable {
@@ -14,6 +15,7 @@ class Post extends Equatable {
   final int commentCount;
   final bool isLiked;
   final String? location;
+  final Author? author;
 
   const Post({
     required this.id,
@@ -28,6 +30,7 @@ class Post extends Equatable {
     this.commentCount = 0,
     this.isLiked = false,
     this.location,
+    this.author,
   });
 
   @override
@@ -44,8 +47,10 @@ class Post extends Equatable {
         commentCount,
         isLiked,
         location,
+        author,
       ];
 
+  /// Creates a copy of this post with the given fields replaced with the new values
   Post copyWith({
     String? id,
     String? userId,
