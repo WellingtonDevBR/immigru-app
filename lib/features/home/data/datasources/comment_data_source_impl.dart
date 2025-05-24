@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:immigru/features/home/data/models/post_comment_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -536,11 +535,11 @@ class CommentDataSourceImpl implements CommentDataSource {
 
       // If the user hasn't liked the comment yet, create a new like
       if (existingLike == null) {
-        final result = await supabase.from('PostCommentLike').insert({
+        await supabase.from('PostCommentLike').insert({
           'CommentId': commentId,
           'UserId': userId,
           'CreatedAt': DateTime.now().toIso8601String(),
-        }).select();
+        });
       } else {}
       // If the user has already liked the comment, we do nothing
     } catch (e) {
@@ -568,8 +567,7 @@ class CommentDataSourceImpl implements CommentDataSource {
             .from('PostCommentLike')
             .delete()
             .eq('CommentId', commentId)
-            .eq('UserId', userId)
-            .select();
+            .eq('UserId', userId);
       } else {}
     } catch (e) {
       rethrow; // Propagate the error to be handled by the caller
