@@ -129,7 +129,6 @@ class EventDataSourceImpl implements EventDataSource {
 
       return events;
     } catch (e) {
-      print('Error fetching events: $e');
       return [];
     }
   }
@@ -164,7 +163,6 @@ class EventDataSourceImpl implements EventDataSource {
 
       return true;
     } catch (e) {
-      print('Error registering for event: $e');
       return false;
     }
   }

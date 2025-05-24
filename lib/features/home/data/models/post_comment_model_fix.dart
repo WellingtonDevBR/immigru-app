@@ -16,6 +16,8 @@ class PostCommentModel extends PostComment {
     super.userAvatar,
     super.replies = const [],
     super.isCurrentUserComment = false,
+    super.likeCount = 0,
+    super.isLikedByCurrentUser = false,
   });
 
   /// Create a PostCommentModel from JSON
@@ -83,6 +85,7 @@ class PostCommentModel extends PostComment {
   }
 
   /// Create a copy of this PostCommentModel with the given fields replaced
+  @override
   PostCommentModel copyWith({
     String? id,
     String? postId,
@@ -96,6 +99,8 @@ class PostCommentModel extends PostComment {
     String? userAvatar,
     List<PostComment>? replies,
     bool? isCurrentUserComment,
+    int? likeCount,
+    bool? isLikedByCurrentUser,
   }) {
     return PostCommentModel(
       id: id ?? this.id,
@@ -110,6 +115,8 @@ class PostCommentModel extends PostComment {
       userAvatar: userAvatar ?? this.userAvatar,
       replies: replies ?? this.replies,
       isCurrentUserComment: isCurrentUserComment ?? this.isCurrentUserComment,
+      likeCount: likeCount ?? this.likeCount,
+      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
     );
   }
 }

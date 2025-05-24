@@ -109,7 +109,6 @@ class ImmiGroveDataSourceImpl implements ImmiGroveDataSource {
 
       return immiGroves;
     } catch (e) {
-      print('Error fetching ImmiGroves: $e');
       return [];
     }
   }
@@ -198,7 +197,8 @@ class ImmiGroveDataSourceImpl implements ImmiGroveDataSource {
           description: grove['Description'],
           imageUrl: grove['ImageUrl'],
           memberCount: memberCount,
-          isJoined: false, // We already excluded ImmiGroves the user is a member of
+          isJoined:
+              false, // We already excluded ImmiGroves the user is a member of
         );
 
         immiGroves.add(immiGroveModel);
@@ -206,7 +206,6 @@ class ImmiGroveDataSourceImpl implements ImmiGroveDataSource {
 
       return immiGroves;
     } catch (e) {
-      print('Error fetching recommended ImmiGroves: $e');
       return [];
     }
   }
@@ -270,7 +269,6 @@ class ImmiGroveDataSourceImpl implements ImmiGroveDataSource {
 
       return immiGroves;
     } catch (e) {
-      print('Error fetching popular ImmiGroves: $e');
       return [];
     }
   }
@@ -308,7 +306,6 @@ class ImmiGroveDataSourceImpl implements ImmiGroveDataSource {
 
       return true;
     } catch (e) {
-      print('Error joining/leaving ImmiGrove: $e');
       return false;
     }
   }

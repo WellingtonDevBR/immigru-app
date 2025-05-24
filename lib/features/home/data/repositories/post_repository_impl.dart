@@ -216,7 +216,7 @@ class PostRepositoryImpl implements PostRepository {
       _logger.d('${like ? 'Liking' : 'Unliking'} post: $postId',
           tag: 'PostRepositoryImpl');
 
-      final result = await _postDataSource.likePost(
+      final result = await _postDataSource.togglePostLike(
         postId: postId,
         userId: userId,
         like: like,

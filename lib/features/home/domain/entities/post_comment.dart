@@ -4,37 +4,43 @@ import 'package:equatable/equatable.dart';
 class PostComment extends Equatable {
   /// Unique identifier for the comment
   final String id;
-  
+
   /// ID of the post this comment belongs to
   final String postId;
-  
+
   /// ID of the user who created the comment
   final String userId;
-  
+
   /// ID of the parent comment (if this is a reply)
   final String? parentCommentId;
-  
+
   /// ID of the root comment in the thread (for nested replies)
   final String? rootCommentId;
-  
+
   /// Depth level of the comment (1 = direct post comment, 2 = reply to comment, 3 = reply to reply)
   final int depth;
-  
+
   /// Content of the comment
   final String content;
-  
+
   /// When the comment was created
   final DateTime createdAt;
-  
+
   /// Name of the user who created the comment
   final String? userName;
-  
+
+  /// Number of likes this comment has received
+  final int likeCount;
+
+  /// Whether the current user has liked this comment
+  final bool isLikedByCurrentUser;
+
   /// Avatar URL of the user who created the comment
   final String? userAvatar;
-  
+
   /// Replies to this comment
   final List<PostComment> replies;
-  
+
   /// Whether this comment belongs to the current user
   final bool isCurrentUserComment;
 
@@ -52,6 +58,8 @@ class PostComment extends Equatable {
     this.userAvatar,
     this.replies = const [],
     this.isCurrentUserComment = false,
+    this.likeCount = 0,
+    this.isLikedByCurrentUser = false,
   });
 
   @override
@@ -68,8 +76,10 @@ class PostComment extends Equatable {
         userAvatar,
         replies,
         isCurrentUserComment,
+        likeCount,
+        isLikedByCurrentUser,
       ];
-      
+
   /// Create a copy of this PostComment with the given fields replaced with new values
   PostComment copyWith({
     String? id,
@@ -84,6 +94,8 @@ class PostComment extends Equatable {
     String? userAvatar,
     List<PostComment>? replies,
     bool? isCurrentUserComment,
+    int? likeCount,
+    bool? isLikedByCurrentUser,
   }) {
     return PostComment(
       id: id ?? this.id,
@@ -98,6 +110,8 @@ class PostComment extends Equatable {
       userAvatar: userAvatar ?? this.userAvatar,
       replies: replies ?? this.replies,
       isCurrentUserComment: isCurrentUserComment ?? this.isCurrentUserComment,
+      likeCount: likeCount ?? this.likeCount,
+      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
     );
   }
 }

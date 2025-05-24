@@ -16,6 +16,8 @@ class PostCommentModel extends PostComment {
     super.userAvatar,
     super.replies = const [],
     super.isCurrentUserComment = false,
+    super.likeCount = 0,
+    super.isLikedByCurrentUser = false,
   });
 
   /// Create a PostCommentModel from JSON
@@ -54,6 +56,10 @@ class PostCommentModel extends PostComment {
       userAvatar: json['user_avatar']?.toString(),
       isCurrentUserComment:
           currentUserId != null && json['UserId']?.toString() == currentUserId,
+      // Get like count from the database or default to 0
+      likeCount: json['like_count'] != null ? int.parse(json['like_count'].toString()) : 0,
+      // Check if the current user has liked this comment
+      isLikedByCurrentUser: json['is_liked_by_current_user'] == true,
       replies: json['replies'] != null
           ? List<PostCommentModel>.from(
               (json['replies'] as List).map(
@@ -94,5 +100,40 @@ class PostCommentModel extends PostComment {
   /// Create a list of PostCommentModels from a list of JSON objects
   static List<PostCommentModel> fromJsonList(List<dynamic> jsonList) {
     return jsonList.map((json) => PostCommentModel.fromJson(json)).toList();
+  }
+  
+  @override
+  PostCommentModel copyWith({
+    String? id,
+    String? postId,
+    String? userId,
+    String? parentCommentId,
+    String? rootCommentId,
+    int? depth,
+    String? content,
+    DateTime? createdAt,
+    String? userName,
+    String? userAvatar,
+    List<PostComment>? replies,
+    bool? isCurrentUserComment,
+    int? likeCount,
+    bool? isLikedByCurrentUser,
+  }) {
+    return PostCommentModel(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      userId: userId ?? this.userId,
+      parentCommentId: parentCommentId ?? this.parentCommentId,
+      rootCommentId: rootCommentId ?? this.rootCommentId,
+      depth: depth ?? this.depth,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      userName: userName ?? this.userName,
+      userAvatar: userAvatar ?? this.userAvatar,
+      replies: replies ?? this.replies,
+      isCurrentUserComment: isCurrentUserComment ?? this.isCurrentUserComment,
+      likeCount: likeCount ?? this.likeCount,
+      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
+    );
   }
 }

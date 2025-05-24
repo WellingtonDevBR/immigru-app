@@ -28,7 +28,6 @@ class _AllPostsTabState extends State<AllPostsTab>
   final supabase = Supabase.instance.client;
 
   // State variables
-  List<Post> _localPosts = [];
   bool _isLoadingMore = false;
   Timer? _loadingTimeoutTimer;
 
@@ -46,9 +45,6 @@ class _AllPostsTabState extends State<AllPostsTab>
     _logger.d('[ALL_POSTS_TAB:$_requestId] Widget initialized',
         tag: 'AllPostsTab');
 
-    // Initialize with empty list
-    _localPosts = [];
-
     // Schedule a post-frame callback to check the HomeBloc state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -64,10 +60,6 @@ class _AllPostsTabState extends State<AllPostsTab>
           _logger.d(
               '[ALL_POSTS_TAB:$_requestId] Using ${currentState.posts.length} posts from HomeBloc',
               tag: 'AllPostsTab');
-
-          setState(() {
-            _localPosts = currentState.posts;
-          });
         }
         // IMPORTANT: We no longer fetch posts here. This is now handled centrally by HomeScreen._initializeHomeData
         // This eliminates duplicate fetches and provides a single source of truth
@@ -251,7 +243,6 @@ class _AllPostsTabState extends State<AllPostsTab>
               tag: 'AllPostsTab');
 
           setState(() {
-            _localPosts = state.posts;
             _isLoadingMore = false; // Reset loading flag when we get new posts
           });
         } else if (state is PostsError) {
@@ -314,7 +305,8 @@ class _AllPostsTabState extends State<AllPostsTab>
             Icon(
               Icons.article_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -370,15 +362,17 @@ class _AllPostsTabState extends State<AllPostsTab>
                 final currentUserId = supabase.auth.currentUser?.id;
                 if (currentUserId != null) {
                   // Get the HomeBloc from the current context
-                  final homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-                  
+                  final homeBloc =
+                      BlocProvider.of<HomeBloc>(context, listen: false);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PostCommentsScreen(
                         post: post,
                         userId: currentUserId,
-                        homeBloc: homeBloc, // Pass the HomeBloc to the PostCommentsScreen
+                        homeBloc:
+                            homeBloc, // Pass the HomeBloc to the PostCommentsScreen
                       ),
                     ),
                   );

@@ -227,8 +227,6 @@ class _PostCreationScreenState extends State<PostCreationScreen>
     );
     
     // Create a local variable to track text input
-    String inputText = state.content;
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

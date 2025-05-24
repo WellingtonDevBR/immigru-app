@@ -15,6 +15,9 @@ import 'package:immigru/features/home/domain/usecases/edit_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_comments_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_personalized_posts_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_posts_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/like_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/like_post_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/unlike_comment_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/comments/comments_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_bloc.dart';
@@ -99,6 +102,13 @@ class HomeModule {
           () => DeletePostUseCase(repository: sl<PostRepository>()),
         );
       }
+      
+      // Register like post use case
+      if (!sl.isRegistered<LikePostUseCase>()) {
+        sl.registerLazySingleton(
+          () => LikePostUseCase(sl<PostRepository>()),
+        );
+      }
 
       // BLoCs - Using singleton for HomeBloc to prevent multiple instances
       if (!sl.isRegistered<HomeBloc>()) {
@@ -109,6 +119,7 @@ class HomeModule {
             editPostUseCase: sl<EditPostUseCase>(),
             deletePostUseCase: sl<DeletePostUseCase>(),
             logger: sl<UnifiedLogger>(),
+            likePostUseCase: sl<LikePostUseCase>(),
           ),
         );
       }
@@ -121,6 +132,8 @@ class HomeModule {
             createCommentUseCase: sl<CreateCommentUseCase>(),
             editCommentUseCase: sl<EditCommentUseCase>(),
             deleteCommentUseCase: sl<DeleteCommentUseCase>(),
+            likeCommentUseCase: sl<LikeCommentUseCase>(),
+            unlikeCommentUseCase: sl<UnlikeCommentUseCase>(),
           ),
         );
       }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
@@ -7,6 +8,7 @@ import 'package:immigru/features/home/domain/usecases/create_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/delete_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/edit_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_posts_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/like_post_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +19,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final CreatePostUseCase createPostUseCase;
   final EditPostUseCase editPostUseCase;
   final DeletePostUseCase deletePostUseCase;
+  final LikePostUseCase likePostUseCase;
   final LoggerInterface logger;
 
   // Pagination parameters
@@ -33,6 +36,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.createPostUseCase,
     required this.editPostUseCase,
     required this.deletePostUseCase,
+    required this.likePostUseCase,
     required this.logger,
   }) : super(const HomeInitial()) {
     on<FetchPosts>(_onFetchPosts);
@@ -40,6 +44,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<CreatePost>(_onCreatePost);
     on<EditPost>(_onEditPost);
     on<DeletePost>(_onDeletePost);
+    on<LikePost>(_onLikePost);
     on<SelectCategory>(_onSelectCategory);
     on<HomeError>(_onHomeError);
     on<InitializeHomeData>(_onInitializeHomeData);
@@ -459,6 +464,105 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
+  /// Handle LikePost event - like or unlike a post
+  Future<void> _onLikePost(
+    LikePost event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      logger.d('${event.like ? "Liking" : "Unliking"} post: ${event.postId}', tag: 'HomeBloc');
+      
+      // Get the current state
+      final currentState = state;
+      if (currentState is! PostsLoaded) {
+        logger.w('Cannot like post: Invalid state', tag: 'HomeBloc');
+        return;
+      }
+      
+      // Find the post to like/unlike
+      final postIndex = _allPosts.indexWhere((post) => post.id == event.postId);
+      if (postIndex == -1) {
+        logger.w('Post not found: ${event.postId}', tag: 'HomeBloc');
+        return;
+      }
+      
+      // Get the post and create an optimistically updated version
+      final post = _allPosts[postIndex];
+      
+      // Only update if the action changes the current state
+      if (post.isLiked == event.like) {
+        logger.d('Post is already in the desired like state', tag: 'HomeBloc');
+        return;
+      }
+      
+      // Create updated post with new like status and count
+      final updatedPost = Post(
+        id: post.id,
+        userId: post.userId,
+        userName: post.userName,
+        userAvatar: post.userAvatar,
+        content: post.content,
+        imageUrl: post.imageUrl,
+        category: post.category,
+        createdAt: post.createdAt,
+        likeCount: event.like ? post.likeCount + 1 : math.max(0, post.likeCount - 1),
+        commentCount: post.commentCount,
+        isLiked: event.like,
+        location: post.location,
+        author: post.author,
+        hasUserComment: post.hasUserComment,
+      );
+      
+      // Update the posts list optimistically
+      final updatedPosts = List<Post>.from(_allPosts);
+      updatedPosts[postIndex] = updatedPost;
+      _allPosts[postIndex] = updatedPost;
+      
+      // Emit the updated state
+      emit(PostsLoaded(
+        posts: updatedPosts,
+        hasReachedMax: currentState.hasReachedMax,
+        currentUserId: currentState.currentUserId,
+        isLoadingMore: currentState.isLoadingMore,
+        initialFetchPerformed: currentState.initialFetchPerformed,
+      ));
+      
+      // Call the use case to like/unlike the post
+      final params = LikePostParams(
+        postId: event.postId,
+        userId: event.userId,
+        like: event.like,
+      );
+      final result = await likePostUseCase.call(params);
+      
+      // Handle the result
+      result.fold(
+        (failure) {
+          // Revert the optimistic update on failure
+          logger.e('Failed to ${event.like ? "like" : "unlike"} post: ${failure.message}', tag: 'HomeBloc');
+          
+          // Restore the original post
+          final revertedPosts = List<Post>.from(_allPosts);
+          revertedPosts[postIndex] = post;
+          _allPosts[postIndex] = post;
+          
+          emit(PostsLoaded(
+            posts: revertedPosts,
+            hasReachedMax: currentState.hasReachedMax,
+            currentUserId: currentState.currentUserId,
+            isLoadingMore: currentState.isLoadingMore,
+            initialFetchPerformed: currentState.initialFetchPerformed,
+          ));
+        },
+        (success) {
+          logger.d('Post ${event.like ? "liked" : "unliked"} successfully', tag: 'HomeBloc');
+        },
+      );
+    } catch (e) {
+      logger.e('Error ${event.like ? "liking" : "unliking"} post: $e', tag: 'HomeBloc');
+    }
+  }
+  
   /// Handle DeletePost event
   Future<void> _onDeletePost(
     DeletePost event,

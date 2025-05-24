@@ -112,3 +112,39 @@ class DeleteComment extends CommentsEvent {
   @override
   List<Object?> get props => [commentId, postId, userId];
 }
+
+/// Event to like a comment
+class LikeComment extends CommentsEvent {
+  /// ID of the comment to like
+  final String commentId;
+  
+  /// ID of the user liking the comment
+  final String userId;
+  
+  /// Create a new LikeComment event
+  const LikeComment({
+    required this.commentId,
+    required this.userId,
+  });
+  
+  @override
+  List<Object?> get props => [commentId, userId];
+}
+
+/// Event to unlike a comment
+class UnlikeComment extends CommentsEvent {
+  /// ID of the comment to unlike
+  final String commentId;
+  
+  /// ID of the user unliking the comment
+  final String userId;
+  
+  /// Create a new UnlikeComment event
+  const UnlikeComment({
+    required this.commentId,
+    required this.userId,
+  });
+  
+  @override
+  List<Object?> get props => [commentId, userId];
+}

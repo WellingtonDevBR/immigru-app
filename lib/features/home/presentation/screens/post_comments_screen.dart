@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/domain/entities/post_comment.dart';
+import 'package:immigru/features/home/domain/repositories/comment_repository.dart';
+import 'package:immigru/features/home/domain/usecases/create_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/delete_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/edit_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/get_comments_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/like_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/unlike_comment_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/comments/comments_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
@@ -10,6 +18,7 @@ import 'package:immigru/features/home/presentation/widgets/comment_input_widget.
 import 'package:immigru/features/home/presentation/widgets/comment_list_widget.dart';
 import 'package:immigru/shared/widgets/error_message_widget.dart';
 import 'package:immigru/shared/widgets/loading_indicator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Screen to display and manage comments for a post
 class PostCommentsScreen extends StatefulWidget {
@@ -41,7 +50,29 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
   @override
   void initState() {
     super.initState();
-    _commentsBloc = GetIt.instance<CommentsBloc>();
+    
+    // Create a new instance of CommentsBloc with all required dependencies
+    final commentRepository = GetIt.instance.get<CommentRepository>();
+    
+    // Create all the required use cases
+    final getCommentsUseCase = GetCommentsUseCase(commentRepository);
+    final createCommentUseCase = CreateCommentUseCase(repository: commentRepository);
+    final editCommentUseCase = EditCommentUseCase(repository: commentRepository);
+    final deleteCommentUseCase = DeleteCommentUseCase(repository: commentRepository);
+    final likeCommentUseCase = LikeCommentUseCase(commentRepository);
+    final unlikeCommentUseCase = UnlikeCommentUseCase(commentRepository);
+    
+    // Create a new instance of CommentsBloc with all required use cases
+    _commentsBloc = CommentsBloc(
+      getCommentsUseCase: getCommentsUseCase,
+      createCommentUseCase: createCommentUseCase,
+      editCommentUseCase: editCommentUseCase,
+      deleteCommentUseCase: deleteCommentUseCase,
+      likeCommentUseCase: likeCommentUseCase,
+      unlikeCommentUseCase: unlikeCommentUseCase,
+    );
+    
+    // Load comments when the screen initializes
     _loadComments();
   }
 
@@ -250,6 +281,55 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       ),
     );
   }
+  
+  /// Handle liking a comment
+  void _handleLikeComment(PostComment comment) {
+    _commentsBloc.add(
+      LikeComment(
+        commentId: comment.id,
+        userId: widget.userId,
+      ),
+    );
+  }
+  
+  /// Handle unliking a comment
+  void _handleUnlikeComment(PostComment comment) {
+    _commentsBloc.add(
+      UnlikeComment(
+        commentId: comment.id,
+        userId: widget.userId,
+      ),
+    );
+  }
+  
+  /// Toggle like status for a comment
+  void _toggleCommentLike(PostComment comment) {
+    // Get current user ID from Supabase
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    
+    // If user is not logged in, show a message
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You need to be logged in to like comments')),
+      );
+      return;
+    }
+    
+    // Toggle like status based on current state
+    if (comment.isLikedByCurrentUser) {
+      _handleUnlikeComment(comment);
+    } else {
+      _handleLikeComment(comment);
+    }
+  }
+  
+  /// Handle copying a comment to clipboard
+  void _handleCopyComment(PostComment comment) {
+    Clipboard.setData(ClipboardData(text: comment.content));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Comment copied to clipboard')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +407,18 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                           onReply: _showReplyModal,
                           onEdit: _showEditCommentModal,
                           onDelete: _showDeleteCommentDialog,
+                          onLike: _toggleCommentLike,
+                          onCopy: _handleCopyComment,
+                          onReport: (comment) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Comment reported')),
+                            );
+                          },
+                          onHide: (comment) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Comment hidden')),
+                            );
+                          },
                         ),
                         // Add some padding at the bottom for the input field
                         const SizedBox(height: 80),

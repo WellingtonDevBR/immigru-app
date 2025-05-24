@@ -99,4 +99,70 @@ class CommentRepositoryImpl implements CommentRepository {
       return Left(Failure(message: 'Failed to delete comment'));
     }
   }
+  
+  @override
+  Future<Either<Failure, bool>> likeComment({
+    required String commentId,
+    required String userId,
+  }) async {
+    try {
+      await dataSource.likeComment(
+        commentId: commentId,
+        userId: userId,
+      );
+      return const Right(true);
+    } catch (e) {
+      logger.e('Failed to like comment: $e', tag: 'CommentRepository');
+      return Left(Failure(message: 'Failed to like comment'));
+    }
+  }
+  
+  @override
+  Future<Either<Failure, bool>> unlikeComment({
+    required String commentId,
+    required String userId,
+  }) async {
+    try {
+      await dataSource.unlikeComment(
+        commentId: commentId,
+        userId: userId,
+      );
+      return const Right(true);
+    } catch (e) {
+      logger.e('Failed to unlike comment: $e', tag: 'CommentRepository');
+      return Left(Failure(message: 'Failed to unlike comment'));
+    }
+  }
+  
+  @override
+  Future<Either<Failure, int>> getCommentLikeCount({
+    required String commentId,
+  }) async {
+    try {
+      final count = await dataSource.getCommentLikeCount(
+        commentId: commentId,
+      );
+      return Right(count);
+    } catch (e) {
+      logger.e('Failed to get comment like count: $e', tag: 'CommentRepository');
+      return const Right(0); // Return 0 on error instead of failure
+    }
+  }
+  
+  @override
+  Future<Either<Failure, bool>> hasUserLikedComment({
+    required String commentId,
+    required String userId,
+  }) async {
+    try {
+      final hasLiked = await dataSource.hasUserLikedComment(
+        commentId: commentId,
+        userId: userId,
+      );
+      return Right(hasLiked);
+    } catch (e) {
+      logger.e('Failed to check if user has liked comment: $e', tag: 'CommentRepository');
+      return const Right(false); // Return false on error instead of failure
+    }
+  }
 }

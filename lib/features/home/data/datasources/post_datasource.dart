@@ -13,6 +13,59 @@ class PostDataSource {
   PostDataSource({
     SupabaseClient? supabaseClient,
   }) : _supabaseClient = supabaseClient ?? Supabase.instance.client;
+  
+  /// Like or unlike a post
+  /// Returns true if the operation was successful
+  Future<bool> likePost({
+    required String postId,
+    required String userId,
+    required bool like,
+  }) async {
+    try {
+      _logger.d('${like ? "Liking" : "Unliking"} post: $postId by user: $userId', tag: 'PostDataSource');
+      
+      if (like) {
+        // Check if the user has already liked the post
+        final existingLike = await _supabaseClient
+            .from('PostLike')
+            .select()
+            .eq('PostId', postId)
+            .eq('UserId', userId)
+            .maybeSingle();
+            
+        if (existingLike != null) {
+          _logger.d('User has already liked this post', tag: 'PostDataSource');
+          return true; // Already liked, consider it a success
+        }
+        
+        // Add a new like
+        await _supabaseClient.from('PostLike').insert({
+          'PostId': postId,
+          'UserId': userId,
+          'CreatedAt': DateTime.now().toIso8601String(),
+        });
+        
+        _logger.d('Post liked successfully', tag: 'PostDataSource');
+        return true;
+      } else {
+        // Unlike the post (delete the like record)
+        await _supabaseClient
+            .from('PostLike')
+            .delete()
+            .eq('PostId', postId)
+            .eq('UserId', userId);
+            
+        _logger.d('Post unliked successfully', tag: 'PostDataSource');
+        return true;
+      }
+    } catch (e, stackTrace) {
+      _logger.e('Error ${like ? "liking" : "unliking"} post: $e', 
+          tag: 'PostDataSource', 
+          error: e, 
+          stackTrace: stackTrace);
+      return false;
+    }
+  }
 
   /// Create a new post using the Supabase edge function
   Future<Map<String, dynamic>> createPost({
@@ -780,8 +833,8 @@ class PostDataSource {
     }
   }
 
-  /// Like or unlike a post
-  Future<bool> likePost({
+  /// Toggle the like status of a post
+  Future<bool> togglePostLike({
     required String postId,
     required String userId,
     required bool like,

@@ -249,7 +249,6 @@ class PostDataSourceImpl implements PostDataSource {
 
       return posts;
     } catch (e) {
-      print('Error fetching posts: $e');
       throw ServerException(message: 'Failed to fetch posts: $e');
     }
   }
@@ -369,7 +368,6 @@ class PostDataSourceImpl implements PostDataSource {
 
       return posts;
     } catch (e) {
-      print('Error fetching personalized posts: $e');
       throw ServerException(message: 'Failed to fetch personalized posts: $e');
     }
   }
@@ -420,7 +418,6 @@ class PostDataSourceImpl implements PostDataSource {
 
       return postModel;
     } catch (e) {
-      print('Error creating post: $e');
       throw Exception('Failed to create post: $e');
     }
   }
@@ -496,7 +493,6 @@ class PostDataSourceImpl implements PostDataSource {
 
       return postModel;
     } catch (e) {
-      print('Error editing post: $e');
       throw Exception('Failed to edit post: $e');
     }
   }
@@ -524,7 +520,6 @@ class PostDataSourceImpl implements PostDataSource {
 
       return true;
     } catch (e) {
-      print('Error deleting post: $e');
       return false;
     }
   }

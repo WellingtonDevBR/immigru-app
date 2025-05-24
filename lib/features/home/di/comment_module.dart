@@ -7,6 +7,8 @@ import 'package:immigru/features/home/domain/usecases/create_comment_usecase.dar
 import 'package:immigru/features/home/domain/usecases/delete_comment_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/edit_comment_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/get_comments_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/like_comment_usecase.dart';
+import 'package:immigru/features/home/domain/usecases/unlike_comment_usecase.dart';
 import 'package:immigru/features/home/presentation/bloc/comments/comments_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -40,22 +42,34 @@ class CommentModule {
           () => GetCommentsUseCase(sl<CommentRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<CreateCommentUseCase>()) {
         sl.registerLazySingleton(
           () => CreateCommentUseCase(repository: sl<CommentRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<EditCommentUseCase>()) {
         sl.registerLazySingleton(
           () => EditCommentUseCase(repository: sl<CommentRepository>()),
         );
       }
-      
+
       if (!sl.isRegistered<DeleteCommentUseCase>()) {
         sl.registerLazySingleton(
           () => DeleteCommentUseCase(repository: sl<CommentRepository>()),
+        );
+      }
+
+      if (!sl.isRegistered<LikeCommentUseCase>()) {
+        sl.registerLazySingleton(
+          () => LikeCommentUseCase(sl<CommentRepository>()),
+        );
+      }
+
+      if (!sl.isRegistered<UnlikeCommentUseCase>()) {
+        sl.registerLazySingleton(
+          () => UnlikeCommentUseCase(sl<CommentRepository>()),
         );
       }
 
@@ -67,11 +81,11 @@ class CommentModule {
             createCommentUseCase: sl<CreateCommentUseCase>(),
             editCommentUseCase: sl<EditCommentUseCase>(),
             deleteCommentUseCase: sl<DeleteCommentUseCase>(),
+            likeCommentUseCase: sl<LikeCommentUseCase>(),
+            unlikeCommentUseCase: sl<UnlikeCommentUseCase>(),
           ),
         );
       }
-    } catch (e) {
-      print('Error initializing CommentModule: $e');
-    }
+    } catch (e) {}
   }
 }

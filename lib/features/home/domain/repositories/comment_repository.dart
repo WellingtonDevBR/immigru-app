@@ -55,4 +55,38 @@ abstract class CommentRepository {
     required String postId,
     required String userId,
   });
+  
+  /// Like a comment
+  ///
+  /// [commentId] - ID of the comment to like
+  /// [userId] - ID of the user liking the comment
+  Future<Either<Failure, bool>> likeComment({
+    required String commentId,
+    required String userId,
+  });
+  
+  /// Unlike a comment
+  ///
+  /// [commentId] - ID of the comment to unlike
+  /// [userId] - ID of the user unliking the comment
+  Future<Either<Failure, bool>> unlikeComment({
+    required String commentId,
+    required String userId,
+  });
+  
+  /// Get the like count for a comment
+  ///
+  /// [commentId] - ID of the comment to get like count for
+  Future<Either<Failure, int>> getCommentLikeCount({
+    required String commentId,
+  });
+  
+  /// Check if a user has liked a comment
+  ///
+  /// [commentId] - ID of the comment to check
+  /// [userId] - ID of the user to check
+  Future<Either<Failure, bool>> hasUserLikedComment({
+    required String commentId,
+    required String userId,
+  });
 }
