@@ -16,6 +16,9 @@ class Post extends Equatable {
   final bool isLiked;
   final String? location;
   final Author? author;
+  
+  /// Whether the current user has commented on this post
+  final bool hasUserComment;
 
   const Post({
     required this.id,
@@ -31,6 +34,7 @@ class Post extends Equatable {
     this.isLiked = false,
     this.location,
     this.author,
+    this.hasUserComment = false,
   });
 
   @override
@@ -48,6 +52,7 @@ class Post extends Equatable {
         isLiked,
         location,
         author,
+        hasUserComment,
       ];
 
   /// Creates a copy of this post with the given fields replaced with the new values
@@ -64,6 +69,8 @@ class Post extends Equatable {
     int? commentCount,
     bool? isLiked,
     String? location,
+    Author? author,
+    bool? hasUserComment,
   }) {
     return Post(
       id: id ?? this.id,
@@ -78,6 +85,8 @@ class Post extends Equatable {
       commentCount: commentCount ?? this.commentCount,
       isLiked: isLiked ?? this.isLiked,
       location: location ?? this.location,
+      author: author ?? this.author,
+      hasUserComment: hasUserComment ?? this.hasUserComment,
     );
   }
 }

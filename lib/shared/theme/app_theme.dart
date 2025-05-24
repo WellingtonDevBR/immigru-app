@@ -25,7 +25,7 @@ class AppTheme {
       foregroundColor: AppColors.textPrimaryLight,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.cardLight,
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -33,7 +33,7 @@ class AppTheme {
         side: BorderSide(color: AppColors.borderLight, width: 0.5),
       ),
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: AppColors.primaryLight,
       unselectedLabelColor: AppColors.textSecondaryLight,
       indicatorColor: AppColors.primaryLight,
@@ -131,7 +131,7 @@ class AppTheme {
       foregroundColor: AppColors.textPrimaryDark,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.cardDark,
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -139,7 +139,7 @@ class AppTheme {
         side: BorderSide(color: AppColors.borderDark, width: 0.5),
       ),
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: AppColors.primaryDark,
       unselectedLabelColor: AppColors.textSecondaryDark,
       indicatorColor: AppColors.primaryDark,

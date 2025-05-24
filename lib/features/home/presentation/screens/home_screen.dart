@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:immigru/features/home/domain/entities/post_media.dart';
-import 'package:immigru/features/home/presentation/bloc/post_creation/post_creation_bloc.dart';
-import 'package:immigru/features/home/presentation/screens/post_creation_screen.dart';
-import 'package:provider/provider.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
@@ -13,14 +9,17 @@ import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
-import 'package:immigru/features/home/presentation/widgets/app_bar_widget.dart';
+import 'package:immigru/features/home/presentation/widgets/home/home_app_bar.dart';
+import 'package:immigru/features/home/presentation/widgets/home/home_bottom_navigation.dart';
+import 'package:immigru/features/home/presentation/widgets/home/home_drawer.dart';
+import 'package:immigru/features/home/presentation/widgets/home/post_creation_modal.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/all_posts_tab.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/immi_groves_tab.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/notifications_tab.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
-import 'package:immigru/shared/theme/theme_provider.dart';
-import 'package:immigru/core/logging/unified_logger.dart';
 
+/// Main home screen of the application
+/// Displays posts, ImmiGroves, and notifications
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.user});
 
@@ -35,336 +34,76 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin {
+  // Core components
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _logger = UnifiedLogger();
+  final UnifiedLogger _logger = UnifiedLogger();
 
-  late PageController _pageController;
+  // UI state
   int _selectedIndex = 0;
-  bool hasUnreadMessages = true;
-  bool hasUnreadNotifications = true;
-  int unreadMessageCount = 3;
-
-  String _selectedCategory = 'All';
-
-  bool _hasInitializedData = false;
-
-  bool _isInitializing = false;
-
-  bool _hasSetLoadingTimeout = false;
-
+  bool hasUnreadMessages = false;
+  int unreadMessageCount = 0;
   bool _isNavigating = false;
 
   @override
-  bool get wantKeepAlive => true;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
+  bool get wantKeepAlive => true; // Keep state alive when navigating
 
   @override
   void initState() {
     super.initState();
-
-    _pageController = PageController(initialPage: _selectedIndex);
-
-    _logger.d('Home screen created with key: ${widget.key}', tag: 'HomeScreen');
-
+    
+    // Initialize data after the first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          !_isInitializing &&
-          !_isNavigating &&
-          !_hasInitializedData) {
-        _initializeOnce();
-      } else {
-        _logger.d(
-            'Skipping initialization - widget already initialized or busy',
-            tag: 'HomeScreen');
+      if (mounted) {
+        _initializeHomeData();
       }
     });
+    
+    // Log initialization
+    _logger.d('HomeScreen initialized', tag: 'HomeScreen');
   }
 
-  void _initializeOnce() {
-    if (_isInitializing || !mounted || _isNavigating || _hasInitializedData) {
-      _logger.d(
-          'HOME SCREEN: Skipping initialization - already initialized or navigating',
-          tag: 'HomeScreen');
+  /// Initialize home screen data using BLoC
+  void _initializeHomeData() {
+    final homeBloc = BlocProvider.of<HomeBloc>(context);
+    final authBloc = BlocProvider.of<AuthBloc>(context);
+    final authState = authBloc.state;
+    final currentUser = authState.user ?? widget.user;
+    final currentState = homeBloc.state;
+    final String? currentUserId = currentUser?.id;
+    
+    // Check if we already have loaded posts
+    if (currentState is PostsLoaded && currentState.posts.isNotEmpty) {
+      _logger.d('Home screen already has posts, skipping initialization', tag: 'HomeScreen');
       return;
     }
-
-    // Set initialization flag to prevent concurrent initialization
-    _isInitializing = true;
-    _logger.d('HOME SCREEN: Starting initialization', tag: 'HomeScreen');
-
-    try {
-      final homeBloc = context.read<HomeBloc>();
-      final currentState = homeBloc.state;
-
-      _logger.d(
-          'HOME SCREEN: Initializing with state: ${currentState.runtimeType}',
-          tag: 'HomeScreen');
-
-      if (currentState is HomeInitial || !_hasInitializedData) {
-        _hasInitializedData = true;
-        _logger.d('HOME SCREEN: First initialization, fetching initial data',
-            tag: 'HomeScreen');
-
-        // Use a single microtask to prevent multiple UI updates
-        Future.microtask(() {
-          if (mounted && !_isNavigating) {
-            _fetchInitialData();
-            _logger.d('HOME SCREEN: Data initialization triggered',
-                tag: 'HomeScreen');
-          }
-        });
-      } else if (currentState is PostsLoaded) {
-        // If posts are already loaded, just make sure we're using the right category
-        _selectedCategory = currentState.selectedCategory;
-        _hasInitializedData = true; // Mark as initialized
-        _logger.d(
-            'HOME SCREEN: Already has data with category: $_selectedCategory',
-            tag: 'HomeScreen');
-      } else {
-        _logger.d(
-            'HOME SCREEN: Has state ${currentState.runtimeType}, refreshing data',
-            tag: 'HomeScreen');
-        _hasInitializedData = true; // Mark as initialized
-
-        // Use a single microtask to prevent multiple UI updates
-        Future.microtask(() {
-          if (mounted && !_isNavigating) {
-            _fetchInitialData();
-          }
-        });
-      }
-    } catch (e) {
-      _logger.e('HOME SCREEN ERROR: Error during initialization: $e',
-          tag: 'HomeScreen');
-      // Even if there's an error, try to fetch data to avoid a blank screen
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && !_isNavigating && !_hasInitializedData) {
-          _logger.d('HOME SCREEN: Attempting recovery after error',
-              tag: 'HomeScreen');
-          _hasInitializedData =
-              true; // Mark as initialized to prevent multiple recovery attempts
-          _fetchInitialData();
-        }
-      });
-    } finally {
-      // Reset the initialization lock after a shorter delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          _isInitializing = false;
-          _logger.d('HOME SCREEN: Initialization lock released',
-              tag: 'HomeScreen');
-        }
-      });
+    
+    // SAFETY CHECK: Don't proceed with fetching if we don't have a user ID
+    // This prevents the issue where posts are fetched without proper filtering
+    if (currentUserId == null) {
+      _logger.e('ERROR: No authenticated user found, cannot initialize home data safely', tag: 'HomeScreen');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to view posts')),
+      );
+      return; // Don't initialize without a user ID
     }
+    
+    _logger.d('Initializing home data with currentUserId: $currentUserId', tag: 'HomeScreen');
+    
+    // Initialize with no category filtering and a valid user ID
+    homeBloc.add(InitializeHomeData(
+      userId: currentUserId, // Always use a valid user ID
+      category: null, // No category filtering
+      forceRefresh: false, // Let the bloc decide if we need to refresh
+    ));
   }
-
+  
   @override
   void dispose() {
-    _logger.d('HOME SCREEN: Disposing', tag: 'HomeScreen');
-    // Mark as navigating to prevent any further data fetching
-    _isNavigating = true;
-    _pageController.dispose();
     super.dispose();
   }
 
-  @override
-  void updateKeepAlive() {
-    super.updateKeepAlive();
-  }
-
-  // Flag to track if we've attempted to recover from a failed fetch
-  bool _hasAttemptedRecovery = false;
-
-  // Flag to track if we've fetched posts at least once
-  bool _hasFetchedPosts = false;
-
-  /// Fetch initial data for the home screen - only called once
-  void _fetchInitialData() {
-    // Strict one-time execution guard - only allow recovery attempts after first fetch
-    if (_hasFetchedPosts && !_hasAttemptedRecovery) {
-      _logger.d('HOME SCREEN: Skipping data fetch - already fetched posts once',
-          tag: 'HomeScreen');
-      return;
-    }
-
-    // More robust check to prevent fetches during navigation
-    if (_isNavigating) {
-      _logger.d('HOME SCREEN: Skipping data fetch - navigation in progress',
-          tag: 'HomeScreen');
-      return;
-    }
-
-    // Mark that we've attempted to fetch posts
-    _hasFetchedPosts = true;
-
-    try {
-      // Get the bloc instance safely using read to prevent context issues
-      final homeBloc = context.read<HomeBloc>();
-
-      // Check current state to avoid duplicate fetches
-      final currentState = homeBloc.state;
-      _logger.d(
-          'HOME SCREEN: Fetching data with state: ${currentState.runtimeType}',
-          tag: 'HomeScreen');
-
-      // Clear the recovery flag if we're making a new attempt
-      _hasAttemptedRecovery = false;
-
-      // Only fetch posts if we're in initial state or if we need a refresh
-      if (currentState is HomeInitial ||
-          currentState is PostsError ||
-          currentState is PostsLoading) {
-        // Mark as initialized to prevent duplicate fetches
-        _hasInitializedData = true;
-
-        // Force a refresh to ensure we get fresh data
-        if (!homeBloc.isClosed) {
-          // Get the current user ID for filtering
-          final String? currentUserId = widget.user?.id;
-          
-          // Use enhanced filtering options
-          homeBloc.add(FetchPosts(
-            filter: 'all',  // Default filter for the main feed
-            category: _selectedCategory,
-            currentUserId: currentUserId,
-            refresh: true,
-          ));
-        }
-
-        // Set a timeout to ensure we don't get stuck in loading state
-        _setLoadingTimeout();
-
-        // Use a single delayed future for all secondary data fetches to reduce overhead
-        Future.delayed(const Duration(milliseconds: 800), () {
-          if (!mounted || _isNavigating) return;
-
-          // Fetch personalized posts if user is logged in
-          if (widget.user != null) {
-            _logger.d(
-                'HOME SCREEN: Fetching personalized posts for user: ${widget.user!.id}',
-                tag: 'HomeScreen');
-            homeBloc.add(FetchPersonalizedPosts(userId: widget.user!.id));
-          } else {
-            _logger.w('HOME SCREEN: User is null, skipping personalized posts',
-                tag: 'HomeScreen');
-          }
-
-          // Fetch events after a short delay
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted && !_isNavigating) {
-              _logger.d('HOME SCREEN: Fetching events', tag: 'HomeScreen');
-              homeBloc.add(const FetchEvents());
-            }
-          });
-        });
-      } else if (currentState is PostsLoaded) {
-        // If posts are already loaded, check if they're for the current category
-        if (currentState.selectedCategory != _selectedCategory) {
-          _logger.d(
-              'HOME SCREEN: Posts loaded for different category, updating to: $_selectedCategory',
-              tag: 'HomeScreen');
-          homeBloc.add(SelectCategory(category: _selectedCategory));
-        } else {
-          _logger.d(
-              'HOME SCREEN: Posts already loaded for category: $_selectedCategory, skipping fetch',
-              tag: 'HomeScreen');
-          // No need to emit additional events if data is already loaded
-        }
-      } else if (currentState is PostsLoading) {
-        _logger.d('HOME SCREEN: Posts already loading, setting timeout',
-            tag: 'HomeScreen');
-        _setLoadingTimeout();
-      } else {
-        _logger.d(
-            'HOME SCREEN: Unexpected state: ${currentState.runtimeType}, fetching posts',
-            tag: 'HomeScreen');
-        if (!homeBloc.isClosed) {
-          homeBloc.add(FetchPosts(category: _selectedCategory, refresh: true));
-        }
-
-        _setLoadingTimeout();
-      }
-    } catch (e) {
-      _logger.e('HOME SCREEN ERROR: Failed to initialize data: $e',
-          tag: 'HomeScreen');
-
-      // Try to recover by fetching posts after a short delay
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          _logger.d('HOME SCREEN: Attempting data recovery after error',
-              tag: 'HomeScreen');
-          final homeBloc = context.read<HomeBloc>();
-          if (!homeBloc.isClosed) {
-            homeBloc
-                .add(FetchPosts(category: _selectedCategory, refresh: true));
-          }
-        }
-      });
-    }
-  }
-
-  // Set a timeout to prevent getting stuck in loading state
-  void _setLoadingTimeout() {
-    // Prevent multiple timeouts from being set
-    if (_hasSetLoadingTimeout || _isNavigating) {
-      return;
-    }
-
-    _hasSetLoadingTimeout = true;
-    _logger.d('Setting loading timeout', tag: 'HomeScreen');
-
-    // Use a shorter timeout (6 seconds) for better user experience
-    Future.delayed(const Duration(seconds: 6), () {
-      if (mounted && !_isNavigating) {
-        try {
-          final homeBloc = context.read<HomeBloc>();
-          final currentState = homeBloc.state;
-
-          // If we're still in a loading state after the timeout, force a recovery
-          if (currentState is PostsLoading) {
-            // Set recovery flag to allow a retry even if _hasInitializedData is true
-            _hasAttemptedRecovery = true;
-            _logger.w('HOME SCREEN: Loading timeout reached',
-                tag: 'HomeScreen');
-
-            // Try to fetch with a simpler approach
-            homeBloc.add(FetchPosts(category: 'All', refresh: true));
-
-            // Set a shorter secondary timeout for the recovery attempt
-            Future.delayed(const Duration(seconds: 3), () {
-              if (mounted && !_isNavigating) {
-                final newState = homeBloc.state;
-                if (newState is PostsLoading) {
-                  // If still loading after recovery attempt, force an error state
-                  // This will show an error message instead of infinite loading
-                  _logger.w(
-                      'HOME SCREEN: Recovery timeout reached, showing error',
-                      tag: 'HomeScreen');
-                  homeBloc.add(const HomeError(
-                      message:
-                          'Unable to load posts. Please check your connection and try again.'));
-                }
-              }
-            });
-          }
-        } catch (e) {
-          _logger.e('Error setting timeout: $e', tag: 'HomeScreen');
-        } finally {
-          // Reset the timeout flag immediately to allow for future timeouts
-          _hasSetLoadingTimeout = false;
-        }
-      } else {
-        // Reset the flag if we're no longer mounted or navigating
-        _hasSetLoadingTimeout = false;
-      }
-    });
-  }
-
+  /// Show the post creation modal
   void _showPostCreationModal() {
     final authBloc = BlocProvider.of<AuthBloc>(context);
     final authState = authBloc.state;
@@ -381,248 +120,17 @@ class _HomeScreenState extends State<HomeScreen>
     // Capture the HomeBloc before opening the modal
     final homeBloc = BlocProvider.of<HomeBloc>(context);
     
-    showModalBottomSheet(
+    // Use the extracted component to show the modal
+    showPostCreationModal(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      builder: (modalContext) {
-        return _PostCreationModalWrapper(
-          user: currentUser,
-          homeBloc: homeBloc, // Pass the HomeBloc to the wrapper
-          onPost: (content, category, mediaItems) {
-            // Extract the first media URL if available for backward compatibility with HomeBloc
-            final String? firstMediaUrl = mediaItems.isNotEmpty ? mediaItems.first.path : null;
-            
-            // Create the post using the captured HomeBloc
-            homeBloc.add(
-              CreatePost(
-                content: content,
-                userId: currentUser.id,
-                category: category,
-                imageUrl: firstMediaUrl,
-              ),
-            );
-            
-            HapticFeedback.mediumImpact();
-            Navigator.pop(modalContext);
-            
-            // Show a success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Post created successfully!')),
-            );
-          },
-        );
-      },
+      user: currentUser,
+      homeBloc: homeBloc,
     );
   }
-
-  /// Build the drawer for the home screen
-  Widget _buildDrawer(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    return Drawer(
-      backgroundColor: isDarkMode ? AppColors.darkSurface : Colors.white,
-      child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // User profile section
-            if (widget.user != null)
-              UserAccountsDrawerHeader(
-                accountName: Text(widget.user!.displayName ?? 'User'),
-                accountEmail: Text(widget.user!.email ?? ''),
-                currentAccountPicture: CircleAvatar(
-                  backgroundImage: widget.user!.photoUrl != null
-                      ? NetworkImage(widget.user!.photoUrl!)
-                      : null,
-                  child: widget.user!.photoUrl == null
-                      ? Text(
-                          widget.user!.displayName?[0] ?? 'U',
-                          style: const TextStyle(fontSize: 24),
-                        )
-                      : null,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                ),
-              )
-            else
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Immigru',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Welcome to Immigru',
-                      style: TextStyle(
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Menu items
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              selected: true,
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to profile screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flight_takeoff),
-              title: const Text('Immigration Journey'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to immigration journey screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to settings screen
-              },
-            ),
-            // Theme selection
-            ExpansionTile(
-              leading: const Icon(Icons.brightness_6),
-              title: const Text('Theme'),
-              children: [
-                RadioListTile<ThemeMode>(
-                  title: const Text('Light'),
-                  value: ThemeMode.light,
-                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
-                  onChanged: (ThemeMode? value) {
-                    if (value != null) {
-                      Provider.of<ThemeProvider>(context, listen: false)
-                          .setThemeMode(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-                RadioListTile<ThemeMode>(
-                  title: const Text('Dark'),
-                  value: ThemeMode.dark,
-                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
-                  onChanged: (ThemeMode? value) {
-                    if (value != null) {
-                      Provider.of<ThemeProvider>(context, listen: false)
-                          .setThemeMode(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-                RadioListTile<ThemeMode>(
-                  title: const Text('System'),
-                  value: ThemeMode.system,
-                  groupValue: Provider.of<ThemeProvider>(context).themeMode,
-                  onChanged: (ThemeMode? value) {
-                    if (value != null) {
-                      Provider.of<ThemeProvider>(context, listen: false)
-                          .setThemeMode(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              ],
-            ),
-            const Divider(),
-            // Always show sign-out button
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
-              onTap: () {
-                Navigator.pop(context);
-                // Sign out using AuthBloc
-                BlocProvider.of<AuthBloc>(context).add(AuthSignOutEvent());
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Build the bottom navigation bar
-  Widget _buildBottomNavigationBar() {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    // Regular bottom navigation bar
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedIndex,
-      backgroundColor: isDarkMode ? AppColors.darkSurface : Colors.white,
-      selectedItemColor: theme.colorScheme.primary,
-      unselectedItemColor: isDarkMode ? Colors.white70 : Colors.grey,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      onTap: (index) {
-        HapticFeedback.lightImpact();
-        setState(() => _selectedIndex = index);
-
-        if (index == 3) {
-          // Menu button opens drawer from bottom
-          _scaffoldKey.currentState?.openEndDrawer();
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.groups),
-          label: 'ImmiGroves',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: 'Notifications',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu),
-          label: 'Menu',
-        ),
-      ],
-    );
-  }
-
-  // Flag to track if we've logged the first build
-  static bool _hasLoggedFirstBuild = false;
 
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-
-    // Only log the first build to reduce console spam
-    if (!_hasLoggedFirstBuild) {
-      _hasLoggedFirstBuild = true;
-    }
 
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
@@ -639,9 +147,6 @@ class _HomeScreenState extends State<HomeScreen>
           _logger.d('User logged out, navigating to login from HomeScreen',
               tag: 'HomeScreen');
           _isNavigating = true;
-
-          // Cancel any pending operations
-          _hasInitializedData = false;
 
           // Use a slight delay to prevent UI freezing
           Future.delayed(const Duration(milliseconds: 50), () {
@@ -669,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen>
         listenWhen: (previous, current) {
           // Only trigger listener when state type actually changes or for specific states
           // Prevent excessive rebuilds by checking if we're navigating
-          // Also prevent rebuilds if we're already initialized and just getting more data
           if (_isNavigating) return false;
 
           if (previous.runtimeType == current.runtimeType) {
@@ -718,9 +222,22 @@ class _HomeScreenState extends State<HomeScreen>
               hasUnreadMessages: hasUnreadMessages,
               unreadMessageCount: unreadMessageCount,
             ),
-            endDrawer: _buildDrawer(
-                context), // Changed to endDrawer for bottom menu access
-            bottomNavigationBar: _buildBottomNavigationBar(),
+            endDrawer: HomeDrawer(
+              user: widget.user,
+              onLogout: () {
+                final authBloc = BlocProvider.of<AuthBloc>(context);
+                authBloc.add(AuthSignOutEvent());
+              },
+            ),
+            bottomNavigationBar: HomeBottomNavigation(
+              selectedIndex: _selectedIndex,
+              onItemSelected: (index) {
+                setState(() => _selectedIndex = index);
+              },
+              onMenuTap: () {
+                _scaffoldKey.currentState?.openEndDrawer();
+              },
+            ),
             body: SafeArea(
               child: Column(
                 children: [
@@ -739,8 +256,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.2),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           width: 1.0,
                         ),
                       ),
@@ -816,13 +332,32 @@ class _HomeScreenState extends State<HomeScreen>
                     child: _selectedIndex == 0
                         ? RefreshIndicator(
                             onRefresh: () async {
+                              // Get the current user ID to ensure proper filtering
+                              final authBloc = BlocProvider.of<AuthBloc>(context);
+                              final authState = authBloc.state;
+                              final currentUser = authState.user ?? widget.user;
+                              final String? currentUserId = currentUser?.id;
+                              
+                              // SAFETY CHECK: Don't proceed with fetching if we don't have a user ID
+                              if (currentUserId == null) {
+                                _logger.e('ERROR: No authenticated user found, cannot refresh posts safely', tag: 'HomeScreen');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please sign in to refresh posts')),
+                                );
+                                return; // Don't refresh without a user ID
+                              }
+                              
+                              _logger.d('Refreshing posts with currentUserId: $currentUserId', tag: 'HomeScreen');
+                              
+                              // Always include the current user ID when refreshing
                               BlocProvider.of<HomeBloc>(context).add(
-                                const FetchPosts(refresh: true),
+                                FetchPosts(
+                                  refresh: true,
+                                  currentUserId: currentUserId, // CRITICAL: Always include user ID
+                                ),
                               );
                             },
-                            child: AllPostsTab(
-                              selectedCategory: _selectedCategory,
-                            ),
+                            child: const AllPostsTab(),
                           )
                         : _selectedIndex == 1
                             ? const ImmiGrovesTab()
@@ -834,64 +369,7 @@ class _HomeScreenState extends State<HomeScreen>
           );
         },
       ),
-    ); // <-- Closing BlocListener
-  }
-}
-
-class _PostCreationModalWrapper extends StatelessWidget {
-  final User user;
-  final HomeBloc homeBloc;
-  final Function(String, String, List<PostMedia>) onPost;
-
-  const _PostCreationModalWrapper({
-    required this.user,
-    required this.homeBloc,
-    required this.onPost,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
-    // Pass the onPost callback directly to the PostCreationScreen
-    void handlePost(String content, String category, List<PostMedia> media) {
-      onPost(content, category, media);
-    }
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 200),
-      padding: EdgeInsets.only(bottom: keyboardHeight),
-      curve: Curves.easeOut,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxHeight: 400, // prevents it from taking full screen
-            minHeight: 250,
-          ),
-          // Provide both the HomeBloc and PostCreationBloc to the PostCreationScreen
-          child: MultiBlocProvider(
-            providers: [
-              BlocProvider.value(
-                value: homeBloc,
-              ),
-              BlocProvider(
-                create: (context) => GetIt.instance<PostCreationBloc>(),
-              ),
-            ],
-            child: PostCreationScreen(
-              user: user,
-              scrollController: ScrollController(),
-              onPost: handlePost,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
+

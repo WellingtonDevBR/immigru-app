@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:immigru/core/network/models/failure.dart';
 import 'package:immigru/features/home/domain/entities/post_comment.dart';
-import 'package:immigru/features/home/domain/repositories/home_repository.dart';
+import 'package:immigru/features/home/domain/repositories/comment_repository.dart';
 
 /// Use case for getting comments for a post
 class GetCommentsUseCase {
-  final HomeRepository repository;
+  final CommentRepository repository;
 
   GetCommentsUseCase(this.repository);
 

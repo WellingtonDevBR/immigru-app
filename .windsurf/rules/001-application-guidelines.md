@@ -14,4 +14,4 @@ trigger: always_on
 - never alter or create migrations, only supabase functions, if required.
 - new architecture is on new_core, features, shared.
 - do not change information on the old architecture.
-- before creating files or anything run node generate-files.js that is in the root to understand the whole structure.
+- never leave unsued variables behind.

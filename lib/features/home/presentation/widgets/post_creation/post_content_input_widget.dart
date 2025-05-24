@@ -95,7 +95,7 @@ class _PostContentInputWidgetState extends State<PostContentInputWidget> {
                           widget.userAvatarUrl!.startsWith('http')
                       ? NetworkImage(widget.userAvatarUrl!)
                       : null,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                   child: widget.userAvatarUrl == null
                       ? Text(
                           widget.userDisplayName?[0].toUpperCase() ?? 'U',

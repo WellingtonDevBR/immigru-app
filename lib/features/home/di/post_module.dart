@@ -1,6 +1,5 @@
 import 'package:get_it/get_it.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
-import 'package:immigru/core/network/edge_function_client.dart';
 import 'package:immigru/features/home/data/datasources/post_datasource.dart';
 import 'package:immigru/features/home/data/repositories/post_repository_impl.dart';
 import 'package:immigru/features/home/domain/repositories/post_repository.dart';
@@ -15,7 +14,6 @@ class PostModule {
     // Data sources
     locator.registerLazySingleton<PostDataSource>(
       () => PostDataSource(
-        edgeFunctionClient: locator<EdgeFunctionClient>(),
         supabaseClient: Supabase.instance.client,
       ),
     );

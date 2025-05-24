@@ -4,18 +4,12 @@ import 'package:immigru/features/home/domain/entities/post_media.dart';
 class PostMediaModel extends PostMedia {
   /// Constructor
   const PostMediaModel({
-    required String id,
-    required String path,
-    required String name,
-    required MediaType type,
-    required DateTime createdAt,
-  }) : super(
-          id: id,
-          path: path,
-          name: name,
-          type: type,
-          createdAt: createdAt,
-        );
+    required super.id,
+    required super.path,
+    required super.name,
+    required super.type,
+    required super.createdAt,
+  });
 
   /// Create a model from a map (for deserialization)
   factory PostMediaModel.fromJson(Map<String, dynamic> json) {

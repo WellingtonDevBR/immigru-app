@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:immigru/features/home/domain/entities/event.dart';
-import 'package:immigru/features/home/domain/repositories/home_repository.dart';
+import 'package:immigru/features/home/domain/repositories/event_repository.dart';
 import 'package:immigru/core/network/models/failure.dart';
 
 /// Use case for getting events
 class GetEventsUseCase {
-  final HomeRepository repository;
+  final EventRepository repository;
 
   GetEventsUseCase(this.repository);
 

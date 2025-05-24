@@ -110,7 +110,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                 'Onboarding completed, navigating to home screen',
                 tag: 'OnboardingScreen',
               );
-              
+
               // Use a longer delay to ensure the onboarding completion is processed
               // and the AuthBloc has time to refresh the user data
               Future.delayed(const Duration(milliseconds: 800), () {

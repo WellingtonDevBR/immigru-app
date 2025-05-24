@@ -43,77 +43,51 @@ class PostsLoaded extends HomeState {
   /// Whether we've reached the maximum number of posts
   final bool hasReachedMax;
 
-  /// Selected category
-  final String selectedCategory;
-
-  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
-  final String filter;
-
-  /// Optional user ID to filter posts by
-  final String? userId;
-
-  /// Optional ImmiGrove ID to filter posts by
-  final String? immigroveId;
-
-  /// Whether to exclude the current user's posts
-  final bool excludeCurrentUser;
-
-  /// ID of the current user (needed for some filters)
+  /// ID of the current user (to exclude their posts)
   final String? currentUserId;
 
   /// Whether more posts are being loaded (pagination)
   final bool isLoadingMore;
 
+  /// CRITICAL FIX: Flag to track if initial fetch has been performed
+  /// This helps prevent duplicate fetches between HomeScreen and AllPostsTab
+  final bool initialFetchPerformed;
+
   /// Constructor
   const PostsLoaded({
     required this.posts,
-    required this.hasReachedMax,
-    required this.selectedCategory,
-    this.filter = 'all',
-    this.userId,
-    this.immigroveId,
-    this.excludeCurrentUser = false,
+    this.hasReachedMax = false,
     this.currentUserId,
     this.isLoadingMore = false,
+    this.initialFetchPerformed = false,
   });
 
-  /// Create a copy with some fields changed
+  /// Create a copy with updated values
   PostsLoaded copyWith({
     List<Post>? posts,
     bool? hasReachedMax,
-    String? selectedCategory,
-    String? filter,
-    String? userId,
-    String? immigroveId,
-    bool? excludeCurrentUser,
     String? currentUserId,
     bool? isLoadingMore,
+    bool? initialFetchPerformed,
   }) {
     return PostsLoaded(
       posts: posts ?? this.posts,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
-      selectedCategory: selectedCategory ?? this.selectedCategory,
-      filter: filter ?? this.filter,
-      userId: userId ?? this.userId,
-      immigroveId: immigroveId ?? this.immigroveId,
-      excludeCurrentUser: excludeCurrentUser ?? this.excludeCurrentUser,
       currentUserId: currentUserId ?? this.currentUserId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      initialFetchPerformed:
+          initialFetchPerformed ?? this.initialFetchPerformed,
     );
   }
 
   @override
   List<Object?> get props => [
-    posts, 
-    hasReachedMax, 
-    selectedCategory, 
-    filter,
-    userId,
-    immigroveId,
-    excludeCurrentUser,
-    currentUserId,
-    isLoadingMore
-  ];
+        posts,
+        hasReachedMax,
+        currentUserId,
+        isLoadingMore,
+        initialFetchPerformed,
+      ];
 }
 
 /// Error state for posts

@@ -172,7 +172,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -239,7 +239,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                   widget.user.photoUrl!.startsWith('http')
               ? NetworkImage(widget.user.photoUrl!)
               : null,
-          backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
           child: widget.user.photoUrl == null
               ? Text(
                   widget.user.displayName?[0].toUpperCase() ?? 'U',
@@ -932,10 +932,10 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                         disabledBackgroundColor: isDarkMode
                                             ? Colors.grey[800]
                                             : theme.colorScheme.primary
-                                                .withOpacity(0.3),
+                                                .withValues(alpha: 0.3),
                                         disabledForegroundColor: isDarkMode
                                             ? Colors.grey[600]
-                                            : Colors.white.withOpacity(0.8),
+                                            : Colors.white.withValues(alpha: 0.8),
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 16, vertical: 12),
                                         shape: RoundedRectangleBorder(

@@ -10,128 +10,47 @@ abstract class HomeEvent extends Equatable {
 
 /// Event to fetch posts
 class FetchPosts extends HomeEvent {
-  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
-  final String filter;
   /// Optional category filter
   final String? category;
-  /// Optional user ID to filter posts by
-  final String? userId;
-  /// Optional ImmiGrove ID to filter posts by
-  final String? immigroveId;
-  /// Whether to exclude the current user's posts
-  final bool excludeCurrentUser;
-  /// ID of the current user (needed for some filters)
+
+  /// ID of the current user (to exclude their posts)
   final String? currentUserId;
+
   /// Whether to refresh the posts
   final bool refresh;
 
   const FetchPosts({
-    this.filter = 'all',
     this.category,
-    this.userId,
-    this.immigroveId,
-    this.excludeCurrentUser = false,
     this.currentUserId,
     this.refresh = false,
   });
 
   @override
   List<Object?> get props => [
-    filter,
-    category,
-    userId,
-    immigroveId,
-    excludeCurrentUser,
-    currentUserId,
-    refresh,
-  ];
+        category,
+        currentUserId,
+        refresh,
+      ];
 }
 
 /// Event to fetch more posts (pagination)
 class FetchMorePosts extends HomeEvent {
-  /// Filter type: 'all', 'user', 'following', 'my-immigroves'
-  final String filter;
   /// Optional category filter
   final String? category;
-  /// Optional user ID to filter posts by
-  final String? userId;
-  /// Optional ImmiGrove ID to filter posts by
-  final String? immigroveId;
-  /// Whether to exclude the current user's posts
-  final bool excludeCurrentUser;
-  /// ID of the current user (needed for some filters)
+
+  /// ID of the current user (to exclude their posts)
   final String? currentUserId;
 
   const FetchMorePosts({
-    this.filter = 'all',
     this.category,
-    this.userId,
-    this.immigroveId,
-    this.excludeCurrentUser = false,
     this.currentUserId,
   });
 
   @override
   List<Object?> get props => [
-    filter,
-    category,
-    userId,
-    immigroveId,
-    excludeCurrentUser,
-    currentUserId,
-  ];
-}
-
-/// Event to fetch personalized posts
-class FetchPersonalizedPosts extends HomeEvent {
-  final String userId;
-  final bool refresh;
-
-  const FetchPersonalizedPosts({
-    required this.userId,
-    this.refresh = false,
-  });
-
-  @override
-  List<Object> get props => [userId, refresh];
-}
-
-/// Event to fetch more personalized posts (pagination)
-class FetchMorePersonalizedPosts extends HomeEvent {
-  final String userId;
-
-  const FetchMorePersonalizedPosts({
-    required this.userId,
-  });
-
-  @override
-  List<Object> get props => [userId];
-}
-
-/// Event to fetch events
-class FetchEvents extends HomeEvent {
-  final bool upcoming;
-  final bool refresh;
-
-  const FetchEvents({
-    this.upcoming = true,
-    this.refresh = false,
-  });
-
-  @override
-  List<Object> get props => [upcoming, refresh];
-}
-
-/// Event to fetch more events (pagination)
-class FetchMoreEvents extends HomeEvent {
-  final bool upcoming;
-
-  const FetchMoreEvents({
-    this.upcoming = true,
-  });
-
-  @override
-  List<Object> get props => [upcoming];
+        category,
+        currentUserId,
+      ];
 }
 
 /// Event to create a post
@@ -196,12 +115,86 @@ class SelectCategory extends HomeEvent {
 
 /// Event to handle errors in the home screen
 class HomeError extends HomeEvent {
+  /// Error message
   final String message;
 
+  /// Constructor
   const HomeError({
     required this.message,
   });
 
   @override
   List<Object> get props => [message];
+}
+
+/// Event to initialize home screen data
+class InitializeHomeData extends HomeEvent {
+  /// Current user ID (optional)
+  final String? userId;
+
+  /// Selected category (optional)
+  final String? category;
+
+  /// Whether to force refresh
+  final bool forceRefresh;
+
+  /// Constructor
+  const InitializeHomeData({
+    this.userId,
+    this.category,
+    this.forceRefresh = true,
+  });
+
+  @override
+  List<Object?> get props => [userId, category, forceRefresh];
+}
+
+/// Event to edit a post
+class EditPost extends HomeEvent {
+  final String postId;
+  final String userId;
+  final String content;
+  final String category;
+
+  const EditPost({
+    required this.postId,
+    required this.userId,
+    required this.content,
+    required this.category,
+  });
+
+  @override
+  List<Object> get props => [postId, userId, content, category];
+}
+
+/// Event to delete a post (soft delete by setting DeletedAt)
+class DeletePost extends HomeEvent {
+  /// ID of the post to delete
+  final String postId;
+
+  /// Create a new DeletePost event
+  const DeletePost({
+    required this.postId,
+  });
+
+  @override
+  List<Object?> get props => [postId];
+}
+
+/// Event to update a post's hasUserComment flag
+class UpdatePostHasUserComment extends HomeEvent {
+  /// ID of the post to update
+  final String postId;
+  
+  /// Whether the current user has commented on this post
+  final bool hasUserComment;
+
+  /// Create a new UpdatePostHasUserComment event
+  const UpdatePostHasUserComment({
+    required this.postId,
+    required this.hasUserComment,
+  });
+
+  @override
+  List<Object?> get props => [postId, hasUserComment];
 }

@@ -14,6 +14,12 @@ class PostComment extends Equatable {
   /// ID of the parent comment (if this is a reply)
   final String? parentCommentId;
   
+  /// ID of the root comment in the thread (for nested replies)
+  final String? rootCommentId;
+  
+  /// Depth level of the comment (1 = direct post comment, 2 = reply to comment, 3 = reply to reply)
+  final int depth;
+  
   /// Content of the comment
   final String content;
   
@@ -28,6 +34,9 @@ class PostComment extends Equatable {
   
   /// Replies to this comment
   final List<PostComment> replies;
+  
+  /// Whether this comment belongs to the current user
+  final bool isCurrentUserComment;
 
   /// Create a new PostComment
   const PostComment({
@@ -35,11 +44,14 @@ class PostComment extends Equatable {
     required this.postId,
     required this.userId,
     this.parentCommentId,
+    this.rootCommentId,
+    this.depth = 1, // Default to direct post comment
     required this.content,
     required this.createdAt,
     this.userName,
     this.userAvatar,
     this.replies = const [],
+    this.isCurrentUserComment = false,
   });
 
   @override
@@ -48,10 +60,44 @@ class PostComment extends Equatable {
         postId,
         userId,
         parentCommentId,
+        rootCommentId,
+        depth,
         content,
         createdAt,
         userName,
         userAvatar,
         replies,
+        isCurrentUserComment,
       ];
+      
+  /// Create a copy of this PostComment with the given fields replaced with new values
+  PostComment copyWith({
+    String? id,
+    String? postId,
+    String? userId,
+    String? parentCommentId,
+    String? rootCommentId,
+    int? depth,
+    String? content,
+    DateTime? createdAt,
+    String? userName,
+    String? userAvatar,
+    List<PostComment>? replies,
+    bool? isCurrentUserComment,
+  }) {
+    return PostComment(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      userId: userId ?? this.userId,
+      parentCommentId: parentCommentId ?? this.parentCommentId,
+      rootCommentId: rootCommentId ?? this.rootCommentId,
+      depth: depth ?? this.depth,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      userName: userName ?? this.userName,
+      userAvatar: userAvatar ?? this.userAvatar,
+      replies: replies ?? this.replies,
+      isCurrentUserComment: isCurrentUserComment ?? this.isCurrentUserComment,
+    );
+  }
 }

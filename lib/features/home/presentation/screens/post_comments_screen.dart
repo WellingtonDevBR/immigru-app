@@ -4,6 +4,8 @@ import 'package:get_it/get_it.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/domain/entities/post_comment.dart';
 import 'package:immigru/features/home/presentation/bloc/comments/comments_bloc.dart';
+import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
+import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/widgets/comment_input_widget.dart';
 import 'package:immigru/features/home/presentation/widgets/comment_list_widget.dart';
 import 'package:immigru/shared/widgets/error_message_widget.dart';
@@ -17,12 +19,16 @@ class PostCommentsScreen extends StatefulWidget {
   /// Current user ID
   final String userId;
 
+  /// HomeBloc instance
+  final HomeBloc homeBloc;
+
   /// Create a new PostCommentsScreen
   const PostCommentsScreen({
-    Key? key,
+    super.key,
     required this.post,
     required this.userId,
-  }) : super(key: key);
+    required this.homeBloc,
+  });
 
   @override
   State<PostCommentsScreen> createState() => _PostCommentsScreenState();
@@ -38,27 +44,45 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
     _commentsBloc = GetIt.instance<CommentsBloc>();
     _loadComments();
   }
-  
+
   /// Validates if the provided URL is a valid image URL
   bool _isValidImageUrl(String? url) {
     if (url == null || url.isEmpty) return false;
     if (url == 'custom') return false; // Filter out invalid 'custom' URL
-    
+
     // Basic URL validation
-    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/');
+    return url.startsWith('http://') ||
+        url.startsWith('https://') ||
+        url.startsWith('data:image/');
   }
 
   void _loadComments() {
     _commentsBloc.add(LoadComments(postId: widget.post.id));
   }
 
-  Future<void> _handleCommentSubmit(String content, String? parentCommentId) async {
+  Future<void> _handleCommentSubmit(
+      String content, String? parentCommentId, String? rootCommentId) async {
+    // Calculate comment depth based on parent comment
+    int depth = 1; // Default for direct post comments
+
+    if (parentCommentId != null && _replyingTo != null) {
+      // If replying to a comment, set depth accordingly
+      depth = _replyingTo!.depth + 1;
+
+      // Cap depth at maximum level (3)
+      if (depth > CommentInputWidget.maxDepth) {
+        depth = CommentInputWidget.maxDepth;
+      }
+    }
+
     _commentsBloc.add(
       CreateComment(
         postId: widget.post.id,
         userId: widget.userId,
         content: content,
         parentCommentId: parentCommentId,
+        rootCommentId: rootCommentId,
+        depth: depth,
       ),
     );
 
@@ -67,8 +91,21 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       Navigator.of(context).pop();
       _replyingTo = null;
     }
-    
+
+    // Mark that the user has commented on this post
+    // This will be used to control the comment animation
+    _updatePostHasUserComment();
+
     return Future.value();
+  }
+
+  /// Updates the post's hasUserComment flag to indicate the current user has commented
+  void _updatePostHasUserComment() {
+    // Use the HomeBloc passed as a parameter
+    widget.homeBloc.add(UpdatePostHasUserComment(
+      postId: widget.post.id,
+      hasUserComment: true,
+    ));
   }
 
   void _showReplyModal(PostComment parentComment) {
@@ -97,6 +134,122 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       });
     });
   }
+  
+  /// Show a modal to edit a comment
+  void _showEditCommentModal(PostComment comment) {
+    // Create a text controller pre-filled with the comment content
+    final TextEditingController controller = TextEditingController(text: comment.content);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Edit Comment',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Edit your comment...',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      final editedContent = controller.text.trim();
+                      if (editedContent.isNotEmpty) {
+                        _handleEditComment(comment, editedContent);
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    ).then((_) {
+      controller.dispose();
+    });
+  }
+  
+  /// Show confirmation dialog before deleting a comment
+  void _showDeleteCommentDialog(PostComment comment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Comment'),
+        content: Text(
+          'Are you sure you want to delete this comment? ${comment.replies.isNotEmpty 
+              ? 'All replies to this comment will also be deleted.'
+              : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _handleDeleteComment(comment);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Handle editing a comment
+  void _handleEditComment(PostComment comment, String newContent) {
+    _commentsBloc.add(
+      EditComment(
+        commentId: comment.id,
+        postId: widget.post.id,
+        userId: widget.userId,
+        content: newContent,
+      ),
+    );
+  }
+  
+  /// Handle deleting a comment
+  void _handleDeleteComment(PostComment comment) {
+    _commentsBloc.add(
+      DeleteComment(
+        commentId: comment.id,
+        postId: widget.post.id,
+        userId: widget.userId,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,12 +268,14 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  backgroundImage: _isValidImageUrl(widget.post.author?.avatarUrl)
-                      ? NetworkImage(widget.post.author!.avatarUrl!)
-                      : _isValidImageUrl(widget.post.userAvatar)
-                          ? NetworkImage(widget.post.userAvatar!)
-                          : null,
-                  child: (!_isValidImageUrl(widget.post.author?.avatarUrl) && !_isValidImageUrl(widget.post.userAvatar))
+                  backgroundImage:
+                      _isValidImageUrl(widget.post.author?.avatarUrl)
+                          ? NetworkImage(widget.post.author!.avatarUrl!)
+                          : _isValidImageUrl(widget.post.userAvatar)
+                              ? NetworkImage(widget.post.userAvatar!)
+                              : null,
+                  child: (!_isValidImageUrl(widget.post.author?.avatarUrl) &&
+                          !_isValidImageUrl(widget.post.userAvatar))
                       ? const Icon(Icons.person)
                       : null,
                 ),
@@ -130,7 +285,9 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.post.author?.displayName ?? widget.post.userName ?? 'User',
+                        widget.post.author?.displayName ??
+                            widget.post.userName ??
+                            'User',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
@@ -147,7 +304,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
             ),
           ),
           const Divider(thickness: 1),
-          
+
           // Comments list
           Expanded(
             child: BlocBuilder<CommentsBloc, CommentsState>(
@@ -168,6 +325,8 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                         CommentListWidget(
                           comments: state.comments,
                           onReply: _showReplyModal,
+                          onEdit: _showEditCommentModal,
+                          onDelete: _showDeleteCommentDialog,
                         ),
                         // Add some padding at the bottom for the input field
                         const SizedBox(height: 80),

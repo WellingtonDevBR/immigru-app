@@ -46,3 +46,15 @@ class CommentsError extends CommentsState {
   @override
   List<Object?> get props => [message];
 }
+
+/// State when comments are being updated (edit, delete, etc.)
+class CommentsUpdating extends CommentsState {
+  /// Current comments
+  final List<PostComment> comments;
+
+  /// Create a new CommentsUpdating state
+  const CommentsUpdating({required this.comments});
+
+  @override
+  List<Object?> get props => [comments];
+}

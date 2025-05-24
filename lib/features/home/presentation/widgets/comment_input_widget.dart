@@ -7,18 +7,21 @@ class CommentInputWidget extends StatefulWidget {
   final String postId;
   
   /// Callback when a comment is submitted
-  final Function(String, String?) onSubmit;
+  final Function(String, String?, String?) onSubmit;
   
   /// Parent comment (if this is a reply)
   final PostComment? parentComment;
   
+  /// Maximum depth level for comments
+  static const int maxDepth = 3;
+  
   /// Create a new CommentInputWidget
   const CommentInputWidget({
-    Key? key,
+    super.key,
     required this.postId,
     required this.onSubmit,
     this.parentComment,
-  }) : super(key: key);
+  });
 
   @override
   State<CommentInputWidget> createState() => _CommentInputWidgetState();
@@ -42,10 +45,15 @@ class _CommentInputWidgetState extends State<CommentInputWidget> {
     setState(() {
       _isSubmitting = true;
     });
+    
+    // Determine root comment ID for proper threading
+    final String? rootCommentId = widget.parentComment == null ? null :
+        (widget.parentComment!.depth == 1 ? widget.parentComment!.id : widget.parentComment!.rootCommentId);
 
     widget.onSubmit(
       _commentController.text.trim(),
       widget.parentComment?.id,
+      rootCommentId,
     ).then((_) {
       // Clear the input field after successful submission
       _commentController.clear();
@@ -74,7 +82,7 @@ class _CommentInputWidgetState extends State<CommentInputWidget> {
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),

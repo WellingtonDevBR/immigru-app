@@ -47,7 +47,7 @@ class CategoryPickerWidget extends StatelessWidget {
                     child: ChoiceChip(
                       label: Text(category),
                       selected: isSelected,
-                      selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                       backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                       labelStyle: TextStyle(
                         color: isSelected
