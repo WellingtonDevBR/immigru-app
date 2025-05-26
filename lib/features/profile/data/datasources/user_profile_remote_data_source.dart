@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:immigru/core/config/storage_config.dart';
 import 'package:immigru/core/error/error_handler.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart' as auth_entities;
 import 'package:immigru/features/profile/data/models/user_profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,6 +20,9 @@ abstract class UserProfileRemoteDataSource {
   
   /// Upload a profile cover image
   Future<String> uploadCoverImage(String userId, String filePath);
+  
+  /// Remove a profile cover image
+  Future<bool> removeCoverImage(String userId);
   
   /// Get user stats (posts count, followers count, following count)
   Future<Map<String, int>> getUserStats(String userId);
@@ -80,29 +85,45 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   @override
   Future<String> uploadAvatar(String userId, String filePath) async {
     try {
+      // Get the current authenticated user to ensure proper permissions
+      final currentUser = _supabaseClient.auth.currentUser;
+      if (currentUser == null || currentUser.id != userId) {
+        throw Exception('Permission denied: Cannot upload avatar for another user');
+      }
+      
       final file = File(filePath);
       final fileExt = filePath.split('.').last;
-      final fileName = 'avatar_$userId.$fileExt';
+      
+      // Generate a unique file ID for the avatar
+      final fileId = StorageConfig.generateFileId();
+      final fileName = 'avatars-$fileId.$fileExt';
+      
+      // Generate the storage path using the config
+      final storagePath = '${StorageConfig.userPaths.avatarPath(userId)}/$fileName';
       
       // Upload the file to Supabase storage
       await _supabaseClient
           .storage
-          .from('avatars')
-          .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
+          .from(StorageConfig.buckets.users)
+          .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
       
-      final avatarUrl = _supabaseClient
-          .storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-      
-      // Update the profile with the new avatar URL
+      // Store only the file name in the database, not the full path or URL
+      // The application will build the full path when needed
       await _supabaseClient
           .from('UserProfile')
-          .update({'AvatarUrl': avatarUrl})
+          .update({'AvatarUrl': fileName})
           .eq('UserId', userId);
+      
+      // Get the public URL for immediate return
+      final avatarUrl = _supabaseClient
+          .storage
+          .from(StorageConfig.buckets.users)
+          .getPublicUrl(storagePath);
       
       return avatarUrl;
     } catch (e) {
+      final logger = UnifiedLogger();
+      logger.e('Error uploading avatar: ${e.toString()}', tag: 'UserProfileRemoteDataSource');
       throw ErrorHandler.instance.handleException(e, tag: 'UserProfileRemoteDataSource');
     }
   }
@@ -112,27 +133,104 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
     try {
       final file = File(filePath);
       final fileExt = filePath.split('.').last;
-      final fileName = 'cover_$userId.$fileExt';
       
-      // Upload the file to Supabase storage
+      // Get the current authenticated user to ensure proper permissions
+      final currentUser = _supabaseClient.auth.currentUser;
+      if (currentUser == null || currentUser.id != userId) {
+        throw Exception('Permission denied: Cannot upload cover image for another user');
+      }
+      
+      // Generate a unique file ID for the cover image
+      final fileId = StorageConfig.generateFileId();
+      final fileName = 'covers-$fileId.$fileExt';
+      
+      // Generate the storage path using the config
+      final storagePath = '${StorageConfig.userPaths.coverPath(userId)}/$fileName';
+      
+      // Upload the file to Supabase storage with proper path
       await _supabaseClient
           .storage
-          .from('covers')
-          .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
+          .from(StorageConfig.buckets.users)
+          .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
       
-      final coverUrl = _supabaseClient
-          .storage
-          .from('covers')
-          .getPublicUrl(fileName);
-      
-      // Update the profile with the new cover image URL
+      // Store only the file name in the database, not the full path or URL
+      // The application will build the full path when needed
       await _supabaseClient
           .from('UserProfile')
-          .update({'CoverImageUrl': coverUrl})
+          .update({'CoverImageUrl': fileName})
           .eq('UserId', userId);
+      
+      // Get the public URL for immediate return
+      final coverUrl = _supabaseClient
+          .storage
+          .from(StorageConfig.buckets.users)
+          .getPublicUrl(storagePath);
       
       return coverUrl;
     } catch (e) {
+      // Log the error using the appropriate logger
+      final logger = UnifiedLogger();
+      logger.e('Error uploading cover image: ${e.toString()}', tag: 'UserProfileRemoteDataSource');
+      
+      throw ErrorHandler.instance.handleException(e, tag: 'UserProfileRemoteDataSource');
+    }
+  }
+  
+  @override
+  Future<bool> removeCoverImage(String userId) async {
+    try {
+      // Get the current authenticated user to ensure proper permissions
+      final currentUser = _supabaseClient.auth.currentUser;
+      if (currentUser == null || currentUser.id != userId) {
+        throw Exception('Permission denied: Cannot remove cover image for another user');
+      }
+      
+      // Get the current cover image file name from the profile
+      final profileData = await _supabaseClient
+          .from('UserProfile')
+          .select('CoverImageUrl')
+          .eq('UserId', userId)
+          .single();
+      
+      final fileName = profileData['CoverImageUrl'] as String?;
+      
+      // If there's no cover image, just update the profile and return success
+      if (fileName == null || fileName.isEmpty) {
+        await _supabaseClient
+            .from('UserProfile')
+            .update({'CoverImageUrl': ''})
+            .eq('UserId', userId);
+        return true;
+      }
+      
+      // We need to build the full path to delete the file
+      // If it's already a full path, use it directly
+      String fullPath;
+      if (fileName.contains('/')) {
+        fullPath = fileName;
+      } else {
+        // Build the path: userId/covers/fileName
+        fullPath = '${userId}/covers/$fileName';
+      }
+      
+      // Delete the file from storage
+      await _supabaseClient
+          .storage
+          .from(StorageConfig.buckets.users)
+          .remove([fullPath]);
+      
+      // Update the profile with an empty cover image path
+      await _supabaseClient
+          .from('UserProfile')
+          .update({'CoverImageUrl': ''})
+          .eq('UserId', userId);
+      
+      return true;
+    } catch (e) {
+      // Log the error using the appropriate logger
+      final logger = UnifiedLogger();
+      logger.e('Error removing cover image: ${e.toString()}', tag: 'UserProfileRemoteDataSource');
+      
       throw ErrorHandler.instance.handleException(e, tag: 'UserProfileRemoteDataSource');
     }
   }

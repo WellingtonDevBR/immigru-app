@@ -20,13 +20,8 @@ class SupabaseStorageUtils implements ISupabaseStorage {
   /// The base Supabase storage URL
   static const String _baseStorageUrl = 'https://kkdhnvapcbwwqapsnnfg.supabase.co/storage/v1/object/public';
 
-  /// Storage bucket names
-  static const String profileBucket = 'profiles';
-  static const String postMediaBucket = 'post-media';
-  static const String profileCoversBucket = 'profile-covers';
-  static const String profileAlbumsBucket = 'profile-albums';
-  static const String avatarsBucket = 'avatars';
-  static const String coversBucket = 'covers';
+  /// Storage bucket names - using the new configuration
+  static const String usersBucket = 'users';
 
   // No longer needed as we inject the client in the constructor
 
@@ -35,44 +30,92 @@ class SupabaseStorageUtils implements ISupabaseStorage {
     if (url == null || url.isEmpty) return false;
     if (url == 'custom') return false;
     
+    // If it's a file path, return false
+    if (url.contains('file:///')) return false;
+    
     // Check if it's a valid HTTP/HTTPS URL
-    return (url.startsWith('http://') || url.startsWith('https://')) &&
-           // Make sure it's not a malformed file:/// URL
-           !url.contains('file:///');
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return true;
+    }
+    
+    // Check if it matches our avatar/cover image filename pattern
+    // Format: {type}-{timestamp}-{random}.{extension}
+    final filenamePattern = RegExp(r'^(avatars|covers)-\d+-\d+\.[a-zA-Z0-9]+$');
+    return filenamePattern.hasMatch(url);
   }
 
   @override
   String getPublicUrl(String bucket, String path) {
-    return '$_baseStorageUrl/$bucket/$path';
+    final url = '$_baseStorageUrl/$bucket/$path';
+    print('DEBUG: getPublicUrl - bucket: $bucket, path: $path');
+    print('DEBUG: getPublicUrl - final URL: $url');
+    return url;
   }
 
   @override
   String getProfileImageUrl(String fileName) {
-    return getPublicUrl(profileBucket, fileName);
+    // Get current user ID
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) return '';
+    
+    // Build the path using the new structure
+    final path = '${currentUser.id}/avatars/$fileName';
+    return getPublicUrl(usersBucket, path);
   }
 
   @override
   String getPostMediaUrl(String fileName) {
-    return getPublicUrl(postMediaBucket, fileName);
+    return getPublicUrl('post-media', fileName);
   }
 
   @override
   String getProfileCoverUrl(String fileName) {
-    return getPublicUrl(profileCoversBucket, fileName);
+    // Get current user ID
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) return '';
+    
+    // Build the path using the new structure
+    final path = '${currentUser.id}/covers/$fileName';
+    return getPublicUrl(usersBucket, path);
   }
 
   @override
   String getAvatarUrl(String fileName) {
-    return getPublicUrl(avatarsBucket, fileName);
+    print('DEBUG: getAvatarUrl called with fileName: $fileName');
+    
+    // Get current user ID
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) {
+      print('DEBUG: getAvatarUrl - No current user, returning empty string');
+      return '';
+    }
+    
+    // Build the path using the new structure
+    final path = '${currentUser.id}/avatars/$fileName';
+    print('DEBUG: getAvatarUrl - Built path: $path');
+    
+    final url = getPublicUrl(usersBucket, path);
+    print('DEBUG: getAvatarUrl - Final URL: $url');
+    
+    return url;
   }
 
   @override
   String getCoverUrl(String fileName) {
-    return getPublicUrl(coversBucket, fileName);
+    // Get current user ID
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) return '';
+    
+    // Build the path using the new structure
+    final path = '${currentUser.id}/covers/$fileName';
+    return getPublicUrl(usersBucket, path);
   }
 
   @override
   String getImageUrl(String url, {String? displayName}) {
+    print('DEBUG: SupabaseStorageUtils.getImageUrl input: $url');
+    String result;
+    
     // Handle special cases first
     if (url == 'custom' || url.startsWith('file:///') || !isValidImageUrl(url)) {
       // Use UI Avatars for generating a default profile image with our brand colors
@@ -80,31 +123,54 @@ class SupabaseStorageUtils implements ISupabaseStorage {
       // Convert primary color to hex without the # and without the alpha channel
       final backgroundColor = AppColors.primaryColor.value.toRadixString(16).substring(2);
       final textColor = 'FFFFFF'; // White text for contrast
-      return 'https://ui-avatars.com/api/?background=$backgroundColor&color=$textColor&name=${Uri.encodeComponent(name)}';
+      result = 'https://ui-avatars.com/api/?background=$backgroundColor&color=$textColor&name=${Uri.encodeComponent(name)}';
+      print('DEBUG: Using UI Avatar: $result');
+      return result;
     }
     
     // If it's already a Supabase URL, return it as is
     if (url.contains(_baseStorageUrl)) {
+      print('DEBUG: Already a Supabase URL: $url');
       return url;
     }
     
-    // If it's a relative path within a bucket, try to determine the bucket
-    if (url.startsWith('/')) {
-      // Remove leading slash
-      url = url.substring(1);
+    // Get current user ID for building paths
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) {
+      print('DEBUG: No current user, returning URL as is: $url');
+      return url; // Return as is if no user
     }
     
-    // Try to determine the bucket from the URL pattern
-    if (url.startsWith('avatars/')) {
-      return getPublicUrl(avatarsBucket, url.substring('avatars/'.length));
-    } else if (url.startsWith('covers/')) {
-      return getPublicUrl(coversBucket, url.substring('covers/'.length));
-    } else if (url.startsWith('profiles/')) {
-      return getPublicUrl(profileBucket, url.substring('profiles/'.length));
-    } else if (url.startsWith('post-media/')) {
-      return getPublicUrl(postMediaBucket, url.substring('post-media/'.length));
+    print('DEBUG: Current user ID: ${currentUser.id}');
+    
+    // If it's a relative path within a bucket, try to determine the type
+    if (!url.startsWith('http')) {
+      // Check if it's just a filename or a full path
+      if (url.contains('/')) {
+        // It's already a path, just use it with the users bucket
+        result = getPublicUrl(usersBucket, url);
+        print('DEBUG: Using full path: $result');
+      } else {
+        // It's just a filename, determine the type
+        if (url.startsWith('avatars-')) {
+          result = getAvatarUrl(url);
+          print('DEBUG: Using avatar URL: $result');
+        } else if (url.startsWith('covers-')) {
+          result = getCoverUrl(url);
+          print('DEBUG: Using cover URL: $result');
+        } else if (url.contains('post')) {
+          result = getPostMediaUrl(url);
+          print('DEBUG: Using post media URL: $result');
+        } else {
+          // Default to avatar path if we can't determine
+          result = getAvatarUrl(url);
+          print('DEBUG: Using default avatar URL: $result');
+        }
+      }
+      return result;
     }
     
+    // Default to returning the URL as is
     // If it's a valid external URL, return it as is
     return url;
   }

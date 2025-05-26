@@ -121,21 +121,291 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  /// Pick and upload a new cover image
+  /// Pick and upload a new cover image with modern UI
   Future<void> _pickAndUploadCoverImage() async {
-    final XFile? image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
+    // Capture the ProfileBloc instance and profile state before showing the bottom sheet
+    final profileBloc = context.read<ProfileBloc>();
+    final hasExistingCover = profileBloc.state.profile?.coverImageUrl != null &&
+                           profileBloc.state.profile!.coverImageUrl!.isNotEmpty;
     
-    if (image != null) {
-      if (!mounted) return;
-      
-      context.read<ProfileBloc>().add(UploadCoverImage(
-        userId: widget.userId,
-        filePath: image.path,
-      ));
-    }
+    // Show a modern bottom sheet with options for image management
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Cover Image',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const Divider(height: 1),
+                
+                // Gallery option
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    final XFile? image = await _imagePicker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 80,
+                    );
+                    
+                    if (image != null && mounted) {
+                      profileBloc.add(UploadCoverImage(
+                        userId: widget.userId,
+                        filePath: image.path,
+                      ));
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.photo_library_rounded,
+                            color: Colors.green.shade600,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Choose from Gallery',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Select an image from your photo library',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Camera option
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    final XFile? image = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 80,
+                    );
+                    
+                    if (image != null && mounted) {
+                      profileBloc.add(UploadCoverImage(
+                        userId: widget.userId,
+                        filePath: image.path,
+                      ));
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.camera_alt_rounded,
+                            color: Colors.blue.shade600,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Take a Photo',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Capture a new image with your camera',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Remove option (only shown if there's an existing cover)
+                if (hasExistingCover)
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      // Show confirmation dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text('Remove Cover Image'),
+                            content: const Text('Are you sure you want to remove your cover image?'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.grey.shade700),
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(dialogContext);
+                                  profileBloc.add(RemoveCoverImage(
+                                    userId: widget.userId,
+                                  ));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red.shade50,
+                                  foregroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text('Remove'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.red.shade600,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Remove Cover Image',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Delete your current cover image',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -225,22 +495,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 SliverAppBar(
                   expandedHeight: 200,
                   pinned: true,
+                  backgroundColor: Colors.green.shade600, // Use green color for the app bar
                   flexibleSpace: FlexibleSpaceBar(
-                    title: Text(
-                      profile.displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    // Remove the title (user display name)
+                    title: null,
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Cover image
+                        // Cover image with mobile-friendly upload UI
                         ProfileHeader(
                           profile: profile,
                           onTapCoverImage: widget.isCurrentUser ? _pickAndUploadCoverImage : null,
                           isUploadingCover: state.isUploadingCover,
+                          isMobileView: true, // Enable mobile-specific UI
                         ),
                       ],
                     ),

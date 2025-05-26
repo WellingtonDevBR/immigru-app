@@ -17,3 +17,4 @@ trigger: always_on
 - never leave unsued variables behind.
 - avoid try catch - make use of more better techniques when possible like either (which we have already)
 - stop using withOpacity as it is deprected but withValues.
+- core/config will hold our enviroment variables

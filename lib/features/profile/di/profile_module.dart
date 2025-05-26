@@ -14,6 +14,7 @@ import 'package:immigru/features/profile/data/repositories/user_profile_reposito
 import 'package:immigru/features/profile/domain/repositories/user_profile_repository.dart';
 import 'package:immigru/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/get_user_stats_usecase.dart';
+import 'package:immigru/features/profile/domain/usecases/remove_cover_image_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/upload_avatar_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/upload_cover_image_usecase.dart';
@@ -32,6 +33,7 @@ void registerProfileDependencies(GetIt sl) {
       updateUserProfileUseCase: sl<UpdateUserProfileUseCase>(),
       uploadAvatarUseCase: sl<UploadAvatarUseCase>(),
       uploadCoverImageUseCase: sl<UploadCoverImageUseCase>(),
+      removeCoverImageUseCase: sl<RemoveCoverImageUseCase>(),
       getUserStatsUseCase: sl<GetUserStatsUseCase>(),
       getPostsUseCase: sl<GetPostsUseCase>(),
       likePostUseCase: sl<LikePostUseCase>(),
@@ -45,6 +47,7 @@ void registerProfileDependencies(GetIt sl) {
   sl.registerLazySingleton(() => UpdateUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UploadAvatarUseCase(sl()));
   sl.registerLazySingleton(() => UploadCoverImageUseCase(sl()));
+  sl.registerLazySingleton(() => RemoveCoverImageUseCase(sl()));
   sl.registerLazySingleton(() => GetUserStatsUseCase(sl()));
 
   // Repository

@@ -77,6 +77,20 @@ class UploadCoverImage extends ProfileEvent {
   List<Object?> get props => [userId, filePath];
 }
 
+/// Event to remove a profile cover image
+class RemoveCoverImage extends ProfileEvent {
+  /// ID of the user whose cover image to remove
+  final String userId;
+
+  /// Constructor
+  const RemoveCoverImage({
+    required this.userId,
+  });
+
+  @override
+  List<Object?> get props => [userId];
+}
+
 /// Event to load user stats
 class LoadUserStats extends ProfileEvent {
   /// ID of the user whose stats to load

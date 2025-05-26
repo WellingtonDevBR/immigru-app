@@ -50,7 +50,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           // Fetch from remote
           final remoteProfile = await remoteDataSource.getUserProfile(userId);
           
-          // Cache the result
+          // Cache the result - ensure we're using UserProfileModel
           await localDataSource.cacheUserProfile(remoteProfile);
           
           return Right(remoteProfile);
@@ -86,7 +86,14 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       // Check connectivity before making network request
       if (await _isConnected()) {
         try {
-          final profileModel = UserProfileModel.fromEntity(profile);
+          // Ensure we're working with a UserProfileModel
+          final UserProfileModel profileModel;
+          if (profile is UserProfileModel) {
+            profileModel = profile;
+          } else {
+            profileModel = UserProfileModel.fromEntity(profile);
+          }
+          
           final updatedProfile = await remoteDataSource.updateUserProfile(profileModel);
           
           // Update the cache
@@ -153,6 +160,35 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           }
           
           return Right(coverUrl);
+        } catch (e) {
+          return Left(_errorHandler.handleException(e, tag: 'UserProfileRepository'));
+        }
+      } else {
+        return Left(Failure(message: 'No internet connection'));
+      }
+    } catch (e) {
+      return Left(_errorHandler.handleException(e, tag: 'UserProfileRepository'));
+    }
+  }
+  
+  @override
+  Future<Either<Failure, bool>> removeCoverImage({
+    required String userId,
+  }) async {
+    try {
+      // Check connectivity before making network request
+      if (await _isConnected()) {
+        try {
+          final success = await remoteDataSource.removeCoverImage(userId);
+          
+          // Update the cached profile with empty cover image URL
+          final cachedProfile = await localDataSource.getCachedUserProfile(userId);
+          if (cachedProfile != null) {
+            final updatedProfile = cachedProfile.copyWith(coverImageUrl: '');
+            await localDataSource.cacheUserProfile(updatedProfile as UserProfileModel);
+          }
+          
+          return Right(success);
         } catch (e) {
           return Left(_errorHandler.handleException(e, tag: 'UserProfileRepository'));
         }

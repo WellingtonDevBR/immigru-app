@@ -71,6 +71,8 @@ class UserProfileModel extends UserProfile {
     );
   }
 
+
+
   /// Convert this model to a JSON map
   Map<String, dynamic> toJson() {
     return {

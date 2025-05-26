@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:immigru/core/config/url_builder.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 
 /// Enhanced user profile entity with additional profile information
@@ -169,6 +170,22 @@ class UserProfile extends Equatable {
       showRelationshipStatus: showRelationshipStatus ?? this.showRelationshipStatus,
     );
   }
+  
+  /// Get the full public URL for the avatar image
+  String? get avatarPublicUrl => avatarUrl != null && avatarUrl!.isNotEmpty 
+      ? UrlBuilder.buildAvatarUrl(avatarUrl!)
+      : null;
+      
+  /// Get the full public URL for the cover image
+  String? get coverImagePublicUrl => coverImageUrl != null && coverImageUrl!.isNotEmpty 
+      ? UrlBuilder.buildCoverImageUrl(coverImageUrl!)
+      : null;
+      
+  /// Check if the profile has a cover image
+  bool get hasCoverImage => coverImageUrl != null && coverImageUrl!.isNotEmpty;
+  
+  /// Check if the profile has an avatar
+  bool get hasAvatar => avatarUrl != null && avatarUrl!.isNotEmpty;
   
   @override
   List<Object?> get props => [

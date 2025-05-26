@@ -35,6 +35,13 @@ abstract class UserProfileRepository {
     required String filePath,
   });
   
+  /// Remove a profile cover image
+  /// 
+  /// Returns true on success or a [Failure] on error
+  Future<Either<Failure, bool>> removeCoverImage({
+    required String userId,
+  });
+  
   /// Get user stats (posts count, followers count, following count)
   /// 
   /// Returns a map with the stats on success or a [Failure] on error

@@ -11,11 +11,15 @@ class ProfileStatsSection extends StatelessWidget {
   ImageProvider? _getProfileImage(String? url) {
     if (url == null || url.isEmpty) return null;
     
+    print('DEBUG: Original avatar URL: $url');
+    
     // Get the processed URL from SupabaseStorageUtils
     final processedUrl = GetIt.instance<ISupabaseStorage>().getImageUrl(
       url,
       displayName: profile.displayName,
     );
+    
+    print('DEBUG: Processed avatar URL: $processedUrl');
     
     // Check if it's an asset path
     if (processedUrl.startsWith('assets/')) {

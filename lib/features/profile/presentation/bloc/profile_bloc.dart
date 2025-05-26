@@ -9,6 +9,7 @@ import 'package:immigru/features/home/domain/usecases/delete_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/edit_post_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/get_user_stats_usecase.dart';
+import 'package:immigru/features/profile/domain/usecases/remove_cover_image_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/upload_avatar_usecase.dart';
 import 'package:immigru/features/profile/domain/usecases/upload_cover_image_usecase.dart';
@@ -23,6 +24,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final UpdateUserProfileUseCase _updateUserProfileUseCase;
   final UploadAvatarUseCase _uploadAvatarUseCase;
   final UploadCoverImageUseCase _uploadCoverImageUseCase;
+  final RemoveCoverImageUseCase _removeCoverImageUseCase;
   final GetUserStatsUseCase _getUserStatsUseCase;
   final GetPostsUseCase _getPostsUseCase;
   final LikePostUseCase _likePostUseCase;
@@ -36,6 +38,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     required UpdateUserProfileUseCase updateUserProfileUseCase,
     required UploadAvatarUseCase uploadAvatarUseCase,
     required UploadCoverImageUseCase uploadCoverImageUseCase,
+    required RemoveCoverImageUseCase removeCoverImageUseCase,
     required GetUserStatsUseCase getUserStatsUseCase,
     required GetPostsUseCase getPostsUseCase,
     required LikePostUseCase likePostUseCase,
@@ -45,6 +48,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
        _updateUserProfileUseCase = updateUserProfileUseCase,
        _uploadAvatarUseCase = uploadAvatarUseCase,
        _uploadCoverImageUseCase = uploadCoverImageUseCase,
+       _removeCoverImageUseCase = removeCoverImageUseCase,
        _getUserStatsUseCase = getUserStatsUseCase,
        _getPostsUseCase = getPostsUseCase,
        _likePostUseCase = likePostUseCase,
@@ -56,6 +60,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateUserProfile>(_onUpdateUserProfile);
     on<UploadAvatar>(_onUploadAvatar);
     on<UploadCoverImage>(_onUploadCoverImage);
+    on<RemoveCoverImage>(_onRemoveCoverImage);
     on<LoadUserStats>(_onLoadUserStats);
     on<LoadUserPosts>(_onLoadUserPosts);
     on<LikeUserPost>(_onLikeUserPost);
@@ -175,6 +180,42 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           isUploadingCover: false,
           profile: updatedProfile,
         ));
+      },
+    );
+  }
+  
+  /// Handle the RemoveCoverImage event
+  Future<void> _onRemoveCoverImage(
+    RemoveCoverImage event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(state.copyWith(
+      isUploadingCover: true, // Reuse the same loading state
+      clearCoverUploadError: true,
+    ));
+
+    final result = await _removeCoverImageUseCase(
+      userId: event.userId,
+    );
+    
+    result.fold(
+      (failure) => emit(state.copyWith(
+        isUploadingCover: false,
+        coverUploadError: failure,
+      )),
+      (success) {
+        // Update the profile with an empty cover image URL
+        final updatedProfile = state.profile?.copyWith(
+          coverImageUrl: '', // Empty string to indicate no cover image
+        );
+
+        // Emit the updated state
+        emit(state.copyWith(
+          isUploadingCover: false,
+          profile: updatedProfile,
+        ));
+        
+        _logger.d('Cover image removed for user: ${event.userId}', tag: 'ProfileBloc');
       },
     );
   }
