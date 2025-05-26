@@ -16,6 +16,7 @@ class Post extends Equatable {
   final bool isLiked;
   final String? location;
   final Author? author;
+  final DateTime? updatedAt;
   
   /// Whether the current user has commented on this post
   final bool hasUserComment;
@@ -27,6 +28,7 @@ class Post extends Equatable {
     this.userAvatar,
     required this.content,
     this.imageUrl,
+    this.updatedAt,
     required this.category,
     required this.createdAt,
     this.likeCount = 0,
@@ -54,6 +56,53 @@ class Post extends Equatable {
         author,
         hasUserComment,
       ];
+
+  /// Convert Post to a JSON map
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'userName': userName,
+      'userAvatar': userAvatar,
+      'content': content,
+      'imageUrl': imageUrl,
+      'category': category,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'likeCount': likeCount,
+      'commentCount': commentCount,
+      'isLiked': isLiked,
+      'location': location,
+      'author': author?.toJson(),
+      'hasUserComment': hasUserComment,
+    };
+  }
+
+  /// Create a Post from a JSON map
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      userName: json['userName'] as String?,
+      userAvatar: json['userAvatar'] as String?,
+      content: json['content'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      category: json['category'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      likeCount: json['likeCount'] as int? ?? 0,
+      commentCount: json['commentCount'] as int? ?? 0,
+      isLiked: json['isLiked'] as bool? ?? false,
+      location: json['location'] as String?,
+      author: json['author'] != null ? Author.fromJson(json['author']) : null,
+      hasUserComment: json['hasUserComment'] as bool? ?? false,
+    );
+  }
+
+  /// String representation for debugging
+  @override
+  String toString() {
+    return 'Post{id: $id, content: $content, userId: $userId, createdAt: $createdAt}';
+  }
 
   /// Creates a copy of this post with the given fields replaced with the new values
   Post copyWith({

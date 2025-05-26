@@ -34,13 +34,15 @@ extension PostDataSourceRefreshExtensions on PostDataSource {
         query = query.eq('UserId', userId);
       } else if (filter == 'following' && currentUserId != null) {
         // For the 'following' filter, we need to get the users that the current user is following
+        // Using the UserConnection table with the correct column names
         final followingResponse = await Supabase.instance.client
-            .from('UserFollowing')
-            .select('FollowingId')
-            .eq('UserId', currentUserId);
+            .from('UserConnection')
+            .select('ReceiverId')
+            .eq('SenderId', currentUserId)
+            .eq('Status', 'accepted');
         
         final followingIds = (followingResponse as List)
-            .map((item) => item['FollowingId'] as String)
+            .map((item) => item['ReceiverId'] as String)
             .toList();
         
         if (followingIds.isEmpty) {

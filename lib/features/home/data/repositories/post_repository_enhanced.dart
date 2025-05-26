@@ -95,7 +95,7 @@ class PostRepositoryEnhanced implements PostRepository {
                 final name = mediaNames[originalPath] ?? 'media_${i + 1}';
                 
                 final uploadedMedia = PostMedia(
-                  id: DateTime.now().millisecondsSinceEpoch.toString() + '_$i',
+                  id: '${DateTime.now().millisecondsSinceEpoch}_$i',
                   path: uploadedUrls[i],
                   name: name,
                   type: _getMediaType(originalPath),

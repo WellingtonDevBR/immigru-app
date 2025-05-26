@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 
 /// A virtualized list widget that only renders items that are visible on screen
@@ -47,7 +46,7 @@ class VirtualizedList<T> extends StatefulWidget {
   final bool shrinkWrap;
   
   const VirtualizedList({
-    Key? key,
+    super.key,
     required this.items,
     required this.itemBuilder,
     this.placeholderBuilder,
@@ -60,7 +59,7 @@ class VirtualizedList<T> extends StatefulWidget {
     this.padding,
     this.physics,
     this.shrinkWrap = false,
-  }) : super(key: key);
+  });
 
   @override
   State<VirtualizedList<T>> createState() => _VirtualizedListState<T>();

@@ -6,6 +6,7 @@ import 'package:immigru/features/home/di/home_module.dart';
 import 'package:immigru/features/home/di/immi_grove_module.dart';
 import 'package:immigru/features/home/di/post_module.dart';
 import 'package:immigru/features/onboarding/di/onboarding_module.dart';
+import 'package:immigru/features/profile/di/profile_module.dart';
 import 'package:immigru/features/welcome/di/welcome_module.dart';
 
 /// Feature module for dependency injection
@@ -36,5 +37,8 @@ class FeatureModule {
     
     // Register home feature
     HomeModule.init(sl);
+    
+    // Register profile feature
+    registerProfileDependencies(sl);
   }
 }

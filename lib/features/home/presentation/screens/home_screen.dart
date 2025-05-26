@@ -11,7 +11,7 @@ import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/home/presentation/bloc/home_state.dart';
 import 'package:immigru/features/home/presentation/widgets/home/home_app_bar.dart';
 import 'package:immigru/features/home/presentation/widgets/home/home_bottom_navigation.dart';
-import 'package:immigru/features/home/presentation/widgets/home/home_drawer.dart';
+import 'package:immigru/shared/widgets/app_drawer.dart';
 import 'package:immigru/features/home/presentation/widgets/home/post_creation_modal.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/all_posts_tab.dart';
 import 'package:immigru/features/home/presentation/widgets/tabs/immi_groves_tab.dart';
@@ -248,21 +248,16 @@ class _HomeScreenState extends State<HomeScreen>
               user: widget.user,
               hasUnreadMessages: hasUnreadMessages,
               unreadMessageCount: unreadMessageCount,
+              scaffoldKey: _scaffoldKey,
             ),
-            endDrawer: HomeDrawer(
-              user: widget.user,
-              onLogout: () {
-                final authBloc = BlocProvider.of<AuthBloc>(context);
-                authBloc.add(AuthSignOutEvent());
-              },
-            ),
+            drawer: const AppDrawer(),
             bottomNavigationBar: HomeBottomNavigation(
               selectedIndex: _selectedIndex,
               onItemSelected: (index) {
                 setState(() => _selectedIndex = index);
               },
               onMenuTap: () {
-                _scaffoldKey.currentState?.openEndDrawer();
+                _scaffoldKey.currentState?.openDrawer();
               },
             ),
             body: SafeArea(

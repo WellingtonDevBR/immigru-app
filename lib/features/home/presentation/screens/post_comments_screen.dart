@@ -19,6 +19,7 @@ import 'package:immigru/features/home/presentation/widgets/comment_list_widget.d
 import 'package:immigru/shared/widgets/error_message_widget.dart';
 import 'package:immigru/shared/widgets/loading_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:immigru/core/storage/supabase_storage_utils.dart';
 
 /// Screen to display and manage comments for a post
 class PostCommentsScreen extends StatefulWidget {
@@ -46,6 +47,9 @@ class PostCommentsScreen extends StatefulWidget {
 class _PostCommentsScreenState extends State<PostCommentsScreen> {
   late CommentsBloc _commentsBloc;
   PostComment? _replyingTo;
+
+  // Storage utils for handling image URLs
+  final _storageUtils = SupabaseStorageUtils.instance;
 
   @override
   void initState() {
@@ -78,13 +82,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
 
   /// Validates if the provided URL is a valid image URL
   bool _isValidImageUrl(String? url) {
-    if (url == null || url.isEmpty) return false;
-    if (url == 'custom') return false; // Filter out invalid 'custom' URL
-
-    // Basic URL validation
-    return url.startsWith('http://') ||
-        url.startsWith('https://') ||
-        url.startsWith('data:image/');
+    return _storageUtils.isValidImageUrl(url);
   }
 
   void _loadComments() {
@@ -349,11 +347,13 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
               children: [
                 CircleAvatar(
                   backgroundImage:
-                      _isValidImageUrl(widget.post.author?.avatarUrl)
-                          ? NetworkImage(widget.post.author!.avatarUrl!)
-                          : _isValidImageUrl(widget.post.userAvatar)
-                              ? NetworkImage(widget.post.userAvatar!)
-                              : null,
+                      widget.post.author != null
+                          ? _isValidImageUrl(widget.post.author?.avatarUrl)
+                              ? NetworkImage(_storageUtils.getImageUrl(widget.post.author!.avatarUrl!))
+                              : _isValidImageUrl(widget.post.userAvatar)
+                                  ? NetworkImage(_storageUtils.getImageUrl(widget.post.userAvatar!))
+                                  : null
+                          : null,
                   child: (!_isValidImageUrl(widget.post.author?.avatarUrl) &&
                           !_isValidImageUrl(widget.post.userAvatar))
                       ? const Icon(Icons.person)

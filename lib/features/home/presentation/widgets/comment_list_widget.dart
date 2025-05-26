@@ -4,6 +4,7 @@ import 'package:immigru/features/home/domain/entities/post_comment.dart';
 import 'package:immigru/features/home/presentation/widgets/comment_action_menu.dart';
 import 'package:immigru/features/home/presentation/widgets/comment_like_button.dart';
 import 'package:immigru/features/home/presentation/widgets/comment_thread_indicator.dart';
+import 'package:immigru/core/storage/supabase_storage_utils.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Widget to display a list of comments for a post with a modern, clean design
@@ -65,6 +66,9 @@ class _CommentListWidgetState extends State<CommentListWidget> {
   // Map to track which comment threads are expanded
   final Map<String, bool> _expandedThreads = {};
   
+  // Storage utils for handling image URLs
+  final _storageUtils = SupabaseStorageUtils.instance;
+  
   @override
   void initState() {
     super.initState();
@@ -107,13 +111,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
 
   /// Validates if a URL is a valid image URL
   bool _isValidImageUrl(String? url) {
-    if (url == null || url.isEmpty) return false;
-    return url.startsWith('http') &&
-        (url.endsWith('.jpg') ||
-            url.endsWith('.jpeg') ||
-            url.endsWith('.png') ||
-            url.endsWith('.gif') ||
-            url.endsWith('.webp'));
+    return _storageUtils.isValidImageUrl(url);
   }
 
   /// Build a comment content widget with mention highlighting
@@ -326,7 +324,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                                           : Colors.grey[200],
                                       backgroundImage:
                                           _isValidImageUrl(comment.userAvatar)
-                                              ? NetworkImage(comment.userAvatar!)
+                                              ? NetworkImage(_storageUtils.getImageUrl(comment.userAvatar!))
                                               : null,
                                       child: !_isValidImageUrl(comment.userAvatar)
                                           ? Icon(

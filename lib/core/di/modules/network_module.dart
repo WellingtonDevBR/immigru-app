@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
 import 'package:immigru/core/network/api_client.dart';
 import 'package:immigru/core/network/interceptors/auth_interceptor.dart';
@@ -24,6 +25,9 @@ class NetworkModule {
             sl<AuthInterceptor>(),
           ],
         ));
+        
+    // Register Connectivity service
+    sl.registerLazySingleton<Connectivity>(() => Connectivity());
 
     // Note: EdgeFunctionClient is registered in SupabaseModule
     // We don't register it here to avoid conflicts

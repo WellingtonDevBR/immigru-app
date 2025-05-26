@@ -96,7 +96,7 @@ class _PerformanceTestScreenState extends State<PerformanceTestScreen> {
   Future<void> _testCacheService() async {
     // Test setting and getting a value from cache
     await _cacheService.set('test_key', 'test_value');
-    final value = await _cacheService.get<String>('test_key');
+    final value = _cacheService.get<String>('test_key');
     
     if (value != 'test_value') {
       throw Exception('Cache service test failed: value mismatch');
@@ -111,7 +111,7 @@ class _PerformanceTestScreenState extends State<PerformanceTestScreen> {
   
   Future<void> _testNetworkOptimizer() async {
     // Test network optimizer by checking connectivity
-    final isConnected = await _networkOptimizer.isConnected;
+    final isConnected = _networkOptimizer.isConnected;
     
     if (!isConnected) {
       // This is not a failure, just a status

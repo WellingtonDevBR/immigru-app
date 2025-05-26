@@ -119,7 +119,7 @@ class HomeModule {
 
       // BLoCs - Using singleton for HomeBloc to prevent multiple instances
       if (!sl.isRegistered<HomeBloc>()) {
-        sl.registerFactory(
+        sl.registerLazySingleton(
           () => HomeBloc(
             getPostsUseCase: sl<GetPostsUseCase>(),
             createPostUseCase: sl<CreatePostUseCase>(),

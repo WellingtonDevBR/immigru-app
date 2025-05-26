@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:immigru/core/storage/supabase_storage_utils.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/shared/widgets/in_app_browser.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -44,6 +45,9 @@ class _PostCardState extends State<PostCard> {
   // Track if the current user is the post author
   bool _isCurrentUserAuthor = false;
   String? _currentUserId;
+
+  // Storage utils for handling image URLs
+  final _storageUtils = SupabaseStorageUtils.instance;
 
   @override
   void initState() {
@@ -248,11 +252,7 @@ class _PostCardState extends State<PostCard> {
   
   /// Validates if the provided URL is a valid image URL
   bool _isValidImageUrl(String? url) {
-    if (url == null || url.isEmpty) return false;
-    if (url == 'custom') return false; // Filter out invalid 'custom' URL
-    
-    // Basic URL validation
-    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/');
+    return _storageUtils.isValidImageUrl(url);
   }
 
   @override
@@ -270,8 +270,7 @@ class _PostCardState extends State<PostCard> {
         _isCommented = widget.post.hasUserComment;
       });
       
-      _logger.d('Post data updated: isLiked=$_isLiked, isCommented=$_isCommented, ' +
-               'likeCount=${widget.post.likeCount}, commentCount=${widget.post.commentCount}');
+      _logger.d('Post data updated: isLiked=$_isLiked, isCommented=$_isCommented, ' 'likeCount=${widget.post.likeCount}, commentCount=${widget.post.commentCount}');
     }
   }
   
@@ -409,7 +408,7 @@ class _PostCardState extends State<PostCard> {
                 CircleAvatar(
                   radius: 18,
                   backgroundImage: _isValidImageUrl(widget.post.userAvatar)
-                      ? NetworkImage(widget.post.userAvatar!)
+                      ? NetworkImage(_storageUtils.getImageUrl(widget.post.userAvatar!))
                       : null,
                   child: !_isValidImageUrl(widget.post.userAvatar)
                       ? Text(
@@ -568,7 +567,7 @@ class _PostCardState extends State<PostCard> {
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 400),
               child: Image.network(
-                widget.post.imageUrl!,
+                _storageUtils.getImageUrl(widget.post.imageUrl!),
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
@@ -717,7 +716,7 @@ class _PostCardState extends State<PostCard> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: _isLiked ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                        color: _isLiked ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
@@ -793,7 +792,7 @@ class _PostCardState extends State<PostCard> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: _isCommented ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                        color: _isCommented ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(

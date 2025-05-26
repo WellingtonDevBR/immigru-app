@@ -20,4 +20,28 @@ class Author extends Equatable {
 
   @override
   List<Object?> get props => [id, displayName, avatarUrl];
+  
+  /// Convert Author to a JSON map
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'displayName': displayName,
+      'avatarUrl': avatarUrl,
+    };
+  }
+
+  /// Create an Author from a JSON map
+  factory Author.fromJson(Map<String, dynamic> json) {
+    return Author(
+      id: json['id'] as String,
+      displayName: json['displayName'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
+    );
+  }
+  
+  /// String representation for debugging
+  @override
+  String toString() {
+    return 'Author{id: $id, displayName: $displayName}';
+  }
 }

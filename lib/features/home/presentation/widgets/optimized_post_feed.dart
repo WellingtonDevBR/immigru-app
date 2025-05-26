@@ -42,7 +42,7 @@ class OptimizedPostFeed extends StatefulWidget {
   final String? category;
   
   const OptimizedPostFeed({
-    Key? key,
+    super.key,
     required this.posts,
     this.isLoadingMore = false,
     this.isInitialLoading = false,
@@ -54,7 +54,7 @@ class OptimizedPostFeed extends StatefulWidget {
     this.onRefresh,
     this.filter = 'all',
     this.category,
-  }) : super(key: key);
+  });
 
   @override
   State<OptimizedPostFeed> createState() => _OptimizedPostFeedState();

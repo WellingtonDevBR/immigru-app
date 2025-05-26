@@ -100,8 +100,7 @@ class PostDataSource {
       final updates = response as Map<String, dynamic>;
       
       _logger.d(
-          'Found updates: ${updates['newPostsCount']} new posts, ' +
-          '${updates['updatedPostsCount']} updated posts, ' +
+          'Found updates: ${updates['newPostsCount']} new posts, ' '${updates['updatedPostsCount']} updated posts, ' +
           '${updates['newLikesCount']} new likes, ' +
           '${updates['newCommentsCount']} new comments',
           tag: 'PostDataSource');
@@ -147,13 +146,15 @@ class PostDataSource {
         query = query.eq('UserId', userId);
       } else if (filter == 'following' && currentUserId != null) {
         // For the 'following' filter, we need to get the users that the current user is following
+        // Using the UserConnection table with the correct column names
         final followingResponse = await _supabaseClient
-            .from('UserFollowing')
-            .select('FollowingId')
-            .eq('UserId', currentUserId);
+            .from('UserConnection')
+            .select('ReceiverId')
+            .eq('SenderId', currentUserId)
+            .eq('Status', 'accepted');
 
         final followingIds = (followingResponse as List)
-            .map((item) => item['FollowingId'] as String)
+            .map((item) => item['ReceiverId'] as String)
             .toList();
 
         if (followingIds.isEmpty) {
@@ -262,8 +263,7 @@ class PostDataSource {
         hasUserComment = interactionData['hasUserComment'] as bool;
 
         _logger.d(
-            'Post ${post.id} has $likeCount likes and $commentCount comments. ' +
-                'User liked: $isLiked, user commented: $hasUserComment',
+            'Post ${post.id} has $likeCount likes and $commentCount comments. ' 'User liked: $isLiked, user commented: $hasUserComment',
             tag: 'PostDataSource');
       } else {
         // If the RPC call failed, fall back to the original implementation

@@ -248,7 +248,7 @@ class NetworkOptimizer {
       } catch (e) {
         _logger.e('Error in batch request: $e', tag: 'NetworkOptimizer');
         if (stopOnError) {
-          throw e;
+          rethrow;
         }
       }
     }
