@@ -23,7 +23,7 @@ Edit
       ├── domain
       ├── presentation
       └── di
-  /new_core
+  /core
   /shared
   main.dart
 🔍 Inside a Feature (e.g., auth)
@@ -77,7 +77,7 @@ Data → Domain
 
 Domain → Core only
 
-Shared utilities go in new_core or shared
+Shared utilities go in core or shared
 
 🛠️ Implementation Steps (New Feature)
 Define the Domain Layer
@@ -104,7 +104,7 @@ Register Dependencies
 
 Use the feature’s di/ folder
 
-Add to global container via new_core/di/modules/
+Add to global container via core/di/modules/
 
 🎨 UI Guidelines
 Design & UX
@@ -138,7 +138,7 @@ Widgets: Common UI components
 
 Theme: App-wide colors and styles
 
-new_core/
+core/
 Storage: Secure and local storage
 
 Network: API clients and interceptors
@@ -146,5 +146,3 @@ Network: API clients and interceptors
 DI: Global dependency registration
 
 Config: Static app configuration
-
-

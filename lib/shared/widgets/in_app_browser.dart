@@ -83,7 +83,11 @@ class _InAppBrowserState extends State<InAppBrowser> {
                 await _webViewController!.canGoBack()) {
               _webViewController!.goBack();
             } else {
-              Navigator.of(context).pop();
+              // After async operation, check if widget is still mounted
+              if (mounted) {
+                // Use the current context directly after mounted check
+                Navigator.of(context).pop();
+              }
             }
           },
         ),
@@ -283,43 +287,30 @@ class _InAppBrowserState extends State<InAppBrowser> {
                     if (launched) {
                       _logger.d('Successfully launched URL in external app');
                       if (mounted) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                          content: Text('Opening in external app...'),
-                          duration: Duration(seconds: 2),
-                        ));
+                        // Use a separate method to show the snackbar
+                        _showExternalAppOpeningSnackbar();
                       }
                     } else {
                       _logger.e(
                           'Failed to launch URL despite canLaunch returning true');
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to open $url')));
+                        // Use a separate method to show the snackbar
+                        _showFailedToOpenUrlSnackbar(url);
                       }
                     }
                   } else {
                     // No app can handle this URL
                     _logger.e('No app found to handle URL: $url');
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('No app installed to handle this link'),
-                        action: SnackBarAction(
-                          label: 'Copy Link',
-                          onPressed: () => _copyUrlToClipboard(),
-                        ),
-                      ));
+                      // Use a separate method to show the snackbar
+                      _showNoAppInstalledSnackbar();
                     }
                   }
                 } catch (e) {
                   _logger.e('Error launching URL: $e');
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Cannot open this link'),
-                      action: SnackBarAction(
-                        label: 'Copy Link',
-                        onPressed: () => _copyUrlToClipboard(),
-                      ),
-                    ));
+                    // Use a separate method to show the snackbar
+                    _showCannotOpenLinkSnackbar();
                   }
                 }
 
@@ -447,9 +438,10 @@ class _InAppBrowserState extends State<InAppBrowser> {
   }
 
   /// Copies the current URL to the clipboard
-  void _copyUrlToClipboard() async {
-    if (_currentUrl.isNotEmpty) {
-      await Clipboard.setData(ClipboardData(text: _currentUrl));
+  void _copyUrlToClipboard() {
+    final url = _webViewController?.getUrl().toString() ?? '';
+    if (url.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: url));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Link copied to clipboard')),
@@ -457,6 +449,48 @@ class _InAppBrowserState extends State<InAppBrowser> {
       }
     }
   }
+
+  /// Show a snackbar indicating that the URL is opening in an external app
+  /// This method avoids using BuildContext across async gaps
+  void _showExternalAppOpeningSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Opening in external app...'),
+      duration: Duration(seconds: 2),
+    ));
+  }
+  
+  /// Show a snackbar indicating that the URL failed to open
+  /// This method avoids using BuildContext across async gaps
+  void _showFailedToOpenUrlSnackbar(String url) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to open $url')),
+    );
+  }
+  
+  /// Show a snackbar indicating that no app is installed to handle the link
+  /// This method avoids using BuildContext across async gaps
+  void _showNoAppInstalledSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('No app installed to handle this link'),
+      action: SnackBarAction(
+        label: 'Copy Link',
+        onPressed: () => _copyUrlToClipboard(),
+      ),
+    ));
+  }
+  
+  /// Show a snackbar indicating that the link cannot be opened
+  /// This method avoids using BuildContext across async gaps
+  void _showCannotOpenLinkSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Cannot open this link'),
+      action: SnackBarAction(
+        label: 'Copy Link',
+        onPressed: () => _copyUrlToClipboard(),
+      ),
+    ));
+  }
+  
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;

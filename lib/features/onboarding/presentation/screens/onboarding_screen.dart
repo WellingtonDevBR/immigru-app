@@ -88,6 +88,20 @@ class _OnboardingViewState extends State<OnboardingView> {
     super.dispose();
   }
 
+  /// Navigate to the root screen after a delay
+  /// This method avoids using BuildContext across async gaps
+  void _navigateToRootAfterDelay(BuildContext inputContext) {
+    // Use a longer delay to ensure the onboarding completion is processed
+    // and the AuthBloc has time to refresh the user data
+    Future.delayed(const Duration(milliseconds: 800), () {
+      // Check if widget is still mounted before accessing context
+      if (mounted) {
+        // Use the current context directly after mounted check
+        AuthWrapper.navigateToRoot(context);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,15 +125,9 @@ class _OnboardingViewState extends State<OnboardingView> {
                 tag: 'OnboardingScreen',
               );
 
-              // Use a longer delay to ensure the onboarding completion is processed
-              // and the AuthBloc has time to refresh the user data
-              Future.delayed(const Duration(milliseconds: 800), () {
-                // Check if widget is still mounted before accessing context
-                if (mounted) {
-                  // Use the AuthWrapper's navigation helper instead of pushNamedAndRemoveUntil
-                  AuthWrapper.navigateToRoot(context);
-                }
-              });
+              // Use a separate method to handle navigation after a delay
+              // This avoids using BuildContext across async gaps
+              _navigateToRootAfterDelay(context);
             }
 
             // Handle navigation between steps
@@ -188,12 +196,15 @@ class _OnboardingViewState extends State<OnboardingView> {
 
                           // Force canMoveToNextStep to true
                           if (steps.isNotEmpty) {
+                            // Store bloc reference before async gap
+                            final onboardingBloc = context.read<OnboardingBloc>();
+                            
                             // Longer delay to ensure the state is fully updated
                             Future.delayed(const Duration(milliseconds: 500),
                                 () {
                               if (mounted) {
                                 // Move to the next step
-                                context.read<OnboardingBloc>().add(
+                                onboardingBloc.add(
                                       const NextStepRequested(),
                                     );
                               }
@@ -214,11 +225,14 @@ class _OnboardingViewState extends State<OnboardingView> {
                                 ),
                               );
 
+                          // Store bloc reference before async gap
+                          final onboardingBloc = context.read<OnboardingBloc>();
+                          
                           // Small delay to ensure state is updated before navigating
                           Future.delayed(const Duration(milliseconds: 300), () {
                             if (mounted) {
                               // Move to the next step
-                              context.read<OnboardingBloc>().add(
+                              onboardingBloc.add(
                                     const NextStepRequested(),
                                   );
                             }
@@ -380,15 +394,18 @@ class _OnboardingViewState extends State<OnboardingView> {
                                                       selectedLanguages),
                                                 );
 
+                                            // Store bloc reference before async gap
+                                            final onboardingBloc = context.read<OnboardingBloc>();
+                                            
                                             // Then proceed to next step after a small delay
                                             Future.delayed(
                                                 const Duration(
                                                     milliseconds: 800), () {
-                                              context
-                                                  .read<OnboardingBloc>()
-                                                  .add(
-                                                    const NextStepRequested(),
-                                                  );
+                                              if (mounted) {
+                                                onboardingBloc.add(
+                                                  const NextStepRequested(),
+                                                );
+                                              }
                                             });
                                           } else {
                                             // If no languages selected, just proceed

@@ -103,28 +103,73 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
+  /// Reset the navigation flag after a delay
+  /// This method avoids using BuildContext across async gaps
+  void _resetNavigationFlagAfterDelay() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _isNavigating = false;
+        });
+      }
+    });
+  }
+  
+  /// Navigate to the login screen with proper context handling
+  /// This method avoids using BuildContext across async gaps
+  void _navigateToLoginScreen() {
+    // Use a slight delay to prevent UI freezing
+    Future.delayed(const Duration(milliseconds: 50), () {
+      // After async operation, check if widget is still mounted
+      if (mounted) {
+        // Use the current context directly after mounted check
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false, // Remove all previous routes
+        );
+
+        // Reset navigation flag after a delay
+        _resetNavigationFlagAfterDelay();
+      } else {
+        // Reset flag even if not mounted to prevent stuck states
+        _isNavigating = false;
+      }
+    });
+  }
+
   /// Show the post creation modal
+  /// This method avoids using BuildContext across async gaps
   void _showPostCreationModal() {
-    final authBloc = BlocProvider.of<AuthBloc>(context);
+    // Store context before any potential async operations
+    final currentContext = context;
+    
+    final authBloc = BlocProvider.of<AuthBloc>(currentContext);
     final authState = authBloc.state;
     final currentUser = authState.user ?? widget.user;
 
     if (currentUser == null) {
       authBloc.add(AuthRefreshUserEvent());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preparing post creation...')),
-      );
+      // Use a separate method to show snackbar to avoid BuildContext issues
+      _showPreparingPostCreationSnackbar();
       return;
     }
 
     // Capture the HomeBloc before opening the modal
-    final homeBloc = BlocProvider.of<HomeBloc>(context);
+    final homeBloc = BlocProvider.of<HomeBloc>(currentContext);
     
     // Use the extracted component to show the modal
     showPostCreationModal(
-      context: context,
+      context: currentContext,
       user: currentUser,
       homeBloc: homeBloc,
+    );
+  }
+  
+  /// Show a snackbar indicating that post creation is being prepared
+  /// This method avoids using BuildContext across async gaps
+  void _showPreparingPostCreationSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Preparing post creation...')),
     );
   }
 
@@ -148,26 +193,8 @@ class _HomeScreenState extends State<HomeScreen>
               tag: 'HomeScreen');
           _isNavigating = true;
 
-          // Use a slight delay to prevent UI freezing
-          Future.delayed(const Duration(milliseconds: 50), () {
-            if (mounted) {
-              // Use pushNamedAndRemoveUntil to clear the navigation stack
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/login',
-                (route) => false, // Remove all previous routes
-              );
-
-              // Reset navigation flag after a delay
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) {
-                  _isNavigating = false;
-                }
-              });
-            } else {
-              // Reset flag even if not mounted to prevent stuck states
-              _isNavigating = false;
-            }
-          });
+          // Use a separate method to handle navigation to login screen
+          _navigateToLoginScreen();
         }
       },
       child: BlocConsumer<HomeBloc, HomeState>(
@@ -349,11 +376,12 @@ class _HomeScreenState extends State<HomeScreen>
                               
                               _logger.d('Refreshing posts with currentUserId: $currentUserId', tag: 'HomeScreen');
                               
-                              // Always include the current user ID when refreshing
+                              // Use EfficientRefreshPosts for better performance and real-time updates
                               BlocProvider.of<HomeBloc>(context).add(
-                                FetchPosts(
-                                  refresh: true,
-                                  currentUserId: currentUserId, // CRITICAL: Always include user ID
+                                EfficientRefreshPosts(
+                                  currentUserId: currentUserId,
+                                  bypassCache: true, // Always bypass cache to get fresh data
+                                  excludeCurrentUser: true, // Explicitly exclude the current user's posts
                                 ),
                               );
                             },

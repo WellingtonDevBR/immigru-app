@@ -188,15 +188,12 @@ class _AllPostsTabState extends State<AllPostsTab>
     });
   }
 
-  /// Method to refresh posts using the centralized fetch mechanism
+  /// Method to refresh posts using the efficient refresh mechanism
   Future<void> _refreshPosts() async {
-    _logger.d('[ALL_POSTS_TAB:$_requestId] Refreshing posts',
-        tag: 'AllPostsTab');
+    _logger.d('Refreshing posts efficiently', tag: 'AllPostsTab');
 
-    // Get the current user ID to ensure proper filtering
+    // Get current user ID from Supabase
     final currentUserId = supabase.auth.currentUser?.id;
-
-    // SAFETY CHECK: Don't proceed with refreshing if we don't have a user ID
     if (currentUserId == null) {
       _logger.e(
           '[ALL_POSTS_TAB:$_requestId] ERROR: No authenticated user found, cannot refresh posts safely',
@@ -206,12 +203,25 @@ class _AllPostsTabState extends State<AllPostsTab>
       );
       return; // Don't refresh without a user ID
     }
-
-    // Use the HomeBloc to refresh posts with the current user ID
+    
+    // Get the HomeBloc
     final homeBloc = context.read<HomeBloc>();
+    
+    // Check if we're already in a loading state to prevent duplicate refreshes
+    if (homeBloc.state is PostsLoading) {
+      _logger.d('Already refreshing posts, ignoring duplicate request', tag: 'AllPostsTab');
+      return;
+    }
+    
+    // Add a small delay to make the refresh indicator more visible
+    // This improves the user experience by showing the refresh animation
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // For now, use the regular FetchPosts event with refresh=true
+    // This ensures compatibility with the current architecture
     homeBloc.add(FetchPosts(
+      currentUserId: currentUserId,
       category: null, // No category filtering
-      currentUserId: currentUserId, // Always include user ID
       refresh: true, // Always refresh to get the latest data
     ));
   }
@@ -331,17 +341,52 @@ class _AllPostsTabState extends State<AllPostsTab>
 
     return RefreshIndicator(
       onRefresh: _refreshPosts,
+      // Use custom colors to match the app's theme
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      // Adjust displacement for better UX
+      displacement: 40.0,
+      // Use a more responsive stroke width
+      strokeWidth: 2.5,
+      // Optimize ListView with better caching
       child: ListView.builder(
         controller: _scrollController,
+        // Always allow scrolling for pull-to-refresh even when content is short
         physics: const AlwaysScrollableScrollPhysics(),
+        // Add cacheExtent to preload items for smoother scrolling
+        cacheExtent: 500.0,
         itemCount: posts.length + (hasReachedMax ? 0 : 1),
+        // Use addAutomaticKeepAlives to prevent rebuilding off-screen items
+        addAutomaticKeepAlives: true,
         itemBuilder: (context, index) {
           if (index >= posts.length) {
-            // Show loading indicator at the bottom when loading more
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: CircularProgressIndicator(),
+            // Show enhanced loading indicator at the bottom when loading more
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Loading more posts...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -355,7 +400,23 @@ class _AllPostsTabState extends State<AllPostsTab>
                 // Handle like action
                 _logger.d('Like button pressed for post: ${post.id}',
                     tag: 'AllPostsTab');
-                // Add like functionality here
+                
+                // Get current user ID from Supabase
+                final currentUserId = supabase.auth.currentUser?.id;
+                if (currentUserId != null) {
+                  // Dispatch LikePost event to the HomeBloc
+                  context.read<HomeBloc>().add(LikePost(
+                    postId: post.id,
+                    userId: currentUserId,
+                    like: !post.isLiked, // Toggle the current like state
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You need to be logged in to like posts'),
+                    ),
+                  );
+                }
               },
               onComment: () {
                 // Navigate to comments screen when comment button is pressed

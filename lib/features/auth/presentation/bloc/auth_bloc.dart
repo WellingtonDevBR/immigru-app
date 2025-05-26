@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:immigru/core/error/failures.dart';
 import 'package:immigru/features/auth/domain/entities/auth_error.dart';
 import 'package:immigru/features/auth/domain/usecases/login_usecase.dart';
 import 'package:immigru/features/auth/domain/usecases/logout_usecase.dart';
@@ -72,22 +73,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      final isAuthenticated = await _checkAuthStatusUseCase();
-      if (isAuthenticated) {
-        final user = await _checkAuthStatusUseCase.getCurrentUser();
-        if (user != null) {
-          emit(state.authenticated(user));
+
+    final isAuthenticatedResult = await _checkAuthStatusUseCase();
+
+    await isAuthenticatedResult.fold(
+      (failure) async {
+        emit(state.error('Unable to verify authentication status. Please try again.'));
+      },
+      (isAuthenticated) async {
+        if (isAuthenticated) {
+          final userResult = await _checkAuthStatusUseCase.getCurrentUser();
+
+          await userResult.fold(
+            (failure) async {
+              emit(state.unauthenticated());
+            },
+            (user) async {
+              if (user != null) {
+                emit(state.authenticated(user));
+              } else {
+                emit(state.unauthenticated());
+              }
+            },
+          );
         } else {
           emit(state.unauthenticated());
         }
-      } else {
-        emit(state.unauthenticated());
-      }
-    } catch (e) {
-      emit(state
-          .error('Unable to verify authentication status. Please try again.'));
-    }
+      },
+    );
   }
 
   Future<void> _onSignInWithEmail(
@@ -95,20 +108,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      final user = await _loginWithEmailUseCase(event.email, event.password);
-      emit(state.authenticated(user));
-    } catch (e) {
 
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      } else {
-        final errorMessage =
-            'Failed to sign in. Please check your credentials and try again.';
-        emit(state.error(errorMessage));
-      }
-    }
+    final result = await _loginWithEmailUseCase(event.email, event.password);
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        } else {
+          final errorMessage = failure.message;
+          emit(state.error(errorMessage));
+        }
+      },
+      (user) => emit(state.authenticated(user)),
+    );
   }
 
   Future<void> _onStartPhoneAuth(
@@ -116,19 +131,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      await _loginWithPhoneUseCase.startPhoneAuth(event.phoneNumber);
-      emit(state.codeSent(event.phoneNumber));
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      } else {
-        final errorMessage =
-            'Failed to send verification code. Please check your phone number and try again.';
-        emit(state.error(errorMessage));
-      }
-    }
+
+    final result =
+        await _loginWithPhoneUseCase.startPhoneAuth(event.phoneNumber);
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        } else {
+          final errorMessage = failure.message;
+          emit(state.error(errorMessage));
+        }
+      },
+      (_) => emit(state.codeSent(event.phoneNumber)),
+    );
   }
 
   Future<void> _onVerifyPhoneCode(
@@ -136,24 +155,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      final user = await _loginWithPhoneUseCase.verifyCode(
-        event.verificationId,
-        event.code,
-      );
-      emit(state.authenticated(user));
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      } else if (e.toString().contains('invalid')) {
-        final errorMessage = 'Invalid verification code. Please try again.';
-        emit(state.error(errorMessage));
-      } else {
-        final errorMessage = 'Failed to verify code. Please try again.';
-        emit(state.error(errorMessage));
-      }
-    }
+
+    final result = await _loginWithPhoneUseCase.verifyCode(
+      event.verificationId,
+      event.code,
+    );
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        } else if (failure.message.contains('invalid')) {
+          final errorMessage = 'Invalid verification code. Please try again.';
+          emit(state.error(errorMessage));
+        } else {
+          final errorMessage = failure.message;
+          emit(state.error(errorMessage));
+        }
+      },
+      (user) => emit(state.authenticated(user)),
+    );
   }
 
   Future<void> _onSignInWithGoogle(
@@ -161,26 +184,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      final user = await _loginWithGoogleUseCase();
-      emit(state.authenticated(user));
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      } else if (e.toString().contains('canceled') ||
-          e.toString().contains('cancelled')) {
-        final errorMessage = 'Google sign-in was cancelled.';
-        emit(state.error(errorMessage));
-      } else if (e.toString().contains('network')) {
-        final errorMessage =
-            'Network error. Please check your connection and try again.';
-        emit(state.error(errorMessage));
-      } else {
-        final errorMessage = 'Failed to sign in with Google. Please try again.';
-        emit(state.error(errorMessage));
-      }
-    }
+
+    final result = await _loginWithGoogleUseCase();
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        } else if (failure.message.contains('cancel')) {
+          final errorMessage = 'Google sign-in was cancelled.';
+          emit(state.error(errorMessage));
+        } else if (failure.message.contains('network')) {
+          final errorMessage =
+              'Network error. Please check your connection and try again.';
+          emit(state.error(errorMessage));
+        } else {
+          final errorMessage = failure.message;
+          emit(state.error(errorMessage));
+        }
+      },
+      (user) => emit(state.authenticated(user)),
+    );
   }
 
   Future<void> _onSignUpWithEmail(
@@ -188,31 +214,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      final user = await _signUpWithEmailUseCase(event.email, event.password);
-      emit(state.authenticated(user));
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      } else if (e.toString().contains('already') ||
-          e.toString().contains('exists')) {
-        final errorMessage =
-            'This email is already registered. Please try logging in instead.';
-        emit(state.error(errorMessage));
-      } else if (e.toString().toLowerCase().contains('password')) {
-        final errorMessage =
-            'Password is too weak. Please use a stronger password.';
-        emit(state.error(errorMessage));
-      } else if (e.toString().contains('network')) {
-        final errorMessage =
-            'Network error. Please check your connection and try again.';
-        emit(state.error(errorMessage));
-      } else {
-        final errorMessage = 'Failed to create account. Please try again.';
-        emit(state.error(errorMessage));
-      }
-    }
+
+    final result = await _signUpWithEmailUseCase(event.email, event.password);
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        } else if (failure.message.contains('already') ||
+            failure.message.contains('exists')) {
+          final errorMessage =
+              'This email is already registered. Please try logging in instead.';
+          emit(state.error(errorMessage));
+        } else if (failure.message.toLowerCase().contains('password')) {
+          final errorMessage =
+              'Password is too weak. Please use a stronger password.';
+          emit(state.error(errorMessage));
+        } else if (failure.message.contains('network')) {
+          final errorMessage =
+              'Network error. Please check your connection and try again.';
+          emit(state.error(errorMessage));
+        } else {
+          final errorMessage = failure.message;
+          emit(state.error(errorMessage));
+        }
+      },
+      (user) => emit(state.authenticated(user)),
+    );
   }
 
   Future<void> _onSignOut(
@@ -220,17 +250,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      await _logoutUseCase();
-      emit(state.unauthenticated());
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      }
-      // Even if sign out fails, we still want to show the user as signed out in the UI
-      emit(state.unauthenticated());
-    }
+
+    final result = await _logoutUseCase();
+
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        }
+        // Even if sign out fails, we still want to show the user as signed out in the UI
+        emit(state.unauthenticated());
+      },
+      (_) => emit(state.unauthenticated()),
+    );
   }
 
   /// Handle refresh user event
@@ -243,23 +277,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     emit(state.loading());
-    try {
-      final user = await _checkAuthStatusUseCase.getCurrentUser();
+    final result = await _checkAuthStatusUseCase.getCurrentUser();
 
-      if (user != null) {
-        emit(state.authenticated(user));
-      } else {
-        // If user is null, they might have been logged out
+    result.fold(
+      (failure) {
+        if (failure is AuthFailure && failure.originalError is AuthError) {
+          final errorState =
+              state.errorFromAuthError(failure.originalError as AuthError);
+          emit(errorState);
+        }
+        // Even if getting user fails, we still want to show the user as signed out in the UI
         emit(state.unauthenticated());
-      }
-    } catch (e) {
-      if (e is AuthError) {
-        final errorState = state.errorFromAuthError(e);
-        emit(errorState);
-      }
-      // Even if sign out fails, we still want to show the user as signed out in the UI
-      emit(state.unauthenticated());
-    }
+      },
+      (user) {
+        if (user != null) {
+          emit(state.authenticated(user));
+        } else {
+          // If user is null, they might have been logged out
+          emit(state.unauthenticated());
+        }
+      },
+    );
   }
 
   Future<void> _onResetPassword(
@@ -267,25 +305,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(state.loading());
-    try {
-      // Call the resetPassword use case
-      await _resetPasswordUseCase(email: event.email);
 
-      // Always return success regardless of whether the email exists
-      // This is a security best practice to prevent email enumeration attacks
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: null,
-      ));
-    } catch (e) {
-      // For security reasons, don't reveal specific errors
+    // Call the resetPassword use case
+    await _resetPasswordUseCase(email: event.email);
 
-      // Still show success to the user to prevent email enumeration
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: null,
-      ));
-    }
+    // Always return success regardless of whether the email exists or if there was an error
+    // This is a security best practice to prevent email enumeration attacks
+    emit(state.copyWith(
+      isLoading: false,
+      errorMessage: null,
+    ));
   }
 
   @override

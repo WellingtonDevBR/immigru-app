@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:immigru/core/di/modules/country_module.dart';
 import 'package:immigru/core/di/modules/logging_module.dart';
 import 'package:immigru/core/di/modules/network_module.dart';
+import 'package:immigru/core/di/modules/performance_module.dart';
 import 'package:immigru/core/di/modules/storage_module.dart';
 import 'package:immigru/core/di/modules/supabase_module.dart';
 import 'package:immigru/core/di/modules/theme_module.dart';
@@ -28,5 +29,8 @@ class CoreModule {
 
     // Register country dependencies
     await CountryModule.register(sl);
+    
+    // Register performance optimization dependencies
+    await PerformanceModule.register(sl);
   }
 }

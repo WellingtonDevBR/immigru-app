@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:immigru/core/network/models/failure.dart';
 import 'package:immigru/features/auth/domain/repositories/auth_repository.dart';
 
 /// Use case for resetting a user's password
@@ -8,7 +10,9 @@ class ResetPasswordUseCase {
   ResetPasswordUseCase(this._authRepository);
 
   /// Execute the use case to reset a password
-  Future<void> call({required String email}) async {
-    return await _authRepository.resetPassword(email);
+  ///
+  /// Returns Either void on success or a Failure on error
+  Future<Either<Failure, void>> call({required String email}) {
+    return _authRepository.resetPassword(email);
   }
 }

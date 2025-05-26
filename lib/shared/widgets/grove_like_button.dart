@@ -22,6 +22,9 @@ class GroveLikeButton extends StatefulWidget {
 
   /// Initial liked state
   final bool initialLiked;
+  
+  /// Flag to control when animation should play
+  final bool shouldPlayAnimation;
 
   /// Callback when the like state changes
   final Function(bool)? onLikeChanged;
@@ -34,6 +37,7 @@ class GroveLikeButton extends StatefulWidget {
     this.rootColor = const Color(0xFF6D4C41), // Colors.brown.shade600
     this.leafColor = const Color(0xFF8BC34A), // Colors.lightGreen.shade400
     this.initialLiked = false,
+    this.shouldPlayAnimation = false,
     this.onLikeChanged,
   });
 
@@ -118,17 +122,17 @@ class _GroveLikeButtonState extends State<GroveLikeButton>
   @override
   void didUpdateWidget(GroveLikeButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    // Handle external changes to the liked state
-    if (widget.initialLiked != oldWidget.initialLiked) {
+    
+    // If the liked state changed, update our internal state
+    if (oldWidget.initialLiked != widget.initialLiked) {
       _isLiked = widget.initialLiked;
-
-      if (_isLiked && _controller.value == 0.0) {
-        // If changed to liked and animation hasn't run yet, run it
+      
+      // Only play animation when transitioning from unliked to liked
+      if (_isLiked && !oldWidget.initialLiked) {
         _generateFallingLeaves();
         _controller.forward(from: 0.0);
-      } else if (!_isLiked && _controller.value > 0.0) {
-        // If changed to not liked, reset the animation
+      } else if (!_isLiked && oldWidget.initialLiked) {
+        // Reset controller without animation when unliking
         _controller.value = 0.0;
         _fallingLeaves.clear();
       }
@@ -139,25 +143,6 @@ class _GroveLikeButtonState extends State<GroveLikeButton>
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  void _toggleLike() {
-    setState(() {
-      _isLiked = !_isLiked;
-      if (_isLiked) {
-        _generateFallingLeaves();
-        _controller.forward(from: 0.0);
-      } else {
-        // Reset animation when unliked
-        _controller.value = 0.0;
-        _fallingLeaves.clear();
-      }
-    });
-
-    // Notify parent of the change if callback is provided
-    if (widget.onLikeChanged != null) {
-      widget.onLikeChanged!(_isLiked);
-    }
   }
 
   void _generateFallingLeaves() {
@@ -185,7 +170,10 @@ class _GroveLikeButtonState extends State<GroveLikeButton>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _toggleLike,
+      onTap: () {
+        // This is now controlled by the parent widget
+        // We don't handle tap events directly anymore
+      },
       child: SizedBox(
         width: widget.size,
         height: widget.size,

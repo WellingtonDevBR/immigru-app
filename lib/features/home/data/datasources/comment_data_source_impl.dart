@@ -1,3 +1,4 @@
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/home/data/models/post_comment_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -92,6 +93,7 @@ abstract class CommentDataSource {
 
 /// Implementation of CommentDataSource using Supabase
 class CommentDataSourceImpl implements CommentDataSource {
+  final _logger = UnifiedLogger();
   final SupabaseClient supabase;
 
   /// Create a new CommentDataSourceImpl
@@ -244,7 +246,11 @@ class CommentDataSourceImpl implements CommentDataSource {
               childrenByParentId[parentId] = [commentId];
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          // Log the error but continue processing other comments
+          // This ensures we can still display comments even if one has invalid data
+          _logger.w('Error processing comment relationship: $e', tag: 'CommentDataSource');
+        }
       }
 
       // Second pass: Build the comment tree
@@ -336,6 +342,56 @@ class CommentDataSourceImpl implements CommentDataSource {
     }
   }
 
+  /// Helper method to refresh post counts in the database
+  /// This ensures that all clients see the latest counts
+  Future<void> _refreshPostCounts(String postId) async {
+    try {
+      _logger.d('Refreshing post counts for post: $postId', tag: 'CommentDataSource');
+      
+      // First, try to use the RPC function we created
+      try {
+        await supabase.rpc('refresh_post_counts', params: {'post_id': postId});
+        _logger.d('Successfully refreshed post counts via RPC', tag: 'CommentDataSource');
+        return;
+      } catch (rpcError) {
+        // If the RPC call fails, fall back to manual refresh
+        _logger.w('RPC refresh failed, falling back to manual refresh: $rpcError', tag: 'CommentDataSource');
+      }
+      
+      // Manual refresh approach: force direct database queries
+      // This bypasses any caching mechanisms
+      
+      // Get the latest like count
+      final likeCountResponse = await supabase
+          .from('PostLike')
+          .select('count')
+          .eq('PostId', postId)
+          .count();
+      
+      // Get the latest comment count
+      final commentCountResponse = await supabase
+          .from('PostComment')
+          .select('count')
+          .eq('PostId', postId)
+          .count();
+      
+      // Update the post with the latest counts
+      await supabase
+          .from('Post')
+          .update({
+            'LikeCount': likeCountResponse.count,
+            'CommentCount': commentCountResponse.count,
+            'UpdatedAt': DateTime.now().toIso8601String(),
+          })
+          .eq('Id', postId);
+      
+      _logger.d('Successfully refreshed post counts manually', tag: 'CommentDataSource');
+    } catch (e) {
+      // Log the error but don't throw - we don't want to fail the main operation
+      _logger.e('Error refreshing post counts: $e', tag: 'CommentDataSource');
+    }
+  }
+
   @override
   Future<PostCommentModel> createComment({
     required String postId,
@@ -404,6 +460,10 @@ class CommentDataSourceImpl implements CommentDataSource {
           .insert(commentData)
           .select()
           .single();
+          
+      // Refresh the post counts to ensure all clients see the latest data
+      // This is crucial for fixing the caching issues
+      await _refreshPostCounts(postId);
 
       // Create a PostCommentModel from the response
       return PostCommentModel(
@@ -457,6 +517,9 @@ class CommentDataSourceImpl implements CommentDataSource {
           .eq('Id', commentId)
           .select()
           .single();
+          
+      // Refresh the post counts to ensure all clients see the latest data
+      await _refreshPostCounts(postId);
 
       // Get the user profile data for the comment author
       final userProfileResponse = await supabase
@@ -513,8 +576,15 @@ class CommentDataSourceImpl implements CommentDataSource {
       // If we get here, the comment exists and the user is the author
       // Delete the comment
       await supabase.from('PostComment').delete().eq('Id', commentId);
+      
+      // Refresh the post counts to ensure all clients see the latest data
+      // This is crucial for fixing the caching issues with comment counts
+      await _refreshPostCounts(postId);
+      _logger.d('Comment deleted and post counts refreshed', tag: 'CommentDataSource');
+      
       return true;
     } catch (e) {
+      _logger.e('Error deleting comment: $e', tag: 'CommentDataSource');
       return false;
     }
   }
@@ -540,10 +610,26 @@ class CommentDataSourceImpl implements CommentDataSource {
           'UserId': userId,
           'CreatedAt': DateTime.now().toIso8601String(),
         });
-      } else {}
-      // If the user has already liked the comment, we do nothing
+        
+        // Get the post ID for this comment to refresh its counts
+        final commentData = await supabase
+            .from('PostComment')
+            .select('PostId')
+            .eq('Id', commentId)
+            .single();
+            
+        final postId = commentData['PostId']?.toString() ?? '';
+        if (postId.isNotEmpty) {
+          // Refresh the post counts to ensure all clients see the latest data
+          await _refreshPostCounts(postId);
+          _logger.d('Comment liked and post counts refreshed', tag: 'CommentDataSource');
+        }
+      } else {
+        // If the user has already liked the comment, we do nothing
+      }
     } catch (e) {
-      rethrow; // Propagate the error to be handled by the caller
+      _logger.e('Error liking comment: $e', tag: 'CommentDataSource');
+      // We don't throw here to avoid disrupting the UI flow
     }
   }
 
@@ -568,9 +654,24 @@ class CommentDataSourceImpl implements CommentDataSource {
             .delete()
             .eq('CommentId', commentId)
             .eq('UserId', userId);
-      } else {}
+            
+        // Get the post ID for this comment to refresh its counts
+        final commentData = await supabase
+            .from('PostComment')
+            .select('PostId')
+            .eq('Id', commentId)
+            .single();
+            
+        final postId = commentData['PostId']?.toString() ?? '';
+        if (postId.isNotEmpty) {
+          // Refresh the post counts to ensure all clients see the latest data
+          await _refreshPostCounts(postId);
+          _logger.d('Comment unliked and post counts refreshed', tag: 'CommentDataSource');
+        }
+      }
     } catch (e) {
-      rethrow; // Propagate the error to be handled by the caller
+      _logger.e('Error unliking comment: $e', tag: 'CommentDataSource');
+      // We don't throw here to avoid disrupting the UI flow
     }
   }
 

@@ -355,15 +355,9 @@ class _MigrationJourneyStepState
       logger.e('Error saving migration journey',
           tag: 'MigrationJourney', error: e);
 
-      // Show error snackbar
+      // Show error snackbar using a dedicated method
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Failed to save migration journey. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackbar();
       }
     } finally {
       if (mounted) {
@@ -372,5 +366,16 @@ class _MigrationJourneyStepState
         });
       }
     }
+  }
+  
+  /// Show an error snackbar with a consistent message
+  /// This method avoids using BuildContext across async gaps
+  void _showErrorSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to save migration journey. Please try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }

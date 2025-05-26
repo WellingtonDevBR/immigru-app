@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:immigru/core/network/models/failure.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/features/auth/domain/repositories/auth_repository.dart';
 
@@ -9,7 +11,9 @@ class LoginWithEmailUseCase {
   LoginWithEmailUseCase(this._repository);
 
   /// Execute the login use case
-  Future<User> call(String email, String password) {
+  /// 
+  /// Returns Either a User on success or a Failure on errorF
+  Future<Either<Failure, User>> call(String email, String password) {
     return _repository.signInWithEmailAndPassword(email, password);
   }
 }
@@ -22,12 +26,16 @@ class LoginWithPhoneUseCase {
   LoginWithPhoneUseCase(this._repository);
 
   /// Start the phone authentication process
-  Future<void> startPhoneAuth(String phoneNumber) {
+  /// 
+  /// Returns Either void on success or a Failure on error
+  Future<Either<Failure, void>> startPhoneAuth(String phoneNumber) {
     return _repository.signInWithPhone(phoneNumber);
   }
 
   /// Verify the phone authentication code
-  Future<User> verifyCode(String verificationId, String code) {
+  /// 
+  /// Returns Either a User on success or a Failure on error
+  Future<Either<Failure, User>> verifyCode(String verificationId, String code) {
     return _repository.verifyPhoneCode(verificationId, code);
   }
 }
@@ -40,7 +48,9 @@ class LoginWithGoogleUseCase {
   LoginWithGoogleUseCase(this._repository);
 
   /// Execute the Google login use case
-  Future<User> call() {
+  /// 
+  /// Returns Either a User on success or a Failure on error
+  Future<Either<Failure, User>> call() {
     return _repository.signInWithGoogle();
   }
 }
@@ -53,12 +63,16 @@ class CheckAuthStatusUseCase {
   CheckAuthStatusUseCase(this._repository);
 
   /// Execute the check auth status use case
-  Future<bool> call() {
+  /// 
+  /// Returns Either a boolean on success or a Failure on error
+  Future<Either<Failure, bool>> call() {
     return _repository.isAuthenticated();
   }
 
   /// Get the current user
-  Future<User?> getCurrentUser() {
+  /// 
+  /// Returns Either a User object or null on success, or a Failure on error
+  Future<Either<Failure, User?>> getCurrentUser() {
     return _repository.getCurrentUser();
   }
 

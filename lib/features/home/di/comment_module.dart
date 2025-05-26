@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
 import 'package:immigru/features/home/data/datasources/comment_data_source_impl.dart';
 import 'package:immigru/features/home/data/repositories/comment_repository_impl.dart';
@@ -86,6 +87,10 @@ class CommentModule {
           ),
         );
       }
-    } catch (e) {}
+    } catch (e) {
+      // Log the error but don't rethrow to prevent app crashes during initialization
+      final logger = UnifiedLogger();
+      logger.e('Error initializing CommentModule: $e', tag: 'CommentModule');
+    }
   }
 }

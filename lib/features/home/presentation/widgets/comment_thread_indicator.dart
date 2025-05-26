@@ -27,7 +27,7 @@ class CommentThreadIndicator extends StatelessWidget {
 
   /// Creates a comment thread indicator
   const CommentThreadIndicator({
-    Key? key,
+    super.key,
     required this.level,
     required this.leftPadding,
     this.isExpanded = true,
@@ -35,7 +35,7 @@ class CommentThreadIndicator extends StatelessWidget {
     this.isFirstInThread = false,
     this.isLastInThread = false,
     this.showParentLines = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

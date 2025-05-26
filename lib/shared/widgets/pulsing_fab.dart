@@ -18,10 +18,11 @@ class PulsingFAB extends StatefulWidget {
   });
 
   @override
-  _PulsingFABState createState() => _PulsingFABState();
+  PulsingFABState createState() => PulsingFABState();
 }
 
-class _PulsingFABState extends State<PulsingFAB>
+/// State class for the PulsingFAB widget
+class PulsingFABState extends State<PulsingFAB>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;

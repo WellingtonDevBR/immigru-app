@@ -18,6 +18,9 @@ class SeedCommentButton extends StatefulWidget {
 
   /// Initial commented state
   final bool initialCommented;
+  
+  /// Flag to control when animation should play
+  final bool shouldPlayAnimation;
 
   /// Callback when the comment state changes
   final Function(bool)? onCommentedChanged;
@@ -29,6 +32,7 @@ class SeedCommentButton extends StatefulWidget {
     this.seedColor = const Color(0xFF795548), // brown seed
     this.sproutColor = const Color(0xFF8BC34A), // light green sprout
     this.initialCommented = false,
+    this.shouldPlayAnimation = false,
     this.onCommentedChanged,
   });
 
@@ -112,15 +116,21 @@ class _SeedCommentButtonState extends State<SeedCommentButton>
   }
 
   @override
-  void didUpdateWidget(covariant SeedCommentButton oldWidget) {
+  void didUpdateWidget(SeedCommentButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialCommented != oldWidget.initialCommented) {
+    
+    // Update internal state if the commented state changes
+    if (oldWidget.initialCommented != widget.initialCommented) {
       _isCommented = widget.initialCommented;
-      if (_isCommented) {
-        _controller.forward(from: 0);
+      
+      // Only play animation when transitioning from uncommented to commented
+      if (_isCommented && !oldWidget.initialCommented) {
         _generateSproutParticles();
-      } else {
-        _controller.reverse();
+        _controller.forward(from: 0.0);
+      } else if (!_isCommented && oldWidget.initialCommented) {
+        // Reset controller without animation when uncommenting
+        _controller.value = 0.0;
+        _sproutParticles.clear();
       }
     }
   }
@@ -140,28 +150,13 @@ class _SeedCommentButtonState extends State<SeedCommentButton>
     }
   }
 
-  void _toggleComment() {
-    setState(() {
-      _isCommented = !_isCommented;
-      if (_isCommented) {
-        // Generate particles and animate to final state
-        _generateSproutParticles();
-        _controller.forward(from: 0);
-      } else {
-        // When uncommented, animate back to beginning
-        _controller.reverse();
-      }
-    });
-
-    if (widget.onCommentedChanged != null) {
-      widget.onCommentedChanged!(_isCommented);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _toggleComment,
+      onTap: () {
+        // This is now controlled by the parent widget
+        // We don't handle tap events directly anymore
+      },
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {

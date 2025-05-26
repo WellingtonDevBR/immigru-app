@@ -181,7 +181,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -193,7 +193,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
               Icon(
                 Icons.chat_bubble_outline,
                 size: 48,
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
@@ -267,7 +267,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -296,9 +296,9 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                           );
                         },
                         splashColor:
-                            Theme.of(context).primaryColor.withOpacity(0.1),
+                            Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         highlightColor:
-                            Theme.of(context).primaryColor.withOpacity(0.05),
+                            Theme.of(context).primaryColor.withValues(alpha: 0.05),
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Column(
@@ -315,7 +315,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                                       border: Border.all(
                                         color: Theme.of(context)
                                             .primaryColor
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                         width: 2,
                                       ),
                                     ),
@@ -371,7 +371,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                                                 decoration: BoxDecoration(
                                                   color: Theme.of(context)
                                                       .primaryColor
-                                                      .withOpacity(0.15),
+                                                      .withValues(alpha: 0.15),
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
@@ -517,7 +517,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                               bottom: 0,
                               width: 1.5,
                               child: Container(
-                                color: Theme.of(context).primaryColor.withOpacity(0.12),
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
                               ),
                             ),
 
@@ -549,7 +549,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                child: Divider(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
               ),
           ],
         );
@@ -576,7 +576,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
             Icon(
               icon,
               size: 16,
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
             ),
             const SizedBox(width: 4),
             Text(
@@ -584,7 +584,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: color.withOpacity(0.9),
+                color: color.withValues(alpha: 0.9),
               ),
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:immigru/features/home/di/home_module.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/screens/home_screen.dart';
+import 'package:immigru/features/home/presentation/screens/performance_test_screen.dart';
 
 /// Feature module for the home feature
 class HomeFeature {
@@ -31,6 +32,7 @@ class HomeFeature {
             value: _serviceLocator<HomeBloc>(),
             child: HomeScreen(),
           ),
+      '/features/home/performance_test': (context) => const PerformanceTestScreen(),
     };
   }
 
@@ -42,6 +44,10 @@ class HomeFeature {
           value: _serviceLocator<HomeBloc>(),
           child: HomeScreen(),
         ),
+      );
+    } else if (settings.name == '/features/home/performance_test') {
+      return MaterialPageRoute(
+        builder: (_) => const PerformanceTestScreen(),
       );
     }
     return null;

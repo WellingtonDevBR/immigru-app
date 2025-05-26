@@ -18,11 +18,15 @@ class FetchPosts extends HomeEvent {
 
   /// Whether to refresh the posts
   final bool refresh;
+  
+  /// Whether to bypass the cache and fetch fresh data
+  final bool bypassCache;
 
   const FetchPosts({
     this.category,
     this.currentUserId,
     this.refresh = false,
+    this.bypassCache = false,
   });
 
   @override
@@ -30,6 +34,7 @@ class FetchPosts extends HomeEvent {
         category,
         currentUserId,
         refresh,
+        bypassCache,
       ];
 }
 
@@ -197,4 +202,35 @@ class UpdatePostHasUserComment extends HomeEvent {
 
   @override
   List<Object?> get props => [postId, hasUserComment];
+}
+
+/// Event to efficiently refresh posts by updating like and comment counts
+/// without fetching all post data again
+class EfficientRefreshPosts extends HomeEvent {
+  /// Optional category filter
+  final String? category;
+  
+  /// ID of the current user
+  final String? currentUserId;
+  
+  /// Filter for posts (all, user, following, etc.)
+  final String filter;
+  
+  /// Whether to bypass the cache and fetch fresh data
+  final bool bypassCache;
+  
+  /// Whether to exclude the current user's posts
+  final bool excludeCurrentUser;
+  
+  /// Create a new EfficientRefreshPosts event
+  const EfficientRefreshPosts({
+    this.currentUserId,
+    this.category,
+    this.filter = 'all',
+    this.bypassCache = true, // Default to true to ensure fresh data
+    this.excludeCurrentUser = true, // Default to true to exclude current user's posts
+  });
+  
+  @override
+  List<Object?> get props => [currentUserId, category, filter, bypassCache, excludeCurrentUser];
 }

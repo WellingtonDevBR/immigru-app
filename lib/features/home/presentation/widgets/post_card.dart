@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
-import 'package:immigru/shared/widgets/grove_like_button.dart';
-import 'package:immigru/shared/widgets/seed_comment_button.dart';
 import 'package:immigru/shared/widgets/in_app_browser.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:any_link_preview/any_link_preview.dart';
@@ -35,7 +33,11 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   // Local state to track liked and commented status for immediate UI feedback
   late bool _isLiked;
-  bool _isCommented = false; // Track comment state locally
+  late bool _isCommented; // Track comment state locally
+  
+  // We'll rely on the animation widgets to handle their own animations
+  // based on state changes
+  
   String? _firstLink;
   final _logger = Logger();
   
@@ -47,8 +49,12 @@ class _PostCardState extends State<PostCard> {
   void initState() {
     super.initState();
     _isLiked = widget.post.isLiked;
+    
     // Initialize comment state based on whether the user has commented on this post
     _isCommented = widget.post.hasUserComment;
+    
+    // No need to initialize animation flags anymore
+    
     _extractLinks();
     
     // Check if the current user is the author of this post
@@ -56,6 +62,8 @@ class _PostCardState extends State<PostCard> {
     _currentUserId = supabase.auth.currentUser?.id;
     _isCurrentUserAuthor = _currentUserId != null && _currentUserId == widget.post.userId;
   }
+  
+  // Note: didUpdateWidget is defined below to update state when post data changes
   
   /// Extracts the first valid URL from the post content
   void _extractLinks() {
@@ -250,8 +258,20 @@ class _PostCardState extends State<PostCard> {
   @override
   void didUpdateWidget(PostCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.post.isLiked != widget.post.isLiked) {
-      _isLiked = widget.post.isLiked;
+    
+    // Update local state if the post data has changed
+    if (oldWidget.post.isLiked != widget.post.isLiked ||
+        oldWidget.post.likeCount != widget.post.likeCount ||
+        oldWidget.post.hasUserComment != widget.post.hasUserComment ||
+        oldWidget.post.commentCount != widget.post.commentCount) {
+      
+      setState(() {
+        _isLiked = widget.post.isLiked;
+        _isCommented = widget.post.hasUserComment;
+      });
+      
+      _logger.d('Post data updated: isLiked=$_isLiked, isCommented=$_isCommented, ' +
+               'likeCount=${widget.post.likeCount}, commentCount=${widget.post.commentCount}');
     }
   }
   
@@ -562,34 +582,68 @@ class _PostCardState extends State<PostCard> {
                 },
               ),
             ),
-          // Likes count
+          // Engagement stats (likes and comments)
           Padding(
             padding:
                 const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 4),
             child: Row(
               children: [
-                Icon(
-                  Icons.thumb_up,
-                  size: 14,
-                  color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${widget.post.likeCount}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                // Only show if there are likes
+                if (widget.post.likeCount > 0) ...[  
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.favorite,
+                        size: 14,
+                        color: _isLiked ? Colors.green.shade600 : (isDarkMode ? Colors.white70 : Colors.grey[700]),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${widget.post.likeCount}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const Spacer(),
-                if (widget.post.commentCount > 0)
-                  Text(
-                    '${widget.post.commentCount} comments',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                ],
+                
+                if (widget.post.likeCount > 0 && widget.post.commentCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '•',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                      ),
                     ),
                   ),
+                  
+                // Only show if there are comments
+                if (widget.post.commentCount > 0) ...[  
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.comment,
+                        size: 14,
+                        color: _isCommented ? Colors.green.shade600 : (isDarkMode ? Colors.white70 : Colors.grey[700]),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${widget.post.commentCount} ${widget.post.commentCount == 1 ? 'comment' : 'comments'}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                
+                const Spacer(),
               ],
             ),
           ),
@@ -619,34 +673,64 @@ class _PostCardState extends State<PostCard> {
 
                         // Call the parent's onLike callback
                         widget.onLike();
+                        
+                        // Log the action for performance tracking
+                        _logger.d('Like button tapped. New state: $_isLiked');
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            GroveLikeButton(
-                              key: ValueKey('grove_like_${widget.post.id}'),
-                              size: 28,
-                              initialLiked: _isLiked, // Use local state
-                              // Don't use onLikeChanged to avoid duplicate calls
-                              onLikeChanged: null,
-                              animationDuration:
-                                  const Duration(milliseconds: 600),
-                              trunkColor: Colors.brown.shade600,
-                              rootColor: Colors.brown.shade800,
-                              leafColor: Colors.lightGreen.shade400,
+                            // Use animated icon with scale effect for better visual feedback
+                            AnimatedScale(
+                              scale: _isLiked ? 1.2 : 1.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                child: Icon(
+                                  _isLiked ? Icons.favorite : Icons.favorite_border,
+                                  color: _isLiked ? Colors.green.shade600 : Colors.grey[600],
+                                  size: 24,
+                                ),
+                              ),
                             ),
+                            
                             const SizedBox(width: 6),
-                            Text(
-                              'Like',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: _isLiked
-                                    ? Colors.green.shade700
-                                    : isDarkMode
-                                        ? Colors.white70
-                                        : Colors.grey[600],
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Like',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: _isLiked
+                                          ? Colors.green.shade700
+                                          : isDarkMode
+                                              ? Colors.white70
+                                              : Colors.grey[600],
+                                    ),
+                                  ),
+                                  if (widget.post.likeCount > 0) ...[  
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _isLiked ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${widget.post.likeCount}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _isLiked ? Colors.green.shade700 : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ],
@@ -661,41 +745,68 @@ class _PostCardState extends State<PostCard> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        // Toggle comment state locally
-                        setState(() {
-                          _isCommented = !_isCommented;
-                        });
-
+                        // Do not toggle comment state locally - this should be controlled by the post data
+                        // The state will be updated in didUpdateWidget when the post is refreshed
+                        
                         // Call the parent's onComment callback
                         widget.onComment();
+                        
+                        // Log the action for performance tracking
+                        _logger.d('Comment button tapped');
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SeedCommentButton(
-                              key: ValueKey('seed_comment_${widget.post.id}'),
-                              size: 28,
-                              initialCommented:
-                                  _isCommented, // Use local comment state
-                              // Don't use onCommentedChanged to avoid duplicate calls
-                              onCommentedChanged: null,
-                              animationDuration:
-                                  const Duration(milliseconds: 600),
-                              seedColor: Colors.brown.shade600,
-                              sproutColor: Colors.green.shade400,
+                            // Use animated icon with scale effect for better visual feedback
+                            AnimatedScale(
+                              scale: _isCommented ? 1.2 : 1.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                child: Icon(
+                                  _isCommented ? Icons.comment : Icons.comment_outlined,
+                                  color: _isCommented ? Colors.green.shade600 : Colors.grey[600],
+                                  size: 24,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'Comment',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: _isCommented
-                                    ? Colors.green.shade700
-                                    : isDarkMode
-                                        ? Colors.white70
-                                        : Colors.grey[600],
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Comment',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: _isCommented
+                                          ? Colors.green.shade700
+                                          : isDarkMode
+                                              ? Colors.white70
+                                              : Colors.grey[600],
+                                    ),
+                                  ),
+                                  if (widget.post.commentCount > 0) ...[  
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _isCommented ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${widget.post.commentCount}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _isCommented ? Colors.green.shade700 : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ],

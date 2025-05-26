@@ -28,6 +28,7 @@ class GetPostsUseCase {
     String? currentUserId,
     int limit = 20,
     int offset = 0,
+    bool bypassCache = false,
   }) {
     return repository.getPosts(
       filter: filter,
@@ -38,6 +39,7 @@ class GetPostsUseCase {
       currentUserId: currentUserId,
       limit: limit,
       offset: offset,
+      bypassCache: bypassCache,
     );
   }
 }

@@ -554,7 +554,8 @@ class _MigrationStepModalContentState
       },
     );
 
-    if (picked != null) {
+    // Check if widget is still mounted before updating state
+    if (picked != null && mounted) {
       setState(() {
         if (isStartDate) {
           _startDate = picked;

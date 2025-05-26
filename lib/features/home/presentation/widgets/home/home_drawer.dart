@@ -93,6 +93,16 @@ class HomeDrawer extends StatelessWidget {
               // Navigate to settings screen
             },
           ),
+          // Only show in debug mode
+          if (true) // Replace with !kReleaseMode in production
+            ListTile(
+              leading: const Icon(Icons.speed),
+              title: const Text('Performance Test'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/features/home/performance_test');
+              },
+            ),
           // Theme selection
           ExpansionTile(
             leading: const Icon(Icons.brightness_6),

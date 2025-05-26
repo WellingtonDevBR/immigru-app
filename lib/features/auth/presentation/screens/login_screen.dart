@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
@@ -29,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _logger = UnifiedLogger();
   final _phoneController = TextEditingController();
   bool _isEmailTab = true;
 
@@ -59,7 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text = savedEmail;
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      // Log the error but continue - this is non-critical functionality
+      _logger.w('Error loading saved email: $e', tag: 'LoginScreen');
+    }
   }
 
   /// Saves the email to SharedPreferences for future use
@@ -67,7 +72,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_emailKey, email);
-    } catch (e) {}
+    } catch (e) {
+      // Log the error but continue - this is non-critical functionality
+      _logger.w('Error saving email: $e', tag: 'LoginScreen');
+    }
   }
 
   // Password visibility is now handled by SecureInputField

@@ -86,10 +86,8 @@ class _ProfessionStepContentState
     // Start animations
     _animationController.forward();
 
-    // Add haptic feedback when screen appears
-    Future.delayed(const Duration(milliseconds: 100), () {
-      HapticFeedback.lightImpact();
-    });
+    // Add haptic feedback when screen appears using a separate method
+    _addHapticFeedbackWithDelay();
 
     // Reset profession selection flag when coming back to this screen
     _professionSelected = false;
@@ -111,6 +109,33 @@ class _ProfessionStepContentState
     _searchController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  /// Add haptic feedback with a small delay
+  /// Extracted to a separate method to avoid potential BuildContext issues
+  void _addHapticFeedbackWithDelay() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        HapticFeedback.lightImpact();
+      }
+    });
+  }
+  
+  /// Handle profession selection with animation and callback
+  /// Extracted to a separate method to avoid potential BuildContext issues
+  void _handleProfessionSelection(String professionName) {
+    // Small delay to ensure UI updates before navigating
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        // Animate out before navigating
+        _animationController.reverse().then((_) {
+          if (mounted) {
+            // Notify parent about profession selection
+            widget.onProfessionSelected(professionName);
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -138,14 +163,8 @@ class _ProfessionStepContentState
             // Check if this is a manual selection (not from initialization)
             // Only trigger navigation for manual selections, not when coming back from language step
             if (state.selectionSource == SelectionSource.userAction) {
-              // Small delay to ensure UI updates before navigating
-              Future.delayed(const Duration(milliseconds: 100), () {
-                // Animate out before navigating
-                _animationController.reverse().then((_) {
-                  // Notify parent about profession selection
-                  widget.onProfessionSelected(state.selectedProfession!.name);
-                });
-              });
+              // Handle profession selection with a separate method
+              _handleProfessionSelection(state.selectedProfession!.name);
             } else {
               // Just notify parent about profession selection without navigation
               widget.onProfessionSelected(state.selectedProfession!.name);
@@ -166,10 +185,13 @@ class _ProfessionStepContentState
               .toList();
 
           if (matchingProfession.isNotEmpty) {
+            // Store bloc reference before async gap
+            final professionBloc = context.read<ProfessionBloc>();
+            
             // Select the matching profession
             Future.microtask(() {
               if (mounted) {
-                context.read<ProfessionBloc>().add(
+                professionBloc.add(
                       ProfessionSelected(matchingProfession.first),
                     );
               }

@@ -24,6 +24,7 @@ abstract class PostRepository {
     String? currentUserId,
     int limit = 20,
     int offset = 0,
+    bool bypassCache = false,
   });
 
   /// Get personalized posts for the user
