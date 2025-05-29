@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:immigru/core/storage/supabase_storage_utils.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/shared/widgets/media/media_gallery_viewer.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 import 'package:immigru/shared/widgets/in_app_browser.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:any_link_preview/any_link_preview.dart';
@@ -57,7 +60,19 @@ class _PostCardState extends State<PostCard> {
     // Initialize comment state based on whether the user has commented on this post
     _isCommented = widget.post.hasUserComment;
     
-    // No need to initialize animation flags anymore
+    // Log initialization for debugging
+    _logger.d('Initializing post card: id=${widget.post.id}, ' 
+             'likes=${widget.post.likeCount}, comments=${widget.post.commentCount}, ' 
+             'hasMedia=${widget.post.media != null && widget.post.media!.isNotEmpty}');
+    
+    // Log detailed media information if available
+    if (widget.post.media != null && widget.post.media!.isNotEmpty) {
+      _logger.d('Post has ${widget.post.media!.length} media items:');
+      for (var i = 0; i < widget.post.media!.length; i++) {
+        final media = widget.post.media![i];
+        _logger.d('Media[$i]: id=${media.id}, path=${media.path}, type=${media.type}');
+      }
+    }
     
     _extractLinks();
     
@@ -253,6 +268,496 @@ class _PostCardState extends State<PostCard> {
   /// Validates if the provided URL is a valid image URL
   bool _isValidImageUrl(String? url) {
     return _storageUtils.isValidImageUrl(url);
+  }
+  
+  /// Builds an image widget with proper error handling and fallback
+  Widget _buildImageWithFallback(String imagePath, {String? displayName, BoxFit fit = BoxFit.cover}) {
+    _logger.d('Building image with path: $imagePath');
+    
+    // Handle case where the imagePath might be a JSON string
+    String processedPath = imagePath;
+    if (imagePath.startsWith('[') && imagePath.contains('{') && imagePath.contains('}')) {
+      try {
+        final List<dynamic> mediaList = json.decode(imagePath) as List<dynamic>;
+        if (mediaList.isNotEmpty && mediaList[0] is Map<String, dynamic>) {
+          final Map<String, dynamic> mediaItem = mediaList[0] as Map<String, dynamic>;
+          // Check for different possible path field names
+          if (mediaItem.containsKey('path')) {
+            processedPath = mediaItem['path'] as String;
+            _logger.d('Extracted path from JSON using "path" key: $processedPath');
+          } else if (mediaItem.containsKey('MediaUrl')) {
+            processedPath = mediaItem['MediaUrl'] as String;
+            _logger.d('Extracted path from JSON using "MediaUrl" key: $processedPath');
+          } else if (mediaItem.containsKey('URL')) {
+            processedPath = mediaItem['URL'] as String;
+            _logger.d('Extracted path from JSON using "URL" key: $processedPath');
+          }
+        }
+      } catch (e) {
+        _logger.e('Error parsing JSON in image path: $e');
+        // Keep the original path if JSON parsing fails
+      }
+    }
+    
+    // Ensure the path is not empty after processing
+    if (processedPath.isEmpty) {
+      _logger.e('Empty image path after processing');
+      return _buildImagePlaceholder('No image available');
+    }
+    
+    // Ensure URL is properly formatted for Supabase storage
+    if (processedPath.contains('supabase.co/storage/v1/object') && !processedPath.startsWith('http')) {
+      processedPath = 'https://$processedPath';
+      _logger.d('Added https prefix to Supabase URL: $processedPath');
+    }
+    
+    final imageUrl = _storageUtils.getImageUrl(processedPath, displayName: displayName);
+    _logger.d('Resolved image URL: $imageUrl');
+    
+    // Enhanced headers for Supabase storage
+    final headers = <String, String>{
+      'Accept': 'image/jpeg, image/png, image/webp, image/*',
+    };
+    
+    // Add cache control for better performance
+    if (imageUrl.contains('supabase.co/storage/v1/object')) {
+      headers['Cache-Control'] = 'max-age=3600';
+    }
+    
+    // Use Image.network with headers to handle content type issues
+    return Image.network(
+      imageUrl,
+      fit: fit,
+      headers: headers,
+      // Retry failed images
+      cacheWidth: 800, // Optimize memory usage
+      errorBuilder: (context, error, stackTrace) {
+        _logger.e('Error loading image: $error', error: error, stackTrace: stackTrace);
+        _logger.e('Failed image path: $imagePath, resolved URL: $imageUrl');
+        
+        // Return a fallback image or placeholder
+        return Container(
+          color: Colors.grey[200],
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey[600]),
+                const SizedBox(height: 8),
+                Text(
+                  'Image not available',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                // More descriptive error message
+                Text(
+                  error.toString().contains('404') ? 'Image not found' : 
+                  error.toString().contains('403') ? 'Access denied' : 
+                  'Content type issue',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Path: ${imagePath.length > 30 ? '${imagePath.substring(0, 30)}...' : imagePath}',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        
+        return Container(
+          color: Colors.grey[100],
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  /// Builds a gallery view for multiple media items in a mosaic grid layout
+  Widget _buildMediaGallery(List<PostMedia> mediaItems) {
+    _logger.d('Building media gallery with ${mediaItems.length} items');
+    
+    // Process media items to ensure valid paths
+    final validMediaItems = mediaItems.where((media) {
+      // Basic validation - must have a non-empty path
+      if (media.path.isEmpty) {
+        _logger.e('Skipping media item with empty path: id=${media.id}');
+        return false;
+      }
+      
+      // Log the media item for debugging
+      _logger.d('Processing media item: id=${media.id}, path=${media.path}, type=${media.type}');
+      
+      // Accept all non-empty paths - we'll handle JSON strings in _buildImageWithFallback
+      return true;
+    }).toList();
+    
+    if (validMediaItems.isEmpty) {
+      _logger.e('No valid media items found after filtering');
+      return const SizedBox.shrink(); // Return empty widget if no valid media
+    }
+    
+    // Log all valid media items that will be displayed
+    for (var i = 0; i < validMediaItems.length; i++) {
+      final media = validMediaItems[i];
+      _logger.d('Valid media[$i]: id=${media.id}, path=${media.path}, type=${media.type}');
+    }
+    
+    // If there's only one media item, display it full width
+    if (validMediaItems.length == 1) {
+      final media = validMediaItems.first;
+      _logger.d('Displaying single media item: ${media.path}');
+      
+      if (media.type == MediaType.video) {
+        // TODO: Implement video player when needed
+        _logger.d('Media is video, showing placeholder');
+        return Container(
+          width: double.infinity,
+          height: 300,
+          color: Colors.grey[200],
+          child: const Center(
+            child: Icon(Icons.video_library, size: 48, color: Colors.grey),
+          ),
+        );
+      } else {
+        // Display single image with click to zoom
+        _logger.d('Media is image, building image with path: ${media.path}');
+        return GestureDetector(
+          onTap: () => _openImageGallery(media),
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Hero(
+                tag: 'media_${media.id}',
+                child: _buildImageWithFallback(media.path),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    
+    // For 2 media items, display them side by side
+    if (validMediaItems.length == 2) {
+      return SizedBox(
+        height: 200,
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                  ),
+                  child: _buildMediaItem(validMediaItems[0]),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                  child: _buildMediaItem(validMediaItems[1]),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // For 3 media items, display 1 large on left, 2 stacked on right
+    if (validMediaItems.length == 3) {
+      return SizedBox(
+        height: 300,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                  ),
+                  child: _buildMediaItem(validMediaItems[0]),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 2, bottom: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[1]),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 2, top: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomRight: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[2]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // For 4 media items, display in a 2x2 grid
+    if (validMediaItems.length == 4) {
+      return SizedBox(
+        height: 300,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 2, bottom: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[0]),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 2, bottom: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[1]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 2, top: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[2]),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 2, top: 2),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomRight: Radius.circular(8),
+                        ),
+                        child: _buildMediaItem(validMediaItems[3]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // For 5 or more media items, show first 4 in a grid with a +X overlay on the last one
+    final remainingCount = validMediaItems.length - 4;
+    
+    return SizedBox(
+      height: 300,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 2, bottom: 2),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                      ),
+                      child: _buildMediaItem(validMediaItems[0]),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2, bottom: 2),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(8),
+                      ),
+                      child: _buildMediaItem(validMediaItems[1]),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 2, top: 2),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                      ),
+                      child: _buildMediaItem(validMediaItems[2]),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2, top: 2),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomRight: Radius.circular(8),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildMediaItem(validMediaItems[3]),
+                          if (remainingCount > 0)
+                            Container(
+                              color: Colors.black.withOpacity(0.5),
+                              child: Center(
+                                child: Text(
+                                  '+$remainingCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Helper method to build a media item (image or video)
+  Widget _buildMediaItem(PostMedia media) {
+    if (media.type == MediaType.video) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(color: Colors.black54),
+          const Center(
+            child: Icon(Icons.play_circle_outline, size: 48, color: Colors.white),
+          ),
+        ],
+      );
+    } else {
+      // Make the image clickable to open the gallery viewer
+      return GestureDetector(
+        onTap: () {
+          _openImageGallery(media);
+        },
+        child: Hero(
+          tag: 'media_${media.id}',
+          child: _buildImageWithFallback(
+            media.path,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+  }
+  
+  /// Opens the image gallery viewer for a specific media item
+  void _openImageGallery(PostMedia selectedMedia) {
+    _logger.d('Opening gallery for media: ${selectedMedia.path}');
+    
+    // Find the index of the selected media in the post's media list
+    final mediaItems = widget.post.media ?? [];
+    if (mediaItems.isEmpty) {
+      _logger.w('Cannot open gallery: post has no media items');
+      return;
+    }
+    
+    // Find the index of the selected media
+    final selectedIndex = mediaItems.indexWhere((m) => m.id == selectedMedia.id);
+    final initialIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    
+    // Show the gallery viewer
+    showMediaGallery(context, mediaItems, initialIndex: initialIndex);
+  }
+
+  /// Builds a placeholder widget for when an image can't be displayed
+  Widget _buildImagePlaceholder(String message) {
+    return Container(
+      color: Colors.grey[200],
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey[600]),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -561,26 +1066,25 @@ class _PostCardState extends State<PostCard> {
               ),
             ),
             
-          // Post image if available
-          if (_isValidImageUrl(widget.post.imageUrl))
+          // Post media if available
+          if (widget.post.media != null && widget.post.media!.isNotEmpty) ...[  
+            // Log that we're trying to build media gallery
+            Builder(builder: (context) {
+              _logger.d('Attempting to build media gallery for post ${widget.post.id}');
+              return _buildMediaGallery(widget.post.media!);
+            }),
+          ]
+          // Legacy support for posts with only imageUrl
+          else if (_isValidImageUrl(widget.post.imageUrl)) ...[  
             Container(
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 400),
-              child: Image.network(
-                _storageUtils.getImageUrl(widget.post.imageUrl!),
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.error_outline, size: 40),
-                    ),
-                  );
-                },
+              child: _buildImageWithFallback(
+                widget.post.imageUrl!,
+                displayName: widget.post.userName,
               ),
             ),
+          ],
           // Engagement stats (likes and comments)
           Padding(
             padding:

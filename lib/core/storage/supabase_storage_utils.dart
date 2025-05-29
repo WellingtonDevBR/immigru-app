@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:immigru/core/config/url_builder.dart';
 import 'package:immigru/core/storage/i_supabase_storage.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
 
@@ -114,65 +115,88 @@ class SupabaseStorageUtils implements ISupabaseStorage {
   @override
   String getImageUrl(String url, {String? displayName}) {
     print('DEBUG: SupabaseStorageUtils.getImageUrl input: $url');
-    String result;
     
     // Handle special cases first
-    if (url == 'custom' || url.startsWith('file:///') || !isValidImageUrl(url)) {
-      // Use UI Avatars for generating a default profile image with our brand colors
-      final name = displayName ?? 'User';
-      // Convert primary color to hex without the # and without the alpha channel
-      final backgroundColor = AppColors.primaryColor.value.toRadixString(16).substring(2);
-      final textColor = 'FFFFFF'; // White text for contrast
-      result = 'https://ui-avatars.com/api/?background=$backgroundColor&color=$textColor&name=${Uri.encodeComponent(name)}';
-      print('DEBUG: Using UI Avatar: $result');
-      return result;
+    if (url.isEmpty || url == 'custom' || url.startsWith('file:///')) {
+      final defaultUrl = UrlBuilder.buildDefaultAvatarUrl(displayName ?? 'User');
+      print('DEBUG: Using default avatar: $defaultUrl');
+      return defaultUrl;
     }
     
-    // If it's already a Supabase URL, return it as is
-    if (url.contains(_baseStorageUrl)) {
-      print('DEBUG: Already a Supabase URL: $url');
+    // If it's already a complete URL (Supabase or external), return it as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      print('DEBUG: Already a complete URL: $url');
       return url;
+    }
+    
+    // Special case for full Supabase storage URLs that might be stored without the http prefix
+    if (url.contains('supabase.co/storage/v1/object/public')) {
+      print('DEBUG: Found Supabase storage URL without http prefix: $url');
+      return 'https://$url';
+    }
+    
+    // For avatar filenames that match our pattern but might not exist in storage
+    if (url.startsWith('avatars-')) {
+      // First try to get the actual avatar
+      try {
+        final currentUser = _supabaseClient.auth.currentUser;
+        if (currentUser == null) {
+          print('DEBUG: No current user, using default avatar');
+          return UrlBuilder.buildDefaultAvatarUrl(displayName ?? 'User');
+        }
+        
+        // Try to use the UrlBuilder first if available
+        return UrlBuilder.buildAvatarUrl(url);
+      } catch (e) {
+        print('DEBUG: Error getting avatar URL: $e');
+        return UrlBuilder.buildDefaultAvatarUrl(displayName ?? 'User');
+      }
+    }
+    
+    // Handle post media paths that include the user ID and timestamp
+    // Format: userId/post_timestamp_index.jpg
+    if (url.contains('/post_')) {
+      print('DEBUG: Found post media path: $url');
+      return getPublicUrl('post-media', url);
     }
     
     // Get current user ID for building paths
     final currentUser = _supabaseClient.auth.currentUser;
     if (currentUser == null) {
-      print('DEBUG: No current user, returning URL as is: $url');
-      return url; // Return as is if no user
+      print('DEBUG: No current user, using default avatar');
+      return UrlBuilder.buildDefaultAvatarUrl(displayName ?? 'User');
     }
     
     print('DEBUG: Current user ID: ${currentUser.id}');
+    String result;
     
-    // If it's a relative path within a bucket, try to determine the type
-    if (!url.startsWith('http')) {
-      // Check if it's just a filename or a full path
-      if (url.contains('/')) {
-        // It's already a path, just use it with the users bucket
-        result = getPublicUrl(usersBucket, url);
-        print('DEBUG: Using full path: $result');
+    // Handle different types of relative paths
+    if (url.contains('/')) {
+      // It's already a path, just use it with the appropriate bucket
+      if (url.contains('post-media/')) {
+        result = getPublicUrl('post-media', url.replaceFirst('post-media/', ''));
       } else {
-        // It's just a filename, determine the type
-        if (url.startsWith('avatars-')) {
-          result = getAvatarUrl(url);
-          print('DEBUG: Using avatar URL: $result');
-        } else if (url.startsWith('covers-')) {
-          result = getCoverUrl(url);
-          print('DEBUG: Using cover URL: $result');
-        } else if (url.contains('post')) {
-          result = getPostMediaUrl(url);
-          print('DEBUG: Using post media URL: $result');
-        } else {
-          // Default to avatar path if we can't determine
-          result = getAvatarUrl(url);
-          print('DEBUG: Using default avatar URL: $result');
-        }
+        result = getPublicUrl(usersBucket, url);
       }
-      return result;
+      print('DEBUG: Using full path: $result');
+    } else {
+      // It's just a filename, determine the type based on prefix
+      if (url.startsWith('covers-')) {
+        // Try to use the UrlBuilder first
+        result = UrlBuilder.buildCoverImageUrl(url);
+      } else if (url.contains('post_')) {
+        // For post media, we need to use the post-media bucket
+        result = getPostMediaUrl(url);
+      } else {
+        // For other media that might be from other users, try to extract user ID if present
+        // This is a fallback for media that doesn't follow our naming conventions
+        final userId = currentUser.id;
+        result = getPublicUrl(usersBucket, '$userId/media/$url');
+      }
+      print('DEBUG: Using determined URL: $result');
     }
     
-    // Default to returning the URL as is
-    // If it's a valid external URL, return it as is
-    return url;
+    return result;
   }
 
   @override

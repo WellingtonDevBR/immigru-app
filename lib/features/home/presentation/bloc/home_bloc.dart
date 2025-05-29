@@ -4,8 +4,11 @@ import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/error/error_handler.dart';
 import 'package:immigru/core/logging/logger_interface.dart';
-import 'package:immigru/features/home/data/datasources/post_datasource.dart';
+import 'package:immigru/core/network/api_client.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
+import 'package:immigru/features/home/data/datasources/post_data_source_impl.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 import 'package:immigru/features/home/domain/usecases/create_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/delete_post_usecase.dart';
 import 'package:immigru/features/home/domain/usecases/edit_post_usecase.dart';
@@ -50,7 +53,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.likePostUseCase,
     required this.logger,
     PostDataSource? postDataSource,
-  })  : _postDataSource = postDataSource ?? PostDataSource(),
+  })  : _postDataSource = postDataSource ?? PostDataSourceImpl(
+          supabase: Supabase.instance.client,
+          apiClient: ApiClient(),
+        ),
         super(const HomeInitial()) {
     on<FetchPosts>(_onFetchPosts);
     on<FetchMorePosts>(_onFetchMorePosts);
@@ -220,6 +226,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       // SIMPLIFIED APPROACH: Get posts from the repository
       // The key is to always pass the currentUserId to ensure proper filtering
+      // Use a timeout to prevent getting stuck in API calls
       final result = await Future.any([
         getPostsUseCase(
           // Only pass parameters that are actually needed and used
@@ -231,8 +238,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           offset: 0,
           bypassCache: event.bypassCache, // Use bypassCache parameter to ensure fresh data
         ),
-        Future.delayed(const Duration(seconds: 10), () {
-          throw Exception('Request timed out after 10 seconds');
+        Future.delayed(const Duration(seconds: 8), () {
+          logger.w('Post fetch request timed out after 8 seconds', tag: 'HomeBloc');
+          throw Exception('Request timed out after 8 seconds');
         }),
       ]);
 
@@ -361,15 +369,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         final offset = currentState.posts.length;
 
         // Get more posts from the repository using the simplified approach
-        final result = await getPostsUseCase(
-          // Only pass parameters that are actually needed and used
-          category: event.category, // Pass category if provided
-          currentUserId:
-              event.currentUserId, // CRITICAL: Always pass current user ID
-          excludeCurrentUser: true, // Always exclude current user's posts
-          limit: _postsLimit,
-          offset: offset,
-        );
+        // Use a timeout to prevent getting stuck in API calls during pagination
+        final result = await Future.any([
+          getPostsUseCase(
+            // Only pass parameters that are actually needed and used
+            category: event.category, // Pass category if provided
+            currentUserId:
+                event.currentUserId, // CRITICAL: Always pass current user ID
+            excludeCurrentUser: true, // Always exclude current user's posts
+            limit: _postsLimit,
+            offset: offset,
+          ),
+          Future.delayed(const Duration(seconds: 8), () {
+            logger.w('Pagination request timed out after 8 seconds', tag: 'HomeBloc');
+            throw Exception('Pagination request timed out after 8 seconds');
+          }),
+        ]);
 
         result.fold(
           (failure) {
@@ -451,13 +466,40 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      logger.d('Creating post with content: ${event.content}', tag: 'HomeBloc');
+      // Log the creation request with all details
+      logger.d('Creating post with content: ${event.content}, category: ${event.category}, media items: ${event.media?.length ?? 0}', 
+          tag: 'HomeBloc');
+      
+      // Use the media from the event if provided, otherwise fallback to imageUrl
+      List<PostMedia>? media = event.media;
+      
+      // If no media was provided in the event but imageUrl exists, create a single media item (backwards compatibility)
+      if ((media == null || media.isEmpty) && event.imageUrl != null && event.imageUrl!.isNotEmpty) {
+        media = [
+          PostMedia(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            path: event.imageUrl!,
+            name: 'image_${DateTime.now().millisecondsSinceEpoch}',
+            type: event.imageUrl!.toLowerCase().endsWith('.mp4') ? MediaType.video : MediaType.image,
+            createdAt: DateTime.now(),
+          )
+        ];
+      }
+      
+      // Log media details for debugging
+      if (media != null && media.isNotEmpty) {
+        logger.d('Attaching ${media.length} media items to post', tag: 'HomeBloc');
+        for (int i = 0; i < media.length; i++) {
+          logger.d('Media[$i]: path=${media[i].path}, type=${media[i].type}', tag: 'HomeBloc');
+        }
+      }
 
-      // Create the post with default category
+      // Create the post with the provided category and media
       final result = await createPostUseCase(
         content: event.content,
         userId: event.userId,
-        category: 'General', // Use a default category
+        category: event.category,
+        media: media,
       );
 
       result.fold(

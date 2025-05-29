@@ -13,7 +13,7 @@ abstract class ProfileEvent extends Equatable {
 class LoadUserProfile extends ProfileEvent {
   /// ID of the user whose profile to load
   final String userId;
-  
+
   /// Whether to bypass the cache and fetch fresh data
   final bool bypassCache;
 
@@ -45,7 +45,7 @@ class UpdateUserProfile extends ProfileEvent {
 class UploadAvatar extends ProfileEvent {
   /// ID of the user whose avatar to upload
   final String userId;
-  
+
   /// Path to the avatar image file
   final String filePath;
 
@@ -63,7 +63,7 @@ class UploadAvatar extends ProfileEvent {
 class UploadCoverImage extends ProfileEvent {
   /// ID of the user whose cover image to upload
   final String userId;
-  
+
   /// Path to the cover image file
   final String filePath;
 
@@ -95,7 +95,7 @@ class RemoveCoverImage extends ProfileEvent {
 class LoadUserStats extends ProfileEvent {
   /// ID of the user whose stats to load
   final String userId;
-  
+
   /// Whether to bypass the cache and fetch fresh data
   final bool bypassCache;
 
@@ -113,24 +113,42 @@ class LoadUserStats extends ProfileEvent {
 class LoadUserPosts extends ProfileEvent {
   /// ID of the user whose posts to load
   final String userId;
-  
+
   /// Maximum number of posts to load
   final int limit;
-  
+
   /// Offset for pagination
   final int offset;
-  
+
   /// Whether to bypass the cache and fetch fresh data
   final bool bypassCache;
 
   /// Constructor
   const LoadUserPosts({
     required this.userId,
-    this.limit = 10,
+    this.limit = 30,
     this.offset = 0,
     this.bypassCache = false,
   });
 
   @override
   List<Object?> get props => [userId, limit, offset, bypassCache];
+}
+
+/// Event to clear posts loading error state
+class ClearPostsError extends ProfileEvent {
+  /// Constructor
+  const ClearPostsError();
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Event to enable profile scrolling (switch from posts scrolling to profile scrolling)
+class EnableProfileScrolling extends ProfileEvent {
+  /// Constructor
+  const EnableProfileScrolling();
+
+  @override
+  List<Object?> get props => [];
 }

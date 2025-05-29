@@ -193,12 +193,22 @@ class AppDrawer extends StatelessWidget {
         onTap: currentUser != null
             ? () {
                 Navigator.pop(context);
+                // Create a ProfileBloc and wrap the ProfileScreen with it
+                final profileBloc = GetIt.instance<ProfileBloc>();
+                
+                // Load the user profile data
+                profileBloc.add(LoadUserProfile(userId: currentUser.id));
+                
+                // Navigate to the profile screen with the bloc provider
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProfileScreen(
-                      userId: currentUser.id,
-                      isCurrentUser: true,
+                    builder: (context) => BlocProvider<ProfileBloc>.value(
+                      value: profileBloc,
+                      child: ProfileScreen(
+                        userId: currentUser.id,
+                        isCurrentUser: true,
+                      ),
                     ),
                   ),
                 );

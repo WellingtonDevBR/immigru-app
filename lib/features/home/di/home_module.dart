@@ -5,7 +5,8 @@ import 'package:immigru/core/logging/logger_interface.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/core/network/network_optimizer.dart';
 import 'package:immigru/features/home/data/datasources/home_data_source.dart';
-import 'package:immigru/features/home/data/datasources/post_datasource.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
+import 'package:immigru/features/home/data/datasources/post_data_source_impl.dart';
 import 'package:immigru/features/home/data/repositories/home_repository_impl.dart';
 // Using the enhanced repository implementation for better performance
 import 'package:immigru/features/home/data/repositories/post_repository_enhanced.dart';
@@ -47,7 +48,10 @@ class HomeModule {
       // Register PostDataSource
       if (!sl.isRegistered<PostDataSource>()) {
         sl.registerLazySingleton<PostDataSource>(
-          () => PostDataSource(),
+          () => PostDataSourceImpl(
+            supabase: sl<SupabaseClient>(),
+            apiClient: sl<ApiClient>(),
+          ),
         );
       }
 

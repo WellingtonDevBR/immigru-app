@@ -112,4 +112,21 @@ class UrlBuilder {
     final fullPath = '${currentUser.id}/albums/$fileName';
     return buildStorageUrl(StorageConfig.buckets.users, fullPath);
   }
+  
+  /// Build a URL for a default avatar based on display name
+  /// 
+  /// [displayName] - The user's display name to use for the avatar
+  /// [backgroundColor] - Optional hex color for the background (without #)
+  /// [textColor] - Optional hex color for the text (without #)
+  static String buildDefaultAvatarUrl(String displayName, {String? backgroundColor, String? textColor}) {
+    // Use the app's primary color if no background color is provided
+    final bgColor = backgroundColor ?? '2eaa76'; // Immigru green
+    final txtColor = textColor ?? 'FFFFFF'; // White text for contrast
+    
+    // Encode the display name for URL safety
+    final encodedName = Uri.encodeComponent(displayName.isNotEmpty ? displayName : 'User');
+    
+    // Build the UI Avatars URL
+    return 'https://ui-avatars.com/api/?background=$bgColor&color=$txtColor&name=$encodedName';
+  }
 }

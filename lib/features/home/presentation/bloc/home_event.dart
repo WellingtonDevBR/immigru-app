@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 
 /// Events for the home screen
 abstract class HomeEvent extends Equatable {
@@ -64,16 +65,18 @@ class CreatePost extends HomeEvent {
   final String userId;
   final String category;
   final String? imageUrl;
+  final List<PostMedia>? media;
 
   const CreatePost({
     required this.content,
     required this.userId,
     required this.category,
     this.imageUrl,
+    this.media,
   });
 
   @override
-  List<Object?> get props => [content, userId, category, imageUrl];
+  List<Object?> get props => [content, userId, category, imageUrl, media];
 }
 
 /// Event to like or unlike a post

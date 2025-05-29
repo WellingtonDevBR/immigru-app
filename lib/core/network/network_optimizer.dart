@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:immigru/core/config/environment_config.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:retry/retry.dart';
+import 'package:path/path.dart' as path;
 
 /// A service for optimizing network operations
 ///
@@ -144,8 +146,8 @@ class NetworkOptimizer {
   /// This method uploads multiple files in parallel and returns the URLs of the uploaded files
   Future<List<String>> uploadMediaInParallel(
     List<File> files,
-    String uploadUrl,
-    Map<String, dynamic> metadata, {
+    String bucketName,
+    String folderPath, {
     int maxConcurrent = 3,
     void Function(int, int)? onProgress,
   }) async {
@@ -171,7 +173,11 @@ class NetworkOptimizer {
     
     for (final chunk in chunks) {
       final results = await Future.wait(
-        chunk.map((file) => _uploadSingleFile(file, uploadUrl, metadata, onProgress)),
+        chunk.map((file) {
+          final fileName = path.basename(file.path);
+          final filePath = '$folderPath/$fileName';
+          return uploadSingleFileToSupabase(file, bucketName, filePath, onProgress: onProgress);
+        }),
       );
       
       uploadedUrls.addAll(results);
@@ -181,43 +187,110 @@ class NetworkOptimizer {
     return uploadedUrls;
   }
   
-  /// Upload a single file with retry capability
-  Future<String> _uploadSingleFile(
+  /// Validates and ensures a media file has the correct content type
+  /// 
+  /// Returns a tuple with (isValid, mimeType, errorMessage)
+  Future<(bool, String, String?)> validateMediaFile(File file) async {
+    final fileName = path.basename(file.path);
+    final fileExtension = path.extension(file.path).replaceAll('.', '').toLowerCase();
+    
+    // Map common image extensions to MIME types
+    final validImageExtensions = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'heic': 'image/heic',
+    };
+    
+    final validVideoExtensions = {
+      'mp4': 'video/mp4',
+      'mov': 'video/quicktime',
+      'avi': 'video/x-msvideo',
+    };
+    
+    // Check if it's a valid image or video
+    if (validImageExtensions.containsKey(fileExtension)) {
+      return (true, validImageExtensions[fileExtension]!, null);
+    } else if (validVideoExtensions.containsKey(fileExtension)) {
+      return (true, validVideoExtensions[fileExtension]!, null);
+    }
+    
+    // If not a valid type, return error
+    return (false, 'application/octet-stream', 'Invalid file type: .$fileExtension. Please use a supported image or video format.');
+  }
+  
+  /// Upload a single file to Supabase storage
+  ///
+  /// This method uploads a file to Supabase storage using the correct API endpoint format
+  /// and returns the URL of the uploaded file
+  Future<String> uploadSingleFileToSupabase(
     File file,
-    String uploadUrl,
-    Map<String, dynamic> metadata,
+    String bucketName,
+    String filePath, {
     void Function(int, int)? onProgress,
-  ) async {
-    final fileName = file.path.split('/').last;
+  }) async {
+    if (!_isConnected) {
+      throw Exception('No network connection available');
+    }
+    
+    _logger.d('Uploading file to Supabase storage: $filePath', tag: 'NetworkOptimizer');
     
     try {
-      final formData = FormData.fromMap({
-        ...metadata,
-        'file': await MultipartFile.fromFile(
-          file.path,
-          filename: fileName,
-        ),
-      });
+      // Validate the file type
+      final (isValid, mimeType, errorMessage) = await validateMediaFile(file);
       
+      if (!isValid) {
+        _logger.e('Invalid file type: $errorMessage', tag: 'NetworkOptimizer');
+        throw Exception(errorMessage ?? 'Invalid file type');
+      }
+      
+      final fileName = path.basename(filePath);
+      _logger.d('Validated file with MIME type: $mimeType for file: $fileName', tag: 'NetworkOptimizer');
+      
+      // Read file as bytes
+      final bytes = await file.readAsBytes();
+      
+      // Construct the proper Supabase storage API endpoint
+      final uploadUrl = '${EnvironmentConfig.supabaseUrl}/storage/v1/object/$bucketName/$filePath';
+      
+      _logger.d('Using Supabase upload URL: $uploadUrl', tag: 'NetworkOptimizer');
+      
+      // Create headers with proper content type information
+      final headers = {
+        'Authorization': 'Bearer ${EnvironmentConfig.supabaseAnonKey}',
+        'apikey': EnvironmentConfig.supabaseAnonKey,
+        'x-upsert': 'true',  // Allow overwriting existing files
+        'Content-Type': mimeType, // Set the actual MIME type directly
+      };
+      
+      // Log request details for debugging
+      _logger.d('*** Supabase Upload Request ***', tag: 'NetworkOptimizer');
+      _logger.d('uri: $uploadUrl', tag: 'NetworkOptimizer');
+      _logger.d('method: POST', tag: 'NetworkOptimizer');
+      _logger.d('headers: $headers', tag: 'NetworkOptimizer');
+      
+      // Execute the upload request with raw bytes and proper content type
       final response = await executeWithRetry(
         () => _dio.post(
           uploadUrl,
-          data: formData,
+          data: bytes,
+          options: Options(headers: headers),
           onSendProgress: onProgress,
         ),
       );
       
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = response.data;
-        if (responseData != null && responseData['url'] != null) {
-          return responseData['url'];
-        }
-        throw Exception('Invalid response format');
+        // Construct the public URL for the uploaded file
+        final publicUrl = '${EnvironmentConfig.supabaseUrl}/storage/v1/object/public/$bucketName/$filePath';
+        _logger.d('File uploaded successfully: $publicUrl', tag: 'NetworkOptimizer');
+        return publicUrl;
       } else {
         throw Exception('Upload failed with status code: ${response.statusCode}');
       }
     } catch (e) {
-      _logger.e('Error uploading file $fileName: $e', tag: 'NetworkOptimizer');
+      _logger.e('Error uploading file to Supabase: $e', tag: 'NetworkOptimizer');
       rethrow;
     }
   }
@@ -233,28 +306,24 @@ class NetworkOptimizer {
       throw Exception('No network connection available');
     }
     
-    if (requests.isEmpty) {
-      return [];
-    }
-    
     _logger.d('Executing batch of ${requests.length} requests', tag: 'NetworkOptimizer');
     
-    final responses = <Response>[];
+    final results = <Response>[];
     
     for (final request in requests) {
       try {
-        final response = await executeWithRetry(request);
-        responses.add(response);
+        final response = await executeWithRetry(() => request());
+        results.add(response);
       } catch (e) {
-        _logger.e('Error in batch request: $e', tag: 'NetworkOptimizer');
+        _logger.e('Error in batch operation: $e', tag: 'NetworkOptimizer');
         if (stopOnError) {
           rethrow;
         }
       }
     }
     
-    _logger.d('Completed batch of ${requests.length} requests', tag: 'NetworkOptimizer');
-    return responses;
+    _logger.d('Batch execution completed with ${results.length} successful responses', tag: 'NetworkOptimizer');
+    return results;
   }
   
   /// Dispose resources

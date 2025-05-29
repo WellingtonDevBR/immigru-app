@@ -30,6 +30,7 @@ class _AllPostsTabState extends State<AllPostsTab>
   // State variables
   bool _isLoadingMore = false;
   Timer? _loadingTimeoutTimer;
+  Timer? _globalLoadingTimeoutTimer;
 
   // Request ID for logging
   late final String _requestId;
@@ -60,6 +61,9 @@ class _AllPostsTabState extends State<AllPostsTab>
           _logger.d(
               '[ALL_POSTS_TAB:$_requestId] Using ${currentState.posts.length} posts from HomeBloc',
               tag: 'AllPostsTab');
+        } else if (currentState is PostsLoading) {
+          // Set a timeout to prevent getting stuck in loading state
+          _startGlobalLoadingTimeout();
         }
         // IMPORTANT: We no longer fetch posts here. This is now handled centrally by HomeScreen._initializeHomeData
         // This eliminates duplicate fetches and provides a single source of truth
@@ -72,6 +76,7 @@ class _AllPostsTabState extends State<AllPostsTab>
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _loadingTimeoutTimer?.cancel();
+    _globalLoadingTimeoutTimer?.cancel();
     super.dispose();
   }
 
@@ -187,6 +192,42 @@ class _AllPostsTabState extends State<AllPostsTab>
       }
     });
   }
+  
+  // Start a timeout for the global loading state to prevent infinite loading
+  void _startGlobalLoadingTimeout() {
+    // Cancel any existing timer first
+    _globalLoadingTimeoutTimer?.cancel();
+    
+    // Set a new timer that will force reset the loading state after 10 seconds
+    _globalLoadingTimeoutTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted) {
+        try {
+          final homeBloc = context.read<HomeBloc>();
+          final currentState = homeBloc.state;
+          
+          if (currentState is PostsLoading) {
+            _logger.w(
+                '[ALL_POSTS_TAB:$_requestId] Posts still loading after timeout, showing error message',
+                tag: 'AllPostsTab');
+            
+            // Instead of adding an event to the bloc (which might be closed),
+            // just show a user-friendly message and let the user refresh manually
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Loading posts is taking longer than expected. Please pull down to refresh.'),
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          // Log the error but don't crash the app
+          _logger.e('Error handling loading timeout: $e', tag: 'AllPostsTab');
+        }
+      }
+    });
+  }
 
   /// Method to refresh posts using the efficient refresh mechanism
   Future<void> _refreshPosts() async {
@@ -266,6 +307,8 @@ class _AllPostsTabState extends State<AllPostsTab>
 
         // Handle different states with proper conditional logic
         if (state is PostsLoading) {
+          // Start a timeout to prevent getting stuck in loading state
+          _startGlobalLoadingTimeout();
           return _buildLoadingState();
         } else if (state is PostsError) {
           return _buildErrorState(state.message);

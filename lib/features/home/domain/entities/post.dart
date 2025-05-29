@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:immigru/features/home/domain/entities/author.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 
 /// Entity representing a post in the home feed
 class Post extends Equatable {
@@ -8,7 +9,8 @@ class Post extends Equatable {
   final String? userName;
   final String? userAvatar;
   final String content;
-  final String? imageUrl;
+  final String? imageUrl; // Legacy field, kept for backward compatibility
+  final List<PostMedia>? media; // New field for multiple media items
   final String category;
   final DateTime createdAt;
   final int likeCount;
@@ -28,6 +30,7 @@ class Post extends Equatable {
     this.userAvatar,
     required this.content,
     this.imageUrl,
+    this.media,
     this.updatedAt,
     required this.category,
     required this.createdAt,
@@ -47,6 +50,7 @@ class Post extends Equatable {
         userAvatar,
         content,
         imageUrl,
+        media,
         category,
         createdAt,
         likeCount,

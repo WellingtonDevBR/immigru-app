@@ -1,5 +1,6 @@
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/data/models/author_model.dart';
+import 'package:immigru/features/home/data/models/post_media_model.dart';
 
 /// Model class for Post entity
 class PostModel extends Post {
@@ -10,6 +11,7 @@ class PostModel extends Post {
     super.userAvatar,
     required super.content,
     super.imageUrl,
+    super.media,
     required super.category,
     required super.createdAt,
     super.likeCount = 0,
@@ -30,7 +32,15 @@ class PostModel extends Post {
         avatarUrl: json['user_avatar']?.toString(),
       );
     }
-    
+
+    // Process media attachments if available
+    List<PostMediaModel>? mediaItems;
+    if (json['Media'] != null && json['Media'] is List && (json['Media'] as List).isNotEmpty) {
+      mediaItems = (json['Media'] as List).map((mediaItem) {
+        return PostMediaModel.fromJson(mediaItem as Map<String, dynamic>);
+      }).toList();
+    }
+
     return PostModel(
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString() ?? '',
@@ -38,6 +48,7 @@ class PostModel extends Post {
       userAvatar: json['user_avatar']?.toString(),
       content: json['content']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
+      media: mediaItems,
       category: json['category']?.toString() ?? 'General',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'].toString())
@@ -55,6 +66,7 @@ class PostModel extends Post {
   }
 
   /// Convert PostModel to JSON
+  @override
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {
       'id': id,
@@ -70,11 +82,11 @@ class PostModel extends Post {
       'is_liked': isLiked,
       'location': location,
     };
-    
+
     // Author data is already included in the model
     // We don't need to add it separately to the JSON output
     // as it would duplicate information already present
-    
+
     return data;
   }
 

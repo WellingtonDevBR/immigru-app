@@ -99,9 +99,19 @@ class MediaSelectionWidget extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.photo_library),
                   title: const Text('Choose from gallery'),
+                  subtitle: const Text('Select a single image'),
                   onTap: () {
                     Navigator.of(context).pop();
                     _getImageFromSource(context, ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Select multiple images'),
+                  subtitle: const Text('Choose up to 10 images at once'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _getMultipleImagesFromGallery(context);
                   },
                 ),
                 ListTile(
@@ -199,7 +209,29 @@ class MediaSelectionWidget extends StatelessWidget {
           _logger.d('Image file size: $fileSize bytes',
               tag: 'MediaSelectionWidget');
 
-          // Create a PostMediaModel from the picked file
+          // Validate file extension first
+          final fileName = pickedFile.path.split('/').last;
+          final extension = fileName.split('.').last.toLowerCase();
+          
+          // Define valid image extensions
+          final validImageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'];
+          
+          if (!validImageExtensions.contains(extension)) {
+            // Show error for invalid image type
+            if (context.mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text('Invalid image type: .$extension. Please select a JPG, PNG, GIF, or WebP image.'),
+                  backgroundColor: Colors.red[700],
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+            _logger.e('Invalid image type selected: $extension', tag: 'MediaSelectionWidget');
+            return;
+          }
+          
+          // Create a PostMediaModel from the validated file
           final media = PostMediaModel.fromPath(pickedFile.path);
           _logger.d('Created media model: ${media.name} (${media.path})',
               tag: 'MediaSelectionWidget');
@@ -211,7 +243,7 @@ class MediaSelectionWidget extends StatelessWidget {
             // Show success message
             scaffoldMessenger.showSnackBar(
               SnackBar(
-                content: const Text('Image selected successfully'),
+                content: Text('Image selected successfully (.$extension)'),
                 backgroundColor: Colors.green[700],
                 duration: const Duration(seconds: 1),
               ),
@@ -256,6 +288,129 @@ class MediaSelectionWidget extends StatelessWidget {
           SnackBar(
             content: Text('Error selecting image: $e'),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Get multiple images from the gallery at once
+  Future<void> _getMultipleImagesFromGallery(BuildContext context) async {
+    try {
+      _logger.d('Attempting to pick multiple images from gallery', tag: 'MediaSelectionWidget');
+
+      // Show loading indicator
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Selecting images...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Use the image picker to select multiple images
+      final List<XFile>? pickedFiles = await _imagePicker.pickMultiImage(
+        imageQuality: 70, // Slightly lower quality to reduce file size
+        maxWidth: 1200, // Limit max dimensions to avoid huge images
+        maxHeight: 1200,
+      );
+
+      if (pickedFiles != null && pickedFiles.isNotEmpty) {
+        _logger.d('${pickedFiles.length} images picked', tag: 'MediaSelectionWidget');
+
+        // Limit to 10 images maximum
+        final filesToProcess = pickedFiles.length > 10 ? pickedFiles.sublist(0, 10) : pickedFiles;
+        if (pickedFiles.length > 10) {
+          _logger.d('Limiting selection to 10 images', tag: 'MediaSelectionWidget');
+          if (context.mounted) {
+            scaffoldMessenger.showSnackBar(
+              const SnackBar(
+                content: Text('Maximum 10 images allowed. Only the first 10 will be used.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+
+        // Process each selected image
+        int successCount = 0;
+        for (final pickedFile in filesToProcess) {
+          // Verify the file exists before adding to state
+          final file = File(pickedFile.path);
+          final exists = await file.exists();
+          
+          if (exists) {
+            final fileSize = await file.length();
+            _logger.d('Image file size: $fileSize bytes', tag: 'MediaSelectionWidget');
+
+            // Validate file extension
+            final fileName = pickedFile.path.split('/').last;
+            final extension = fileName.split('.').last.toLowerCase();
+            
+            // Define valid image extensions
+            final validImageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'];
+            
+            if (!validImageExtensions.contains(extension)) {
+              _logger.e('Invalid image type skipped: $extension', tag: 'MediaSelectionWidget');
+              continue; // Skip this file and move to the next
+            }
+            
+            // Create a PostMediaModel from the validated file
+            try {
+              final media = PostMediaModel.fromPath(pickedFile.path);
+              _logger.d('Created media model: ${media.name} (${media.path})', tag: 'MediaSelectionWidget');
+
+              // Add the media to the bloc
+              if (context.mounted) {
+                context.read<PostCreationBloc>().add(MediaAdded(media));
+                successCount++;
+              }
+            } catch (e) {
+              _logger.e('Error creating media model: $e', tag: 'MediaSelectionWidget');
+            }
+          } else {
+            _logger.e('Image file does not exist: ${pickedFile.path}', tag: 'MediaSelectionWidget');
+          }
+        }
+
+        // Show success message with count
+        if (context.mounted && successCount > 0) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('$successCount ${successCount == 1 ? 'image' : 'images'} added successfully'),
+              backgroundColor: Colors.green[700],
+              duration: const Duration(seconds: 2),
+            ),
+          );
+
+          // Log the current state after a short delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (context.mounted) {
+              final state = context.read<PostCreationBloc>().state;
+              _logger.d('Current media count in state: ${state.media.length}', tag: 'MediaSelectionWidget');
+            }
+          });
+        } else if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('No valid images were selected'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        _logger.d('No images selected or selection cancelled', tag: 'MediaSelectionWidget');
+      }
+    } catch (e) {
+      _logger.e('Error picking multiple images: $e', tag: 'MediaSelectionWidget');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting images: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -312,7 +467,29 @@ class MediaSelectionWidget extends StatelessWidget {
             return;
           }
 
-          // Create a PostMediaModel from the picked file
+          // Validate file extension first
+          final fileName = pickedFile.path.split('/').last;
+          final extension = fileName.split('.').last.toLowerCase();
+          
+          // Define valid video extensions
+          final validVideoExtensions = ['mp4', 'mov', 'avi'];
+          
+          if (!validVideoExtensions.contains(extension)) {
+            // Show error for invalid video type
+            if (context.mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text('Invalid video type: .$extension. Please select an MP4, MOV, or AVI video.'),
+                  backgroundColor: Colors.red[700],
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+            _logger.e('Invalid video type selected: $extension', tag: 'MediaSelectionWidget');
+            return;
+          }
+          
+          // Create a PostMediaModel from the validated file
           final media = PostMediaModel.fromPath(pickedFile.path);
           _logger.d('Created media model: ${media.name} (${media.path})',
               tag: 'MediaSelectionWidget');
@@ -324,7 +501,7 @@ class MediaSelectionWidget extends StatelessWidget {
             // Show success message
             scaffoldMessenger.showSnackBar(
               SnackBar(
-                content: const Text('Video selected successfully'),
+                content: Text('Video selected successfully (.$extension)'),
                 backgroundColor: Colors.green[700],
                 duration: const Duration(seconds: 1),
               ),

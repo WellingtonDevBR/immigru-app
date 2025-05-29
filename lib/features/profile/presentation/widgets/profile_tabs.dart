@@ -8,15 +8,19 @@ import 'package:immigru/features/profile/presentation/widgets/profile_posts_tab.
 class ProfileTabs extends StatefulWidget {
   /// Tab controller for managing the tabs
   final TabController tabController;
-  
+
   /// ID of the user whose content to display
   final String userId;
+
+  /// Whether to disable scrolling within the tabs
+  final bool disableScrolling;
 
   /// Constructor
   const ProfileTabs({
     super.key,
     required this.tabController,
     required this.userId,
+    this.disableScrolling = false,
   });
 
   @override
@@ -27,10 +31,10 @@ class _ProfileTabsState extends State<ProfileTabs> {
   @override
   void initState() {
     super.initState();
-    
+
     // Load the user's posts when the widget is first shown
     _loadUserPosts();
-    
+
     // Add listener to reload content when tab changes
     widget.tabController.addListener(_handleTabChange);
   }
@@ -61,7 +65,7 @@ class _ProfileTabsState extends State<ProfileTabs> {
   /// Load the user's posts
   void _loadUserPosts() {
     debugPrint('ProfileTabs: Loading posts for user ${widget.userId}');
-    
+
     // Add a small delay to ensure the ProfileBloc is fully initialized
     Future.microtask(() {
       if (mounted) {
@@ -106,7 +110,7 @@ class _ProfileTabsState extends State<ProfileTabs> {
     required String message,
   }) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -145,10 +149,15 @@ class _ProfileTabsState extends State<ProfileTabs> {
   Widget build(BuildContext context) {
     return TabBarView(
       controller: widget.tabController,
+      physics:
+          widget.disableScrolling ? const NeverScrollableScrollPhysics() : null,
       children: [
         // Posts tab
-        ProfilePostsTab(userId: widget.userId),
-        
+        ProfilePostsTab(
+          userId: widget.userId,
+          disableScrolling: widget.disableScrolling,
+        ),
+
         // Media tab
         _buildPlaceholderContent(
           context: context,
@@ -156,7 +165,7 @@ class _ProfileTabsState extends State<ProfileTabs> {
           title: 'User Media',
           message: 'This is where the user\'s photos and videos will appear.',
         ),
-        
+
         // Likes tab
         _buildPlaceholderContent(
           context: context,

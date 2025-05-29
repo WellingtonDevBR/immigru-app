@@ -18,3 +18,5 @@ trigger: always_on
 - avoid try catch - make use of more better techniques when possible like either (which we have already)
 - stop using withOpacity as it is deprected but withValues.
 - core/config will hold our enviroment variables
+- UserId refers to User.Id table and not UserProfile.Id.
+- stop using print() but instead use or logging inside core/logging, properly use in a inverse dependency injection way we have the interface and the implementation.

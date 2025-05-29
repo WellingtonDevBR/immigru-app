@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:immigru/core/cache/cache_service.dart';
 import 'package:immigru/core/cache/image_cache_service.dart';
@@ -6,8 +9,7 @@ import 'package:immigru/core/error/error_handler.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/core/network/models/failure.dart';
 import 'package:immigru/core/network/network_optimizer.dart';
-import 'package:immigru/core/network/network_optimizer_extension.dart';
-import 'package:immigru/features/home/data/datasources/post_datasource.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
 import 'package:immigru/features/home/domain/entities/author.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:immigru/features/home/domain/entities/post_media.dart';
@@ -21,16 +23,16 @@ class PostRepositoryEnhanced implements PostRepository {
   final CacheService _cacheService;
   final ImageCacheService _imageCacheService;
   final NetworkOptimizer _networkOptimizer;
-  
+
   // Cache keys
   static const String _postsListCacheKey = 'posts_list';
   static const String _personalizedPostsCacheKey = 'personalized_posts';
   static const String _postDetailsCacheKey = 'post_details';
-  
+
   // Cache durations
   static const Duration _postsListCacheDuration = Duration(minutes: 5);
   static const Duration _postDetailsCacheDuration = Duration(hours: 1);
-  
+
   /// Constructor
   PostRepositoryEnhanced({
     required PostDataSource postDataSource,
@@ -62,7 +64,7 @@ class PostRepositoryEnhanced implements PostRepository {
         // Convert media to File objects for parallel upload
         final List<File> mediaFiles = [];
         final Map<String, String> mediaNames = {};
-        
+
         for (final mediaItem in media) {
           if (!mediaItem.path.startsWith('http') &&
               File(mediaItem.path).existsSync()) {
@@ -74,26 +76,49 @@ class PostRepositoryEnhanced implements PostRepository {
             processedMedia.add(mediaItem);
           }
         }
-        
+
         // Use parallel upload for better performance
         if (mediaFiles.isNotEmpty) {
           try {
-            final uploadedUrls = await _networkOptimizer.uploadMediaInParallel(
-              mediaFiles,
-              'https://immigrove.supabase.co/storage/v1/object/public/immigrove-media', // Replace with actual endpoint
-              {'userId': userId},
-              onProgress: (sent, total) {
-                final progress = (sent / total * 100).toStringAsFixed(0);
-                _logger.d('Upload progress: $progress%', tag: 'PostRepositoryEnhanced');
-              },
+            // Generate unique file paths for each media file
+            final mediaFilesWithPaths = mediaFiles.map((file) {
+              final fileExtension = file.path.split('.').last;
+              final fileName =
+                  'post_${DateTime.now().millisecondsSinceEpoch}_${mediaFiles.indexOf(file)}.$fileExtension';
+              return MapEntry(file, '$userId/$fileName');
+            }).toList();
+
+            // Upload each file with its unique path
+            final uploadedUrls = await Future.wait(
+              mediaFilesWithPaths.map((entry) async {
+                final file = entry.key;
+                final filePath = entry.value;
+
+                _logger.d('Uploading file to path: $filePath',
+                    tag: 'PostRepositoryEnhanced');
+
+                final result =
+                    await _networkOptimizer.uploadSingleFileToSupabase(
+                  file,
+                  'post-media', // bucket name
+                  filePath, // file path within bucket
+                  onProgress: (sent, total) {
+                    final progress = (sent / total * 100).toStringAsFixed(0);
+                    _logger.d('Upload progress: $progress%',
+                        tag: 'PostRepositoryEnhanced');
+                  },
+                );
+
+                return result;
+              }),
             );
-            
+
             // Create PostMedia objects from uploaded URLs
             for (int i = 0; i < mediaFiles.length; i++) {
               if (i < uploadedUrls.length) {
                 final originalPath = mediaFiles[i].path;
                 final name = mediaNames[originalPath] ?? 'media_${i + 1}';
-                
+
                 final uploadedMedia = PostMedia(
                   id: '${DateTime.now().millisecondsSinceEpoch}_$i',
                   path: uploadedUrls[i],
@@ -101,14 +126,15 @@ class PostRepositoryEnhanced implements PostRepository {
                   type: _getMediaType(originalPath),
                   createdAt: DateTime.now(),
                 );
-                
+
                 processedMedia.add(uploadedMedia);
                 _logger.d('Media uploaded successfully: ${uploadedUrls[i]}',
                     tag: 'PostRepositoryEnhanced');
               }
             }
           } catch (e) {
-            _logger.e('Error uploading media: $e', tag: 'PostRepositoryEnhanced');
+            _logger.e('Error uploading media: $e',
+                tag: 'PostRepositoryEnhanced');
             return Left(ErrorHandler.instance.handleException(
               e,
               tag: 'PostRepositoryEnhanced',
@@ -119,6 +145,14 @@ class PostRepositoryEnhanced implements PostRepository {
       }
 
       try {
+        // Log the processed media before sending to data source
+        _logger.d('Sending ${processedMedia.length} media items to data source', 
+            tag: 'PostRepositoryEnhanced');
+        for (int i = 0; i < processedMedia.length; i++) {
+          _logger.d('Media[$i] to send: path=${processedMedia[i].path}, type=${processedMedia[i].type}', 
+              tag: 'PostRepositoryEnhanced');
+        }
+        
         // Create the post using the correct interface
         final response = await _postDataSource.createPost(
           userId: userId,
@@ -130,7 +164,34 @@ class PostRepositoryEnhanced implements PostRepository {
         // Convert the response to a Post entity
         if (response['success'] == true && response['data'] != null) {
           final postData = response['data'];
-          
+
+          // Process media items from the response if available
+          List<PostMedia>? mediaItems;
+          if (postData['Media'] != null &&
+              postData['Media'] is List &&
+              (postData['Media'] as List).isNotEmpty) {
+            _logger.d(
+                'Post has ${(postData['Media'] as List).length} media items',
+                tag: 'PostRepositoryEnhanced');
+
+            mediaItems = (postData['Media'] as List).map((mediaItem) {
+              return PostMedia(
+                id: mediaItem['Id'] ?? '',
+                path: mediaItem['MediaUrl'] ?? '',
+                name: 'media_${mediaItem['Id'] ?? ''}',
+                type: mediaItem['MediaType'] == 'video'
+                    ? MediaType.video
+                    : MediaType.image,
+                createdAt: mediaItem['CreatedAt'] != null
+                    ? DateTime.parse(mediaItem['CreatedAt'])
+                    : DateTime.now(),
+              );
+            }).toList();
+          } else if (processedMedia.isNotEmpty) {
+            // If the response doesn't include media but we uploaded some, use the processed media
+            mediaItems = processedMedia;
+          }
+
           // Create a Post entity from the response
           final post = Post(
             id: postData['Id'],
@@ -138,7 +199,9 @@ class PostRepositoryEnhanced implements PostRepository {
             userId: postData['UserId'],
             createdAt: DateTime.parse(postData['CreatedAt']),
             category: postData['Type'], // Use Type field as category
-            imageUrl: postData['MediaUrl'], // Use MediaUrl as imageUrl
+            imageUrl: postData[
+                'MediaUrl'], // Keep legacy MediaUrl as imageUrl for backward compatibility
+            media: mediaItems, // Add the media items
             likeCount: postData['LikeCount'] ?? 0,
             commentCount: postData['CommentCount'] ?? 0,
             isLiked: postData['HasUserLiked'] ?? false,
@@ -151,25 +214,27 @@ class PostRepositoryEnhanced implements PostRepository {
                   )
                 : null,
           );
-          
+
           // Prefetch author avatar for better UX
-          if (post.author?.avatarUrl != null && post.author!.avatarUrl!.isNotEmpty) {
+          if (post.author?.avatarUrl != null &&
+              post.author!.avatarUrl!.isNotEmpty) {
             _imageCacheService.prefetchImage(post.author!.avatarUrl!);
           }
-          
+
           // Prefetch post image if available
           if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
             _imageCacheService.prefetchImage(post.imageUrl!);
           }
-          
+
           // Cache the newly created post
           _cachePost(post);
-          
+
           _logger.d('Post created successfully with ID: ${post.id}',
               tag: 'PostRepositoryEnhanced');
           return Right(post);
         } else {
-          final errorMessage = response['error'] ?? 'Unknown error creating post';
+          final errorMessage =
+              response['error'] ?? 'Unknown error creating post';
           _logger.e('Error creating post: $errorMessage',
               tag: 'PostRepositoryEnhanced');
           return Left(ErrorHandler.instance.handleException(
@@ -188,7 +253,8 @@ class PostRepositoryEnhanced implements PostRepository {
         ));
       }
     } catch (e) {
-      _logger.e('Exception in post creation process: $e', tag: 'PostRepositoryEnhanced');
+      _logger.e('Exception in post creation process: $e',
+          tag: 'PostRepositoryEnhanced');
       // Use the ErrorHandler to standardize error handling
       return Left(ErrorHandler.instance.handleException(
         e,
@@ -222,26 +288,26 @@ class PostRepositoryEnhanced implements PostRepository {
         limit: limit,
         offset: offset,
       );
-      
+
       // Check cache first (only for first page and if not bypassing cache)
       if (offset == 0 && !bypassCache) {
         final cachedPosts = _cacheService.get<List<Post>>(cacheKey);
         if (cachedPosts != null) {
           _logger.d('Returning cached posts for key: $cacheKey',
               tag: 'PostRepositoryEnhanced');
-          
+
           // Prefetch images for better UX
           _prefetchPostImages(cachedPosts);
-          
+
           return Right(cachedPosts);
         }
       }
-      
+
       _logger.d('Getting posts with filter: $filter',
           tag: 'PostRepositoryEnhanced');
 
       // Use network optimizer with retry for better reliability
-      final posts = await _networkOptimizer.executePostOperation(
+      final postsData = await _networkOptimizer.executeWithRetry<List<dynamic>>(
         () => _postDataSource.getPosts(
           filter: filter,
           category: category,
@@ -253,7 +319,10 @@ class PostRepositoryEnhanced implements PostRepository {
           offset: offset,
         ),
       );
-      
+
+      // Convert the dynamic list to a list of Post entities
+      final List<Post> posts = _convertToPosts(postsData);
+
       // Cache the posts (only for first page)
       if (offset == 0) {
         _cacheService.set<List<Post>>(
@@ -263,7 +332,7 @@ class PostRepositoryEnhanced implements PostRepository {
           persistToDisk: true,
         );
       }
-      
+
       // Prefetch images for better UX
       _prefetchPostImages(posts);
 
@@ -287,33 +356,36 @@ class PostRepositoryEnhanced implements PostRepository {
     try {
       // Generate cache key
       final cacheKey = '$_personalizedPostsCacheKey:$userId:$limit:$offset';
-      
+
       // Check cache first (only for first page)
       if (offset == 0) {
         final cachedPosts = _cacheService.get<List<Post>>(cacheKey);
         if (cachedPosts != null) {
           _logger.d('Returning cached personalized posts for user: $userId',
               tag: 'PostRepositoryEnhanced');
-          
+
           // Prefetch images for better UX
           _prefetchPostImages(cachedPosts);
-          
+
           return Right(cachedPosts);
         }
       }
-      
+
       _logger.d('Getting personalized posts for user: $userId',
           tag: 'PostRepositoryEnhanced');
 
       // Use network optimizer with retry for better reliability
-      final posts = await _networkOptimizer.executePostOperation(
+      final postsData = await _networkOptimizer.executeWithRetry<List<dynamic>>(
         () => _postDataSource.getPersonalizedPosts(
           userId: userId,
           limit: limit,
           offset: offset,
         ),
       );
-      
+
+      // Convert the dynamic list to a list of Post entities
+      final List<Post> posts = _convertToPosts(postsData);
+
       // Cache the posts (only for first page)
       if (offset == 0) {
         _cacheService.set<List<Post>>(
@@ -323,7 +395,7 @@ class PostRepositoryEnhanced implements PostRepository {
           persistToDisk: true,
         );
       }
-      
+
       // Prefetch images for better UX
       _prefetchPostImages(posts);
 
@@ -355,7 +427,7 @@ class PostRepositoryEnhanced implements PostRepository {
         content: content,
         category: category,
       );
-      
+
       // Update cache with edited post
       _cachePost(post);
 
@@ -382,7 +454,7 @@ class PostRepositoryEnhanced implements PostRepository {
         postId: postId,
         userId: userId,
       );
-      
+
       // Remove post from cache if deleted successfully
       if (result) {
         _removePostFromCache(postId);
@@ -414,13 +486,13 @@ class PostRepositoryEnhanced implements PostRepository {
         userId: userId,
         like: like,
       );
-      
+
       // Clear all cached posts to ensure fresh data
       _logger.d('Clearing all post caches after like/unlike action',
           tag: 'PostRepositoryEnhanced');
       _cacheService.clearByPrefix(_postsListCacheKey);
       _cacheService.clearByPrefix(_personalizedPostsCacheKey);
-      
+
       // Remove the specific post from cache
       final cacheKey = '$_postDetailsCacheKey:$postId';
       _cacheService.remove(cacheKey);
@@ -436,7 +508,7 @@ class PostRepositoryEnhanced implements PostRepository {
       ));
     }
   }
-  
+
   // Helper method to generate cache key for posts list
   String _generatePostsListCacheKey({
     required String filter,
@@ -450,7 +522,7 @@ class PostRepositoryEnhanced implements PostRepository {
   }) {
     return '$_postsListCacheKey:$filter:${category ?? ''}:${userId ?? ''}:${immigroveId ?? ''}:$excludeCurrentUser:${currentUserId ?? ''}:$limit:$offset';
   }
-  
+
   // Helper method to cache a post
   void _cachePost(Post post) {
     final cacheKey = '$_postDetailsCacheKey:${post.id}';
@@ -461,53 +533,148 @@ class PostRepositoryEnhanced implements PostRepository {
       persistToDisk: true,
     );
   }
-  
+
   // Helper method to remove a post from cache
   void _removePostFromCache(String postId) {
     final cacheKey = '$_postDetailsCacheKey:$postId';
     _cacheService.remove(cacheKey);
-    
+
     // Also clear any list caches that might contain this post
     _cacheService.clearByPrefix(_postsListCacheKey);
     _cacheService.clearByPrefix(_personalizedPostsCacheKey);
   }
-  
+
   // Note: We no longer need to update individual posts in cache
   // Instead, we clear the entire cache to ensure fresh data is fetched
-  
+
   // Helper method to prefetch images for posts
   void _prefetchPostImages(List<Post> posts) {
-    final imagesToPrefetch = <String>[];
-    
     for (final post in posts) {
+      // Prefetch post image if available
       if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
-        imagesToPrefetch.add(post.imageUrl!);
+        _imageCacheService.prefetchImage(post.imageUrl!);
       }
-      
-      if (post.author?.avatarUrl != null && post.author!.avatarUrl!.isNotEmpty) {
-        imagesToPrefetch.add(post.author!.avatarUrl!);
+
+      // Prefetch author avatar if available
+      if (post.author?.avatarUrl != null &&
+          post.author!.avatarUrl!.isNotEmpty) {
+        _imageCacheService.prefetchImage(post.author!.avatarUrl!);
       }
-    }
-    
-    if (imagesToPrefetch.isNotEmpty) {
-      _imageCacheService.prefetchImages(imagesToPrefetch);
+
+      // Prefetch all media items
+      if (post.media != null) {
+        for (final media in post.media!) {
+          if (media.path.isNotEmpty) {
+            _imageCacheService.prefetchImage(media.path);
+          }
+        }
+      }
     }
   }
-  
+
+  // Convert dynamic data from data source to Post entities
+  List<Post> _convertToPosts(List<dynamic> postsData) {
+    final List<Post> result = [];
+
+    for (final postData in postsData) {
+      // Handle both Map and PostModel inputs
+      if (postData is Map<String, dynamic>) {
+        // Create author from data
+        Author? author;
+        if (postData['Author'] != null || (postData['UserProfile'] != null)) {
+          final authorData = postData['Author'] ?? postData['UserProfile'];
+          author = Author(
+            id: authorData['Id'] ?? authorData['UserId'] ?? '',
+            displayName:
+                authorData['Name'] ?? authorData['DisplayName'] ?? 'User',
+            avatarUrl: authorData['ProfileImageUrl'] ?? authorData['AvatarUrl'],
+          );
+        }
+
+        // Process media items
+        List<PostMedia>? mediaItems;
+        if (postData['Media'] != null &&
+            postData['Media'] is List &&
+            (postData['Media'] as List).isNotEmpty) {
+          mediaItems = (postData['Media'] as List).map((mediaItem) {
+            return PostMedia(
+              id: mediaItem['Id'] ?? '',
+              path: mediaItem['MediaUrl'] ?? '',
+              name: 'media_${mediaItem['Id'] ?? ''}',
+              type: mediaItem['MediaType'] == 'video'
+                  ? MediaType.video
+                  : MediaType.image,
+              createdAt: mediaItem['CreatedAt'] != null
+                  ? DateTime.parse(mediaItem['CreatedAt'])
+                  : DateTime.now(),
+            );
+          }).toList();
+        }
+
+        // Create Post entity
+        final post = Post(
+          id: postData['Id'],
+          content: postData['Content'],
+          userId: postData['UserId'],
+          createdAt: DateTime.parse(postData['CreatedAt']),
+          category: postData['Category'] ?? postData['Type'],
+          imageUrl: postData['ImageUrl'],
+          media: mediaItems,
+          likeCount: postData['LikeCount'] ?? 0,
+          commentCount: postData['CommentCount'] ?? 0,
+          isLiked: postData['IsLiked'] ?? postData['HasUserLiked'] ?? false,
+          hasUserComment: postData['HasUserComment'] ?? false,
+          author: author,
+        );
+
+        result.add(post);
+      } else {
+        // Handle PostModel or other model types by converting to Post entity
+        // This is a simplified conversion - extend as needed based on your model
+        final post = Post(
+          id: postData.id,
+          content: postData.content,
+          userId: postData.userId,
+          createdAt: postData.createdAt,
+          category: postData.category,
+          imageUrl: postData.imageUrl,
+          media: postData.media,
+          likeCount: postData.likeCount,
+          commentCount: postData.commentCount ?? 0,
+          isLiked: postData.isLiked,
+          hasUserComment: postData.hasUserComment ?? false,
+          author: postData.userName != null
+              ? Author(
+                  id: postData.userId,
+                  displayName: postData.userName,
+                  avatarUrl: postData.userAvatar,
+                )
+              : null,
+        );
+
+        result.add(post);
+      }
+    }
+
+    return result;
+  }
+
   // Helper method to determine media type from file path
   MediaType _getMediaType(String filePath) {
     final extension = path.extension(filePath).toLowerCase();
-    
+
     // Check if the file is an image
-    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic'].contains(extension)) {
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic']
+        .contains(extension)) {
       return MediaType.image;
     }
-    
+
     // Check if the file is a video
-    if (['.mp4', '.mov', '.avi', '.wmv', '.flv', '.webm', '.mkv', '.3gp'].contains(extension)) {
+    if (['.mp4', '.mov', '.avi', '.wmv', '.flv', '.webm', '.mkv', '.3gp']
+        .contains(extension)) {
       return MediaType.video;
     }
-    
+
     // Default to image if unknown
     return MediaType.image;
   }

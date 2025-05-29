@@ -1,7 +1,7 @@
 import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'post_datasource.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
 
 /// Extension methods for PostDataSource to handle efficient refreshing
 extension PostDataSourceRefreshExtensions on PostDataSource {

@@ -3,7 +3,9 @@ import 'package:immigru/core/cache/cache_service.dart';
 import 'package:immigru/core/cache/image_cache_service.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/core/network/network_optimizer.dart';
-import 'package:immigru/features/home/data/datasources/post_datasource.dart';
+import 'package:immigru/core/network/api_client.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
+import 'package:immigru/features/home/data/datasources/post_data_source_impl.dart';
 import 'package:immigru/features/home/data/repositories/post_repository_enhanced.dart';
 import 'package:immigru/features/home/domain/repositories/post_repository.dart';
 import 'package:immigru/features/home/domain/usecases/create_post_usecase.dart';
@@ -21,8 +23,9 @@ class PostModule {
   static void register(GetIt locator) {
     // Data sources
     locator.registerLazySingleton<PostDataSource>(
-      () => PostDataSource(
-        supabaseClient: Supabase.instance.client,
+      () => PostDataSourceImpl(
+        supabase: Supabase.instance.client,
+        apiClient: locator<ApiClient>(),
       ),
     );
 

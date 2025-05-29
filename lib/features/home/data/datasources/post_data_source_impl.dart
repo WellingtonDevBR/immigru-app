@@ -2,79 +2,129 @@ import 'package:immigru/features/home/data/models/post_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:immigru/core/network/api_client.dart';
 import 'package:immigru/core/error/exceptions.dart';
-
-/// Interface for post data source operations
-abstract class PostDataSource {
-  /// Get posts for the home feed
-  ///
-  /// [filter] - Filter type: 'all', 'user', 'following', 'my-immigroves'
-  /// [category] - Optional category filter
-  /// [userId] - Optional user ID to filter posts by
-  /// [immigroveId] - Optional ImmiGrove ID to filter posts by
-  /// [excludeCurrentUser] - Whether to exclude the current user's posts
-  /// [currentUserId] - ID of the current user (needed for some filters)
-  /// [limit] - Maximum number of posts to return
-  /// [offset] - Pagination offset
-  Future<List<PostModel>> getPosts({
-    String filter = 'all',
-    String? category,
-    String? userId,
-    String? immigroveId,
-    bool excludeCurrentUser = false,
-    String? currentUserId,
-    int limit = 20,
-    int offset = 0,
-  });
-
-  /// Get personalized posts for the user
-  Future<List<PostModel>> getPersonalizedPosts({
-    required String userId,
-    int limit = 20,
-    int offset = 0,
-  });
-
-  /// Create a new post
-  Future<PostModel> createPost({
-    required String content,
-    required String userId,
-    required String category,
-    String? imageUrl,
-  });
-
-  /// Edit an existing post
-  /// Only the post author can edit their own posts
-  Future<PostModel> editPost({
-    required String postId,
-    required String userId,
-    required String content,
-    required String category,
-  });
-
-  /// Delete a post (soft delete by setting DeletedAt)
-  /// Only the post author can delete their own posts
-  Future<bool> deletePost({
-    required String postId,
-    required String userId,
-  });
-
-  /// Like or unlike a post
-  Future<bool> likePost({
-    required String postId,
-    required String userId,
-    required bool like,
-  });
-}
+import 'package:immigru/core/logging/unified_logger.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
+import 'package:immigru/features/home/data/models/post_media_model.dart';
+import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
+import 'package:immigru/features/home/domain/entities/post.dart';
 
 /// Implementation of PostDataSource using Supabase
 class PostDataSourceImpl implements PostDataSource {
   final SupabaseClient supabase;
   final ApiClient apiClient;
+  final UnifiedLogger _logger = UnifiedLogger();
 
   /// Create a new PostDataSourceImpl
   PostDataSourceImpl({
     required this.supabase,
     required this.apiClient,
   });
+
+  @override
+  Future<void> invalidatePostCache(String postId) async {
+    try {
+      _logger.d('Invalidating cache for post: $postId',
+          tag: 'PostDataSourceImpl');
+
+      // Force a direct database refresh to clear any cached data
+      await supabase
+          .from('Post')
+          .select('*')
+          .eq('Id', postId)
+          .limit(1)
+          .single();
+
+      // Also refresh the like and comment counts
+      await supabase
+          .from('PostLike')
+          .select('count')
+          .eq('PostId', postId)
+          .count();
+
+      await supabase
+          .from('PostComment')
+          .select('count')
+          .eq('PostId', postId)
+          .count();
+
+      _logger.d('Cache invalidated for post: $postId',
+          tag: 'PostDataSourceImpl');
+    } catch (e) {
+      _logger.e('Error invalidating post cache: $e', tag: 'PostDataSourceImpl');
+      // Don't throw an exception here, as this is a non-critical operation
+    }
+  }
+
+  @override
+  Future<int> checkForNewPosts({
+    required DateTime since,
+    String filter = 'all',
+    String? category,
+    String? userId,
+    String? immigroveId,
+    bool excludeCurrentUser = false,
+    String? currentUserId,
+  }) async {
+    try {
+      _logger.d('Checking for new posts since ${since.toIso8601String()}',
+          tag: 'PostDataSourceImpl');
+
+      // Build query to count posts newer than the given timestamp
+      var query = supabase
+          .from('Post')
+          .select('count')
+          .filter('CreatedAt', 'gt', since.toIso8601String())
+          .filter('DeletedAt', 'is', null);
+
+      // Apply filters based on parameters (same logic as getPosts)
+      if (filter == 'user' && userId != null) {
+        query = query.eq('UserId', userId);
+      } else if (filter == 'following' && currentUserId != null) {
+        // For the 'following' filter, we need to get the users that the current user is following
+        final followingResponse = await supabase
+            .from('UserConnection')
+            .select('ReceiverId')
+            .eq('SenderId', currentUserId)
+            .eq('Status', 'accepted');
+
+        final followingIds = (followingResponse as List)
+            .map((item) => item['ReceiverId'] as String)
+            .toList();
+
+        if (followingIds.isEmpty) {
+          return 0; // No following users, so no posts
+        }
+
+        // Use 'in' operator correctly for Supabase query
+        query = query.filter('UserId', 'in', followingIds);
+      } else if (filter == 'immigrove' && immigroveId != null) {
+        query = query.eq('ImmigroveId', immigroveId);
+      }
+
+      // Apply category filter if provided
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('Type', category);
+      }
+
+      // Apply user filter if requested
+      if (excludeCurrentUser && currentUserId != null) {
+        query = query.neq('UserId', currentUserId);
+      }
+
+      // Execute the count query
+      final response = await query.count();
+      final newPostsCount = response.count;
+
+      _logger.d(
+          'Found $newPostsCount new posts since ${since.toIso8601String()}',
+          tag: 'PostDataSourceImpl');
+
+      return newPostsCount;
+    } catch (e) {
+      _logger.e('Error checking for new posts: $e', tag: 'PostDataSourceImpl');
+      return 0; // Return 0 on error to avoid false positives
+    }
+  }
 
   @override
   Future<List<PostModel>> getPosts({
@@ -89,12 +139,14 @@ class PostDataSourceImpl implements PostDataSource {
   }) async {
     try {
       // Start with a base query
-      var query = supabase.from('Post').select('*').filter('DeletedAt', 'is', null);
+      var query =
+          supabase.from('Post').select('*').filter('DeletedAt', 'is', null);
 
       // Get current user ID if needed but not provided
       String? userIdForFiltering = userId;
-      String? currentUserIdForFiltering = currentUserId; // This is the parameter passed to the method
-      
+      String? currentUserIdForFiltering =
+          currentUserId; // This is the parameter passed to the method
+
       // Apply filters based on parameters
       if (filter == 'user' && userIdForFiltering != null) {
         query = query.eq('UserId', userIdForFiltering);
@@ -121,7 +173,8 @@ class PostDataSourceImpl implements PostDataSource {
           // If not following anyone, return empty list
           return [];
         }
-      } else if (filter == 'my-immigroves' && currentUserIdForFiltering != null) {
+      } else if (filter == 'my-immigroves' &&
+          currentUserIdForFiltering != null) {
         // Get the list of ImmiGroves that the current user is a member of
         final membershipResponse = await supabase
             .from('ImmiGroveMember')
@@ -148,7 +201,7 @@ class PostDataSourceImpl implements PostDataSource {
 
       // Apply category filter if provided
       if (category != null && category.isNotEmpty) {
-        query = query.eq('Category', category);
+        query = query.eq('Type', category);
       }
 
       // Apply ImmiGrove filter if provided
@@ -202,7 +255,8 @@ class PostDataSourceImpl implements PostDataSource {
 
       // Get the current user ID for determining if the post is liked by the current user
       final currentUser = supabase.auth.currentUser;
-      final String? loggedInUserId = currentUser?.id; // Renamed to avoid conflict with parameter
+      final String? loggedInUserId =
+          currentUser?.id; // Renamed to avoid conflict with parameter
 
       // Get like counts and check if the current user has liked each post
       final List<PostModel> posts = [];
@@ -212,10 +266,8 @@ class PostDataSourceImpl implements PostDataSource {
         final userProfile = userProfilesMap[userId];
 
         // Get like count for this post
-        final response = await supabase
-            .from('PostLike')
-            .select()
-            .eq('PostId', postId);
+        final response =
+            await supabase.from('PostLike').select().eq('PostId', postId);
 
         final likeCount = response.length;
 
@@ -230,19 +282,40 @@ class PostDataSourceImpl implements PostDataSource {
           isLikedByCurrentUser = likeResponse.isNotEmpty;
         }
 
+        // Get media attachments for this post
+        final mediaResponse = await supabase
+            .from('PostMedia')
+            .select('*')
+            .eq('PostId', postId)
+            .order('Position');
+
+        final List<Map<String, dynamic>> media = mediaResponse.isNotEmpty
+            ? List<Map<String, dynamic>>.from(mediaResponse)
+            : [];
+
+        // Convert media attachments to PostMediaModel objects
+        final List<PostMediaModel> mediaAttachments = media.map((mediaItem) {
+          return PostMediaModel.fromJson(mediaItem);
+        }).toList();
+
         // Create a PostModel with all the data
         final postModel = PostModel(
           id: postId,
-          content: post['Content'],
-          category: post['Category'],
+          content: post['Content'] as String? ?? '',
+          category: post['Type'] as String? ?? '',
           userId: userId,
-          imageUrl: post['ImageUrl'],
-          createdAt: DateTime.parse(post['CreatedAt']),
+          imageUrl: post['MediaUrl'] as String? ?? '',
+          // Always include media attachments if they exist
+          media: mediaAttachments,
+          createdAt: DateTime.parse(post['CreatedAt'] as String),
           likeCount: likeCount,
           isLiked: isLikedByCurrentUser,
-          userName: userProfile?['DisplayName'] ?? 'User',
-          userAvatar: userProfile?['AvatarUrl'],
+          userName: userProfile?['DisplayName'] as String? ?? 'User',
+          userAvatar: userProfile?['AvatarUrl'] as String? ?? '',
         );
+        
+        // Log media information for debugging
+        _logger.d('Post $postId has ${mediaAttachments.length} media attachments', tag: 'PostDataSourceImpl');
 
         posts.add(postModel);
       }
@@ -263,13 +336,12 @@ class PostDataSourceImpl implements PostDataSource {
       // Get the user's interests
       final userInterestsResponse = await supabase
           .from('UserInterest')
-          .select('Category')
+          .select('Type')
           .eq('UserId', userId);
 
       // Extract categories from the response
-      final List<String> userInterests = userInterestsResponse
-          .map((item) => item['Category'] as String)
-          .toList();
+      final List<String> userInterests =
+          userInterestsResponse.map((item) => item['Type'] as String).toList();
 
       // If the user has no interests, return regular posts
       if (userInterests.isEmpty) {
@@ -277,14 +349,15 @@ class PostDataSourceImpl implements PostDataSource {
       }
 
       // Get posts matching the user's interests
-      var query = supabase.from('Post').select('*').filter('DeletedAt', 'is', null);
+      var query =
+          supabase.from('Post').select('*').filter('DeletedAt', 'is', null);
 
       // Start with the first interest
-      query = query.eq('Category', userInterests[0]);
+      query = query.eq('Type', userInterests[0]);
 
       // Add OR conditions for the rest of the interests
       for (int i = 1; i < userInterests.length; i++) {
-        query = query.or('Category.eq.${userInterests[i]}');
+        query = query.or('Type.eq.${userInterests[i]}');
       }
 
       // Apply pagination and ordering
@@ -334,10 +407,8 @@ class PostDataSourceImpl implements PostDataSource {
         final userProfile = userProfilesMap[postUserId];
 
         // Get like count for this post
-        final response = await supabase
-            .from('PostLike')
-            .select()
-            .eq('PostId', postId);
+        final response =
+            await supabase.from('PostLike').select().eq('PostId', postId);
 
         final likeCount = response.length;
 
@@ -349,18 +420,35 @@ class PostDataSourceImpl implements PostDataSource {
             .eq('UserId', userId);
         final isLikedByCurrentUser = likeResponse.isNotEmpty;
 
+        // Get media attachments for this post
+        final mediaResponse = await supabase
+            .from('PostMedia')
+            .select('*')
+            .eq('PostId', postId)
+            .order('Position');
+
+        final List<Map<String, dynamic>> media = mediaResponse.isNotEmpty
+            ? List<Map<String, dynamic>>.from(mediaResponse)
+            : [];
+
+        // Convert media attachments to PostMediaModel objects
+        final List<PostMediaModel> mediaAttachments = media.map((mediaItem) {
+          return PostMediaModel.fromJson(mediaItem);
+        }).toList();
+
         // Create a PostModel with all the data
         final postModel = PostModel(
           id: postId,
-          content: post['Content'],
-          category: post['Category'],
+          content: post['Content'] as String? ?? '',
+          category: post['Type'] as String? ?? '',
           userId: postUserId,
-          imageUrl: post['ImageUrl'],
-          createdAt: DateTime.parse(post['CreatedAt']),
+          imageUrl: post['MediaUrl'] as String? ?? '',
+          media: mediaAttachments.isNotEmpty ? mediaAttachments : null,
+          createdAt: DateTime.parse(post['CreatedAt'] as String),
           likeCount: likeCount,
           isLiked: isLikedByCurrentUser,
-          userName: userProfile?['DisplayName'] ?? 'User',
-          userAvatar: userProfile?['AvatarUrl'],
+          userName: userProfile?['DisplayName'] as String? ?? 'User',
+          userAvatar: userProfile?['AvatarUrl'] as String? ?? '',
         );
 
         posts.add(postModel);
@@ -373,13 +461,23 @@ class PostDataSourceImpl implements PostDataSource {
   }
 
   @override
-  Future<PostModel> createPost({
+  Future<Map<String, dynamic>> createPost({
     required String content,
     required String userId,
-    required String category,
+    required String type,
+    List<PostMedia>? media,
     String? imageUrl,
   }) async {
     try {
+      _logger.d('Creating post with content: $content, userId: $userId, type: $type', tag: 'PostDataSourceImpl');
+      if (media != null) {
+        _logger.d('Post has ${media.length} media items', tag: 'PostDataSourceImpl');
+        for (var i = 0; i < media.length; i++) {
+          final item = media[i];
+          _logger.d('Media[$i]: path=${item.path}, type=${item.type}', tag: 'PostDataSourceImpl');
+        }
+      }
+      
       // Get the user profile data for the post author
       final userProfileResponse = await supabase
           .from('UserProfile')
@@ -391,32 +489,90 @@ class PostDataSourceImpl implements PostDataSource {
       final postData = {
         'Content': content,
         'UserId': userId,
-        'Category': category,
-        'ImageUrl': imageUrl,
+        'Type': type, // Using the correct column name 'Type' instead of 'Category'
+        'MediaUrl': imageUrl, // Using the correct column name 'MediaUrl' instead of 'ImageUrl'
         // CreatedAt will be automatically set by the database
       };
 
-      final response = await supabase
-          .from('Post')
-          .insert(postData)
-          .select()
-          .single();
+      final response =
+          await supabase.from('Post').insert(postData).select().single();
+      
+      final postId = response['Id'] as String;
+      _logger.d('Post created with ID: $postId', tag: 'PostDataSourceImpl');
 
-      // Create a PostModel from the response
-      final postModel = PostModel(
-        id: response['Id'],
-        content: response['Content'],
-        category: response['Category'],
-        userId: userId,
-        imageUrl: response['ImageUrl'],
-        createdAt: DateTime.parse(response['CreatedAt']),
-        likeCount: 0,
-        isLiked: false,
-        userName: userProfileResponse['DisplayName'],
-        userAvatar: userProfileResponse['AvatarUrl'],
-      );
+      // If we have media items, insert them into the PostMedia table
+      List<Map<String, dynamic>> mediaItems = [];
+      if (media != null && media.isNotEmpty) {
+        _logger.d('Processing ${media.length} media items for post $postId', tag: 'PostDataSourceImpl');
+        
+        // Create a batch of media items to insert
+        final List<Map<String, dynamic>> mediaDataBatch = [];
+        
+        for (int i = 0; i < media.length; i++) {
+          final mediaItem = media[i];
+          final mediaType = mediaItem.type.toString().split('.').last.toLowerCase();
+          
+          _logger.d('Preparing media item $i: ${mediaItem.path}, type: $mediaType', tag: 'PostDataSourceImpl');
+          
+          final mediaData = {
+            'PostId': postId,
+            'MediaUrl': mediaItem.path,
+            'MediaType': mediaType,
+            'Position': i,
+            // CreatedAt will be automatically set by the database
+          };
+          
+          _logger.d('Adding media data to batch: $mediaData', tag: 'PostDataSourceImpl');
+          mediaDataBatch.add(mediaData);
+        }
+        
+        _logger.d('Final mediaDataBatch size: ${mediaDataBatch.length}', tag: 'PostDataSourceImpl');
+        
+        // Insert all media items in a single batch operation
+        if (mediaDataBatch.isNotEmpty) {
+          _logger.d('Inserting ${mediaDataBatch.length} media items in batch', tag: 'PostDataSourceImpl');
+          
+          try {
+            final mediaResponse = await supabase
+                .from('PostMedia')
+                .insert(mediaDataBatch)
+                .select();
+            
+            _logger.d('Successfully inserted ${mediaResponse.length} media items', tag: 'PostDataSourceImpl');
+            
+            // Log each inserted media item
+            for (int i = 0; i < mediaResponse.length; i++) {
+              _logger.d('Inserted media[$i]: ${mediaResponse[i]}', tag: 'PostDataSourceImpl');
+            }
+            
+            // Add all inserted media items to the result
+            for (final item in mediaResponse) {
+              mediaItems.add(item);
+            }
+          } catch (e) {
+            _logger.e('Error inserting media batch: $e', tag: 'PostDataSourceImpl');
+            // Continue with the post creation even if media insertion fails
+            // This way we at least create the post, even without media
+          }
+        }
+      }
 
-      return postModel;
+      // Create a response map with post and media data
+      final result = {
+        'success': true,
+        'data': {
+          ...response,
+          'Media': mediaItems,
+          'Author': {
+            'Id': userId,
+            'Name': userProfileResponse['DisplayName'] as String? ?? 'User',
+            'ProfileImageUrl':
+                userProfileResponse['AvatarUrl'] as String? ?? '',
+          }
+        }
+      };
+
+      return result;
     } catch (e) {
       throw Exception('Failed to create post: $e');
     }
@@ -441,7 +597,7 @@ class PostDataSourceImpl implements PostDataSource {
       // Update the post
       final postData = {
         'Content': content,
-        'Category': category,
+        'Type': category,
         'UpdatedAt': DateTime.now().toIso8601String(),
       };
 
@@ -461,10 +617,8 @@ class PostDataSourceImpl implements PostDataSource {
           .single();
 
       // Get like count for this post
-      final likeResponse = await supabase
-          .from('PostLike')
-          .select()
-          .eq('PostId', postId);
+      final likeResponse =
+          await supabase.from('PostLike').select().eq('PostId', postId);
 
       final likeCount = likeResponse.length;
 
@@ -480,7 +634,7 @@ class PostDataSourceImpl implements PostDataSource {
       final postModel = PostModel(
         id: response['Id'],
         content: response['Content'],
-        category: response['Category'],
+        category: response['Type'],
         userId: userId,
         imageUrl: response['ImageUrl'],
         createdAt: DateTime.parse(response['CreatedAt']),
@@ -521,6 +675,102 @@ class PostDataSourceImpl implements PostDataSource {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  @override
+  Future<List<Post>> updatePostCounts({
+    required List<Post> posts,
+    required String currentUserId,
+  }) async {
+    try {
+      _logger.d('Updating counts for ${posts.length} posts',
+          tag: 'PostDataSourceImpl');
+
+      final updatedPosts = <Post>[];
+
+      // Process posts in batches to avoid overwhelming the database
+      // This is more efficient than updating each post individually
+      final batches = <List<Post>>[];
+      for (var i = 0; i < posts.length; i += 5) {
+        final end = (i + 5 < posts.length) ? i + 5 : posts.length;
+        batches.add(posts.sublist(i, end));
+      }
+
+      for (final batch in batches) {
+        final batchFutures = <Future<Post>>[];
+
+        for (final post in batch) {
+          batchFutures.add(_updateSinglePostCounts(post, currentUserId));
+        }
+
+        // Wait for all futures in this batch to complete
+        final batchResults = await Future.wait(batchFutures);
+        updatedPosts.addAll(batchResults);
+      }
+
+      _logger.d('Successfully updated counts for ${updatedPosts.length} posts',
+          tag: 'PostDataSourceImpl');
+
+      return updatedPosts;
+    } catch (e) {
+      _logger.e('Error updating post counts: $e', tag: 'PostDataSourceImpl');
+      return posts; // Return original posts on error
+    }
+  }
+
+  /// Helper method to update counts for a single post
+  Future<Post> _updateSinglePostCounts(Post post, String currentUserId) async {
+    try {
+      // Get like count
+      final likeCountResponse = await supabase
+          .from('PostLike')
+          .select('count')
+          .eq('PostId', post.id)
+          .count();
+
+      // Get comment count
+      final commentCountResponse = await supabase
+          .from('PostComment')
+          .select('count')
+          .eq('PostId', post.id)
+          .count();
+
+      // Check if user has liked the post
+      final isLikedResponse = await supabase
+          .from('PostLike')
+          .select()
+          .eq('PostId', post.id)
+          .eq('UserId', currentUserId)
+          .maybeSingle();
+
+      // Check if user has commented on the post
+      final hasCommentedResponse = await supabase
+          .from('PostComment')
+          .select()
+          .eq('PostId', post.id)
+          .eq('UserId', currentUserId)
+          .maybeSingle();
+
+      // Create updated post with new counts
+      return Post(
+        id: post.id,
+        content: post.content,
+        category: post.category,
+        userId: post.userId,
+        imageUrl: post.imageUrl,
+        createdAt: post.createdAt,
+        likeCount: likeCountResponse.count,
+        commentCount: commentCountResponse.count,
+        isLiked: isLikedResponse != null,
+        hasUserComment: hasCommentedResponse != null,
+        author: post.author,
+        media: post.media,
+      );
+    } catch (e) {
+      _logger.e('Error updating counts for post ${post.id}: $e',
+          tag: 'PostDataSourceImpl');
+      return post; // Return original post on error
     }
   }
 

@@ -46,6 +46,10 @@ class ProfileState extends Equatable {
   
   /// Whether there are more posts to load
   final bool hasMorePosts;
+  
+  /// Flag to indicate that profile scrolling should be enabled
+  /// This is used when double pull-to-refresh is detected in posts tab
+  final bool shouldEnableProfileScrolling;
 
   /// Constructor
   const ProfileState({
@@ -63,6 +67,7 @@ class ProfileState extends Equatable {
     this.isPostsLoading = false,
     this.postsError,
     this.hasMorePosts = true,
+    this.shouldEnableProfileScrolling = false,
   });
 
   /// Initial state
@@ -73,22 +78,23 @@ class ProfileState extends Equatable {
     UserProfile? profile,
     bool? isLoading,
     Failure? error,
+    bool clearError = false,
     Map<String, int>? stats,
     bool? isStatsLoading,
     Failure? statsError,
+    bool clearStatsError = false,
     bool? isUploadingAvatar,
     Failure? avatarUploadError,
+    bool clearAvatarUploadError = false,
     bool? isUploadingCover,
     Failure? coverUploadError,
+    bool clearCoverUploadError = false,
     List<Post>? userPosts,
     bool? isPostsLoading,
     Failure? postsError,
-    bool? hasMorePosts,
-    bool clearError = false,
-    bool clearStatsError = false,
-    bool clearAvatarUploadError = false,
-    bool clearCoverUploadError = false,
     bool clearPostsError = false,
+    bool? hasMorePosts,
+    bool? shouldEnableProfileScrolling,
   }) {
     return ProfileState(
       profile: profile ?? this.profile,
@@ -103,8 +109,9 @@ class ProfileState extends Equatable {
       coverUploadError: clearCoverUploadError ? null : coverUploadError ?? this.coverUploadError,
       userPosts: userPosts ?? this.userPosts,
       isPostsLoading: isPostsLoading ?? this.isPostsLoading,
-      postsError: clearPostsError ? null : postsError ?? this.postsError,
+      postsError: clearPostsError ? null : (postsError ?? this.postsError),
       hasMorePosts: hasMorePosts ?? this.hasMorePosts,
+      shouldEnableProfileScrolling: shouldEnableProfileScrolling ?? this.shouldEnableProfileScrolling,
     );
   }
 
@@ -124,5 +131,6 @@ class ProfileState extends Equatable {
     isPostsLoading,
     postsError,
     hasMorePosts,
+    shouldEnableProfileScrolling,
   ];
 }

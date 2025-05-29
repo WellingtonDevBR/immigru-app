@@ -96,10 +96,21 @@ class _OptimizedPostFeedState extends State<OptimizedPostFeed> {
     final imagesToPrefetch = <String>[];
     
     for (final post in visiblePosts) {
+      // Handle main post image
       if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
         imagesToPrefetch.add(post.imageUrl!);
       }
       
+      // Handle post media attachments
+      if (post.media != null && post.media!.isNotEmpty) {
+        for (final media in post.media!) {
+          if (media.path.isNotEmpty) {
+            imagesToPrefetch.add(media.path);
+          }
+        }
+      }
+      
+      // Handle author avatar
       if (post.author?.avatarUrl != null && post.author!.avatarUrl!.isNotEmpty) {
         imagesToPrefetch.add(post.author!.avatarUrl!);
       }

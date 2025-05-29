@@ -19,6 +19,7 @@ class AuthorModel extends Author {
   }
 
   /// Convert AuthorModel to JSON
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
