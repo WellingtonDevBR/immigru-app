@@ -309,7 +309,7 @@ class MediaSelectionWidget extends StatelessWidget {
       );
 
       // Use the image picker to select multiple images
-      final List<XFile>? pickedFiles = await _imagePicker.pickMultiImage(
+      final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(
         imageQuality: 70, // Slightly lower quality to reduce file size
         maxWidth: 1200, // Limit max dimensions to avoid huge images
         maxHeight: 1200,

@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:immigru/core/storage/i_supabase_storage.dart';
 import 'package:immigru/shared/theme/app_colors.dart';
+import 'package:immigru/shared/theme/theme_provider.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_event.dart';
 import 'package:immigru/features/profile/presentation/screens/profile_screen.dart';
+import 'package:provider/provider.dart';
 
 /// App drawer widget that provides navigation to different sections of the app
 class AppDrawer extends StatelessWidget {
@@ -128,6 +130,9 @@ class AppDrawer extends StatelessWidget {
                   // TODO: Navigate to settings screen
                 },
               ),
+              
+              // Dark/Light mode toggle
+              _buildThemeToggle(context),
               
               // Help & Support
               _buildDrawerItem(
@@ -281,6 +286,29 @@ class AppDrawer extends StatelessWidget {
       leading: Icon(icon),
       title: Text(title),
       onTap: onTap,
+    );
+  }
+  
+  /// Build a theme toggle switch for dark/light mode
+  Widget _buildThemeToggle(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    return ListTile(
+      leading: Icon(
+        isDarkMode ? Icons.dark_mode : Icons.light_mode,
+      ),
+      title: const Text('Dark Mode'),
+      trailing: Switch(
+        value: isDarkMode,
+        onChanged: (value) {
+          themeProvider.toggleTheme();
+        },
+        activeColor: Theme.of(context).colorScheme.primary,
+      ),
+      onTap: () {
+        themeProvider.toggleTheme();
+      },
     );
   }
 }

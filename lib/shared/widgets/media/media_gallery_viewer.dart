@@ -11,7 +11,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 class MediaGalleryViewer extends StatefulWidget {
   /// List of media items to display in the gallery
   final List<PostMedia> mediaItems;
-  
+
   /// Initial page index to show
   final int initialIndex;
 
@@ -35,7 +35,7 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
-    
+
     // Use a system UI overlay style that works well with dark backgrounds
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -45,8 +45,9 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
-    
-    _logger.d('Initialized gallery viewer with ${widget.mediaItems.length} items, starting at index $_currentIndex', 
+
+    _logger.d(
+        'Initialized gallery viewer with ${widget.mediaItems.length} items, starting at index $_currentIndex',
         tag: 'MediaGalleryViewer');
   }
 
@@ -82,10 +83,11 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
               setState(() {
                 _currentIndex = index;
               });
-              _logger.d('Gallery page changed to index $index', tag: 'MediaGalleryViewer');
+              _logger.d('Gallery page changed to index $index',
+                  tag: 'MediaGalleryViewer');
             },
           ),
-          
+
           // Close button
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
@@ -97,7 +99,7 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
               },
             ),
           ),
-          
+
           // Page indicator
           if (widget.mediaItems.length > 1)
             Positioned(
@@ -106,9 +108,10 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
               right: 0,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -125,12 +128,13 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
 
   PhotoViewGalleryPageOptions _buildItem(BuildContext context, int index) {
     final media = widget.mediaItems[index];
-    
-    _logger.d('Building gallery item at index $index: ${media.path}', tag: 'MediaGalleryViewer');
-    
+
+    _logger.d('Building gallery item at index $index: ${media.path}',
+        tag: 'MediaGalleryViewer');
+
     // Handle different types of media paths
     String mediaPath = media.path;
-    
+
     // For video thumbnails or unsupported media types, show a placeholder
     if (media.type == MediaType.video) {
       return PhotoViewGalleryPageOptions.customChild(
@@ -142,7 +146,7 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
               const SizedBox(height: 16),
               Text(
                 'Video playback not supported in gallery view',
-                style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
             ],
           ),
@@ -151,7 +155,7 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
         maxScale: PhotoViewComputedScale.covered * 2,
       );
     }
-    
+
     // For images, use PhotoView for zooming capabilities
     return PhotoViewGalleryPageOptions(
       imageProvider: NetworkImage(mediaPath),
@@ -160,7 +164,8 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
       maxScale: PhotoViewComputedScale.covered * 3,
       heroAttributes: PhotoViewHeroAttributes(tag: 'media_${media.id}'),
       errorBuilder: (context, error, stackTrace) {
-        _logger.e('Error loading image in gallery: $error', tag: 'MediaGalleryViewer');
+        _logger.e('Error loading image in gallery: $error',
+            tag: 'MediaGalleryViewer');
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -169,7 +174,7 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
               const SizedBox(height: 16),
               Text(
                 'Failed to load image',
-                style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
             ],
           ),
@@ -180,9 +185,10 @@ class _MediaGalleryViewerState extends State<MediaGalleryViewer> {
 }
 
 /// Helper function to open the media gallery viewer
-void showMediaGallery(BuildContext context, List<PostMedia> mediaItems, {int initialIndex = 0}) {
+void showMediaGallery(BuildContext context, List<PostMedia> mediaItems,
+    {int initialIndex = 0}) {
   if (mediaItems.isEmpty) return;
-  
+
   Navigator.of(context).push(
     MaterialPageRoute(
       builder: (context) => MediaGalleryViewer(

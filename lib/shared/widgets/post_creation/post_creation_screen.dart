@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -72,7 +71,6 @@ class _PostCreationScreenState extends State<PostCreationScreen>
 
   late AnimationController _animationController;
   bool _showSuccessAnimation = false;
-  final bool _hasAutoFocused = false;
   final TextEditingController _textController = TextEditingController();
 
   @override
@@ -176,7 +174,10 @@ class _PostCreationScreenState extends State<PostCreationScreen>
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -352,7 +353,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
       }
     }
   }
-  
+
   /// Build a media icon button for the bottom action bar
   Widget _buildMediaIconButton({
     required IconData icon,
@@ -444,8 +445,6 @@ class _PostCreationScreenState extends State<PostCreationScreen>
       builder: (context, state) {
         return KeyboardVisibilityBuilder(
           builder: (context, isKeyboardVisible) {
-            final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
             return GestureDetector(
               // Dismiss keyboard when tapping outside the text field
               onTap: () => FocusScope.of(context).unfocus(),
@@ -480,9 +479,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                         Container(
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                           decoration: BoxDecoration(
-                            color: isDarkMode 
-                                ? Colors.black 
-                                : Colors.white,
+                            color: isDarkMode ? Colors.black : Colors.white,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.05),
@@ -508,7 +505,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                   borderRadius: BorderRadius.circular(2.5),
                                 ),
                               ),
-                              
+
                               // User info row
                               Row(
                                 children: [
@@ -517,12 +514,14 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.3),
                                         width: 2,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                          color: theme.colorScheme.primary
+                                              .withValues(alpha: 0.1),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         ),
@@ -530,14 +529,19 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                     ),
                                     child: CircleAvatar(
                                       radius: 20,
-                                      backgroundImage: widget.user.photoUrl != null &&
-                                              widget.user.photoUrl!.startsWith('http')
+                                      backgroundImage: widget.user.photoUrl !=
+                                                  null &&
+                                              widget.user.photoUrl!
+                                                  .startsWith('http')
                                           ? NetworkImage(widget.user.photoUrl!)
                                           : null,
-                                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withValues(alpha: 0.2),
                                       child: widget.user.photoUrl == null
                                           ? Text(
-                                              widget.user.displayName?[0].toUpperCase() ?? 'U',
+                                              widget.user.displayName?[0]
+                                                      .toUpperCase() ??
+                                                  'U',
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -547,18 +551,21 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  
+
                                   // User name and posting info
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           widget.user.displayName ?? 'User',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
-                                            color: isDarkMode ? Colors.white : Colors.black87,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black87,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
@@ -566,13 +573,15 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                           'Posting to your profile',
                                           style: TextStyle(
                                             fontSize: 13,
-                                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                            color: isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600],
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  
+
                                   // Character counter
                                   CharacterCounter(text: state.content),
                                 ],
@@ -580,7 +589,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                             ],
                           ),
                         ),
-                        
+
                         // Content area (expandable)
                         Expanded(
                           child: Container(
@@ -593,11 +602,13 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                 children: [
                                   // Text input field
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 16, 16, 8),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: isDarkMode 
-                                            ? (Colors.grey[900] ?? Colors.black).withValues(alpha: 0.5) 
+                                        color: isDarkMode
+                                            ? (Colors.grey[900] ?? Colors.black)
+                                                .withValues(alpha: 0.5)
                                             : (Colors.grey[50] ?? Colors.white),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -605,10 +616,12 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                         controller: _textController,
                                         focusNode: _focusNode,
                                         maxLines: null,
-                                        minLines: 5,
+                                        minLines: 3, // Reduced from 5 to make it more compact
                                         maxLength: 500,
-                                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                                        textCapitalization: TextCapitalization.sentences,
+                                        maxLengthEnforcement:
+                                            MaxLengthEnforcement.enforced,
+                                        textCapitalization:
+                                            TextCapitalization.sentences,
                                         textDirection: TextDirection.ltr,
                                         onChanged: (value) {
                                           context.read<PostCreationBloc>().add(
@@ -616,32 +629,39 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                               );
                                         },
                                         style: TextStyle(
-                                          fontSize: 16,
-                                          color: isDarkMode ? Colors.white : Colors.black87,
-                                          height: 1.4,
+                                          fontSize: 15, // Slightly smaller font
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : Colors.black87,
+                                          height: 1.3, // Slightly tighter line height
                                         ),
                                         decoration: InputDecoration(
                                           hintText: "What's on your mind?",
                                           hintStyle: TextStyle(
-                                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                            color: isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600],
                                             fontSize: 16,
                                             height: 1.4,
                                           ),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                             borderSide: BorderSide.none,
                                           ),
-                                          contentPadding: const EdgeInsets.all(16),
+                                          contentPadding:
+                                              const EdgeInsets.all(16),
                                           counterText: '',
                                         ),
                                       ),
                                     ),
                                   ),
-                                  
+
                                   // Selected media display
                                   if (state.media.isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
                                       child: MediaDisplay(
                                         media: state.media,
                                         onRemoveMedia: (mediaId) {
@@ -651,7 +671,7 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                         },
                                       ),
                                     ),
-                                  
+
                                   // Category selection
                                   Padding(
                                     padding: const EdgeInsets.all(16),
@@ -664,58 +684,19 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                       },
                                     ),
                                   ),
-                                  
-                                  // Media preview area (placeholder for future enhancement)
-                                  if (state.media.isEmpty)
-                                    Container(
-                                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                      height: 120,
-                                      decoration: BoxDecoration(
-                                        color: isDarkMode 
-                                            ? (Colors.grey[900] ?? Colors.black).withValues(alpha: 0.3) 
-                                            : (Colors.grey[100] ?? Colors.white).withValues(alpha: 0.5),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isDarkMode
-                                              ? (Colors.grey[800] ?? Colors.grey).withValues(alpha: 0.5)
-                                              : (Colors.grey[300] ?? Colors.grey).withValues(alpha: 0.5),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.add_photo_alternate_outlined,
-                                              size: 32,
-                                              color: isDarkMode 
-                                                  ? (Colors.grey[500] ?? Colors.grey) 
-                                                  : (Colors.grey[400] ?? Colors.grey),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Add photos or videos',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: isDarkMode 
-                                                    ? (Colors.grey[500] ?? Colors.grey) 
-                                                    : (Colors.grey[600] ?? Colors.grey),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+
+                                  // Add a small spacer to ensure proper spacing between elements
+                                  const SizedBox(height: 8),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                        
+
                         // Bottom action bar
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: isDarkMode ? Colors.black : Colors.white,
                             boxShadow: [
@@ -741,17 +722,18 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                                 onTap: _pickVideo,
                               ),
                               const SizedBox(width: 12),
-                              
+
                               // Spacer
                               const Spacer(),
-                              
+
                               // Post button
                               SizedBox(
                                 width: 100,
                                 height: 44,
                                 child: PostButton(
                                   enabled: state.content.trim().isNotEmpty,
-                                  isSubmitting: state.isSubmitting || _showSuccessAnimation,
+                                  isSubmitting: state.isSubmitting ||
+                                      _showSuccessAnimation,
                                   onTap: () => _submitPost(state),
                                 ),
                               ),
@@ -760,7 +742,6 @@ class _PostCreationScreenState extends State<PostCreationScreen>
                         ),
                       ],
                     ),
-
                   ],
                 ),
               ),
@@ -768,38 +749,6 @@ class _PostCreationScreenState extends State<PostCreationScreen>
           },
         );
       },
-    );
-  }
-
-  // Build floating preview widget for keyboard
-  Widget _buildFloatingPreview(BuildContext context, PostCreationState state, bool isDarkMode, double keyboardHeight) {
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: keyboardHeight + 8,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 250),
-        opacity: 1.0,
-        child: Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(12),
-          color: isDarkMode
-              ? (Colors.grey[850] ?? Colors.grey[900])
-              : Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Text(
-              state.content.trim(),
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : Colors.black87,
-                fontSize: 14,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

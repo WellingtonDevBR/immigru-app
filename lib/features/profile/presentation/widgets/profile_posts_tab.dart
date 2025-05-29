@@ -39,7 +39,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
   late String _sessionId;
   HomeBloc? _homeBloc;
   Timer? _loadingTimeoutTimer;
-  
+
   // Track pull-to-refresh actions
   DateTime? _lastRefreshTime;
   static const Duration _doublePullThreshold = Duration(milliseconds: 1500);
@@ -47,16 +47,17 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
   @override
   void initState() {
     super.initState();
-    
+
     // Generate a unique session ID for this instance
     _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    _logger.d('Initializing ProfilePostsTab with session ID: $_sessionId, userId: ${widget.userId}',
+    _logger.d(
+        'Initializing ProfilePostsTab with session ID: $_sessionId, userId: ${widget.userId}',
         tag: 'ProfilePostsTab:$_sessionId');
-    
+
     // Add scroll listener for pagination
     // Always add the listener, we'll check disableScrolling in the onScroll method
     _scrollController.addListener(_onScroll);
-    
+
     // Try to get HomeBloc from GetIt if it's registered
     try {
       _homeBloc = GetIt.instance<HomeBloc>();
@@ -77,21 +78,23 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       _loadPosts(forceRefresh: true);
     });
   }
-  
+
   @override
   void didUpdateWidget(ProfilePostsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // If scrolling was disabled and is now enabled, we need to handle the transition
     if (oldWidget.disableScrolling && !widget.disableScrolling) {
-      _logger.d('Scrolling enabled in posts container', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.d('Scrolling enabled in posts container',
+          tag: 'ProfilePostsTab:$_sessionId');
       // Re-add the scroll listener when scrolling is enabled
       _scrollController.addListener(_onScroll);
     }
-    
+
     // If scrolling was enabled and is now disabled, we need to handle the transition
     if (!oldWidget.disableScrolling && widget.disableScrolling) {
-      _logger.d('Scrolling disabled in posts container', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.d('Scrolling disabled in posts container',
+          tag: 'ProfilePostsTab:$_sessionId');
       // Remove the scroll listener when scrolling is disabled
       _scrollController.removeListener(_onScroll);
       // Reset scroll position to top when transitioning back to profile scrolling
@@ -184,12 +187,12 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
     if (widget.disableScrolling) {
       return;
     }
-    
+
     // Make sure we have a valid scroll position
     if (!_scrollController.hasClients) {
       return;
     }
-    
+
     // Simple scroll detection matching home feed implementation
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.8 &&
@@ -200,8 +203,10 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       final currentState = profileBloc.state;
 
       _logger.d(
-          'Scroll position: ${_scrollController.position.pixels}/${_scrollController.position.maxScrollExtent}, ' 'isLoadingMore: $_isLoadingMore, ' 'hasMorePosts: ${currentState.hasMorePosts}, ' +
-              'isPostsLoading: ${currentState.isPostsLoading}, ' +
+          'Scroll position: ${_scrollController.position.pixels}/${_scrollController.position.maxScrollExtent}, '
+                  'isLoadingMore: $_isLoadingMore, '
+                  'hasMorePosts: ${currentState.hasMorePosts}, '
+                  'isPostsLoading: ${currentState.isPostsLoading}, ' +
               'currentPostCount: ${currentState.userPosts?.length ?? 0}',
           tag: 'ProfilePostsTab:$_sessionId');
 
@@ -223,7 +228,8 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
     }
 
     _isLoadingMore = true;
-    _logger.d('Loading more posts - PAGINATION TRIGGERED', tag: 'ProfilePostsTab:$_sessionId');
+    _logger.d('Loading more posts - PAGINATION TRIGGERED',
+        tag: 'ProfilePostsTab:$_sessionId');
 
     try {
       // Use read instead of watch to prevent unnecessary rebuilds
@@ -232,7 +238,8 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
 
       // More comprehensive state check - ensure we're not currently loading posts
       if (currentState.isPostsLoading) {
-        _logger.d('Already loading posts in bloc state, skipping duplicate request',
+        _logger.d(
+            'Already loading posts in bloc state, skipping duplicate request',
             tag: 'ProfilePostsTab:$_sessionId');
         _isLoadingMore = false;
         return;
@@ -247,7 +254,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       }
 
       final currentPosts = currentState.userPosts ?? [];
-      
+
       _logger.d(
           'Proceeding with loading more posts, current count: ${currentPosts.length}',
           tag: 'ProfilePostsTab:$_sessionId');
@@ -259,7 +266,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       _logger.d(
           'Requesting more posts with offset=${currentPosts.length}, limit=$batchSize',
           tag: 'ProfilePostsTab:$_sessionId');
-      
+
       profileBloc.add(LoadUserPosts(
         userId: widget.userId,
         offset: currentPosts.length,
@@ -270,11 +277,12 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       // Start a timeout to prevent getting stuck in loading state
       _startLoadingMoreTimeout();
     } catch (e) {
-      _logger.e('Error loading more posts: $e', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.e('Error loading more posts: $e',
+          tag: 'ProfilePostsTab:$_sessionId');
       _isLoadingMore = false; // Reset flag immediately on error
     }
   }
-  
+
   // Start a timeout specifically for loading more posts
   void _startLoadingMoreTimeout() {
     // Cancel any existing timer first
@@ -295,28 +303,29 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
   /// Handle pull-to-refresh
   Future<void> _onRefresh() async {
     _logger.d('Pull-to-refresh triggered', tag: 'ProfilePostsTab:$_sessionId');
-    
+
     // Check if this is a double pull (two pulls within the threshold time)
     final now = DateTime.now();
-    final isDoublePull = _lastRefreshTime != null && 
+    final isDoublePull = _lastRefreshTime != null &&
         now.difference(_lastRefreshTime!) < _doublePullThreshold;
-    
+
     if (isDoublePull && !widget.disableScrolling) {
-      _logger.d('Double pull-to-refresh detected, switching to profile scrolling', 
+      _logger.d(
+          'Double pull-to-refresh detected, switching to profile scrolling',
           tag: 'ProfilePostsTab:$_sessionId');
-      
+
       // Notify parent to enable profile scrolling and disable posts scrolling
       // We need to use a callback to communicate with the parent widget
       if (mounted) {
         // Reset the refresh time
         _lastRefreshTime = null;
-        
+
         // Notify the parent through a callback or event
         _notifyProfileToScroll();
         return;
       }
     }
-    
+
     // Update the last refresh time
     _lastRefreshTime = now;
 
@@ -329,14 +338,14 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
     _logger.d('Pull-to-refresh completed', tag: 'ProfilePostsTab:$_sessionId');
     return;
   }
-  
+
   /// Notify the profile screen to take over scrolling
   void _notifyProfileToScroll() {
     try {
       // Use the ProfileBloc to notify the profile screen
       final profileBloc = context.read<ProfileBloc>();
       profileBloc.add(const EnableProfileScrolling());
-      
+
       // Prevent immediate scroll back by adding a small delay
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients && mounted) {
@@ -344,11 +353,11 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
           _scrollController.jumpTo(0);
         }
       });
-      
-      _logger.d('Notified profile screen to take over scrolling', 
+
+      _logger.d('Notified profile screen to take over scrolling',
           tag: 'ProfilePostsTab:$_sessionId');
     } catch (e) {
-      _logger.e('Error notifying profile to scroll: $e', 
+      _logger.e('Error notifying profile to scroll: $e',
           tag: 'ProfilePostsTab:$_sessionId');
     }
   }
@@ -356,7 +365,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileBloc, ProfileState>(
-      buildWhen: (previous, current) => 
+      buildWhen: (previous, current) =>
           previous.userPosts != current.userPosts ||
           previous.isPostsLoading != current.isPostsLoading ||
           previous.postsError != current.postsError,
@@ -386,23 +395,26 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
     _logger.d(
         'Building content with $postCount posts, hasMore=${state.hasMorePosts}',
         tag: 'ProfilePostsTab:$_sessionId');
-    
+
     // Log each post in the state for debugging
     if (state.userPosts != null && state.userPosts!.isNotEmpty) {
-      _logger.d('===== POST LIST DEBUG START =====', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.d('===== POST LIST DEBUG START =====',
+          tag: 'ProfilePostsTab:$_sessionId');
       for (int i = 0; i < state.userPosts!.length; i++) {
         final post = state.userPosts![i];
         _logger.d(
             'Post[$i]: ID=${post.id}, UserId=${post.userId}, Content=${post.content.substring(0, min(20, post.content.length))}...',
             tag: 'ProfilePostsTab:$_sessionId');
       }
-      _logger.d('===== POST LIST DEBUG END =====', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.d('===== POST LIST DEBUG END =====',
+          tag: 'ProfilePostsTab:$_sessionId');
     }
 
     // Show loading indicator for initial load
     if (state.isPostsLoading &&
         (state.userPosts == null || state.userPosts!.isEmpty)) {
-      _logger.d('Showing loading indicator', tag: 'ProfilePostsTab:$_sessionId');
+      _logger.d('Showing loading indicator',
+          tag: 'ProfilePostsTab:$_sessionId');
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -505,64 +517,64 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
       // Use a more responsive stroke width
       strokeWidth: 2.5,
       child: ListView.builder(
-          controller: _scrollController,
-          // Apply the appropriate physics based on disableScrolling flag
-          physics: widget.disableScrolling 
-              ? const NeverScrollableScrollPhysics() 
-              : const AlwaysScrollableScrollPhysics(),
-          // Add cacheExtent to preload items for smoother scrolling
-          cacheExtent: 500.0,
-          // Remove any padding to eliminate the white gap
-          padding: EdgeInsets.zero,
-          itemCount: state.userPosts!.length + (state.hasMorePosts ? 1 : 0),
-          // Use addAutomaticKeepAlives to prevent rebuilding off-screen items
-          addAutomaticKeepAlives: true,
-          itemBuilder: (context, index) {
-            // Show loading indicator at the bottom
-            if (index == state.userPosts!.length) {
-              _logger.d('Rendering loading indicator at bottom (index $index)',
-                  tag: 'ProfilePostsTab:$_sessionId');
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Loading more posts...',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            // Build a regular post item
-            final post = state.userPosts![index];
-            _logger.d('Rendering post at index $index: ID=${post.id}',
+        controller: _scrollController,
+        // Apply the appropriate physics based on disableScrolling flag
+        physics: widget.disableScrolling
+            ? const NeverScrollableScrollPhysics()
+            : const AlwaysScrollableScrollPhysics(),
+        // Add cacheExtent to preload items for smoother scrolling
+        cacheExtent: 500.0,
+        // Remove any padding to eliminate the white gap
+        padding: EdgeInsets.zero,
+        itemCount: state.userPosts!.length + (state.hasMorePosts ? 1 : 0),
+        // Use addAutomaticKeepAlives to prevent rebuilding off-screen items
+        addAutomaticKeepAlives: true,
+        itemBuilder: (context, index) {
+          // Show loading indicator at the bottom
+          if (index == state.userPosts!.length) {
+            _logger.d('Rendering loading indicator at bottom (index $index)',
                 tag: 'ProfilePostsTab:$_sessionId');
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              child: _buildPostItem(context, post, index),
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Loading more posts...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
-          },
-        ),
-      );
+          }
+
+          // Build a regular post item
+          final post = state.userPosts![index];
+          _logger.d('Rendering post at index $index: ID=${post.id}',
+              tag: 'ProfilePostsTab:$_sessionId');
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: _buildPostItem(context, post, index),
+          );
+        },
+      ),
+    );
   }
 
   /// Updates a post in the state
@@ -640,7 +652,8 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
 
   /// Build an individual post item
   Widget _buildPostItem(BuildContext context, Post post, int index) {
-    _logger.d('Building post item for post ID: ${post.id} at index $index, content: ${post.content.substring(0, min(20, post.content.length))}...',
+    _logger.d(
+        'Building post item for post ID: ${post.id} at index $index, content: ${post.content.substring(0, min(20, post.content.length))}...',
         tag: 'ProfilePostsTab:$_sessionId');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
@@ -663,4 +676,3 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
     );
   }
 }
-

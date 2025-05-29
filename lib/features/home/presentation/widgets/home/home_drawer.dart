@@ -103,42 +103,22 @@ class HomeDrawer extends StatelessWidget {
                 Navigator.pushNamed(context, '/features/home/performance_test');
               },
             ),
-          // Theme selection
-          ExpansionTile(
-            leading: const Icon(Icons.brightness_6),
-            title: const Text('Theme'),
-            children: [
-              RadioListTile<ThemeMode>(
-                title: const Text('Light'),
-                value: ThemeMode.light,
-                groupValue: themeProvider.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('Dark'),
-                value: ThemeMode.dark,
-                groupValue: themeProvider.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('System'),
-                value: ThemeMode.system,
-                groupValue: themeProvider.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-              ),
-            ],
+          // Dark/Light mode toggle
+          ListTile(
+            leading: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+            ),
+            title: const Text('Dark Mode'),
+            trailing: Switch(
+              value: themeProvider.isDarkMode,
+              onChanged: (value) {
+                themeProvider.toggleTheme();
+              },
+              activeColor: theme.colorScheme.primary,
+            ),
+            onTap: () {
+              themeProvider.toggleTheme();
+            },
           ),
           const Divider(),
           ListTile(
