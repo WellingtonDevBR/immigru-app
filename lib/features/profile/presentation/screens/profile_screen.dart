@@ -999,11 +999,22 @@ class _ProfileScreenState extends State<ProfileScreen>
                 delegate: _SliverAppBarDelegate(
                   TabBar(
                     controller: _tabController,
-                    labelColor: AppColors.primaryColor,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: AppColors.primaryColor,
+                    labelColor: Theme.of(context).colorScheme.primary,
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    indicatorColor: Theme.of(context).colorScheme.primary,
                     indicatorWeight: 3,
                     indicatorSize: TabBarIndicatorSize.label,
+                    // Use theme-aware background color for the tab bar
+                    dividerColor: Colors.transparent,
+                    // Use theme-aware background color for the tab bar
+                    overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.hovered)) {
+                          return Theme.of(context).colorScheme.primary.withOpacity(0.1);
+                        }
+                        return null;
+                      },
+                    ),
                     labelStyle: const TextStyle(fontWeight: FontWeight.w600),
                     unselectedLabelStyle:
                         const TextStyle(fontWeight: FontWeight.normal),
@@ -1161,10 +1172,10 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
                 ),
               ),
             ),
-            // Tab bar with white background
+            // Tab bar with theme-aware background
             Expanded(
               child: Container(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 width: double.infinity,
                 child: _tabBar,
               ),
@@ -1175,7 +1186,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     } else {
       // When at the top - show only tabs
       return Container(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         child: _tabBar,
       );
     }
