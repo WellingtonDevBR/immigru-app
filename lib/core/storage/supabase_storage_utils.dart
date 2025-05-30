@@ -240,4 +240,15 @@ class SupabaseStorageUtils implements ISupabaseStorage {
     // Try to fix the URL by getting the image URL
     return getImageUrl(url, displayName: displayName);
   }
+  
+  @override
+  Future<void> removeFile(String bucket, String path) async {
+    try {
+      await _supabaseClient.storage.from(bucket).remove([path]);
+    } catch (e) {
+      print('Error removing file from storage: $e');
+      // Rethrow to allow proper error handling upstream
+      rethrow;
+    }
+  }
 }

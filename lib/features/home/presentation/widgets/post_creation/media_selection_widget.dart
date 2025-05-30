@@ -315,7 +315,7 @@ class MediaSelectionWidget extends StatelessWidget {
         maxHeight: 1200,
       );
 
-      if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      if (pickedFiles.isNotEmpty) {
         _logger.d('${pickedFiles.length} images picked', tag: 'MediaSelectionWidget');
 
         // Limit to 10 images maximum

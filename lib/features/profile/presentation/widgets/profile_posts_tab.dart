@@ -206,8 +206,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> {
           'Scroll position: ${_scrollController.position.pixels}/${_scrollController.position.maxScrollExtent}, '
                   'isLoadingMore: $_isLoadingMore, '
                   'hasMorePosts: ${currentState.hasMorePosts}, '
-                  'isPostsLoading: ${currentState.isPostsLoading}, ' +
-              'currentPostCount: ${currentState.userPosts?.length ?? 0}',
+                  'isPostsLoading: ${currentState.isPostsLoading}, ' 'currentPostCount: ${currentState.userPosts?.length ?? 0}',
           tag: 'ProfilePostsTab:$_sessionId');
 
       if (currentState.hasMorePosts && !currentState.isPostsLoading) {

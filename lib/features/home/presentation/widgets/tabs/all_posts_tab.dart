@@ -198,8 +198,8 @@ class _AllPostsTabState extends State<AllPostsTab>
     // Cancel any existing timer first
     _globalLoadingTimeoutTimer?.cancel();
     
-    // Set a new timer that will force reset the loading state after 10 seconds
-    _globalLoadingTimeoutTimer = Timer(const Duration(seconds: 10), () {
+    // Set a shorter timer (5 seconds) to prevent getting stuck in loading state
+    _globalLoadingTimeoutTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
         try {
           final homeBloc = context.read<HomeBloc>();
@@ -207,18 +207,40 @@ class _AllPostsTabState extends State<AllPostsTab>
           
           if (currentState is PostsLoading) {
             _logger.w(
-                '[ALL_POSTS_TAB:$_requestId] Posts still loading after timeout, showing error message',
+                '[ALL_POSTS_TAB:$_requestId] Posts still loading after timeout, attempting recovery',
                 tag: 'AllPostsTab');
             
-            // Instead of adding an event to the bloc (which might be closed),
-            // just show a user-friendly message and let the user refresh manually
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Loading posts is taking longer than expected. Please pull down to refresh.'),
-                  duration: Duration(seconds: 5),
-                ),
-              );
+            // Get current user ID from Supabase for proper filtering
+            final currentUserId = supabase.auth.currentUser?.id;
+            
+            if (currentUserId != null) {
+              // Attempt to force a refresh with a new request
+              _logger.d('Attempting forced refresh with user ID: $currentUserId', tag: 'AllPostsTab');
+              homeBloc.add(FetchPosts(
+                currentUserId: currentUserId,
+                refresh: true,
+                bypassCache: true, // Force bypass cache to get fresh data
+              ));
+              
+              // Show user-friendly message
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Refreshing posts...'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            } else {
+              // If no user ID, show a message to the user
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please sign in to view posts'),
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              }
             }
           }
         } catch (e) {
@@ -311,6 +333,11 @@ class _AllPostsTabState extends State<AllPostsTab>
           _startGlobalLoadingTimeout();
           return _buildLoadingState();
         } else if (state is PostsError) {
+          // If we have posts in the error state, show them with an error message
+          if (state.posts != null && state.posts!.isNotEmpty) {
+            _logger.d('Showing ${state.posts!.length} posts despite error: ${state.message}', tag: 'AllPostsTab');
+            return _buildPostsListWithError(state.posts!, state.message);
+          }
           return _buildErrorState(state.message);
         } else if (state is PostsLoaded) {
           _logger.d('Building AllPostsTab with state: PostsLoaded',
@@ -495,41 +522,127 @@ class _AllPostsTabState extends State<AllPostsTab>
   }
 
   /// Build the error state widget with a retry button
+  /// Builds a list of posts with an error banner at the top
+  Widget _buildPostsListWithError(List<Post> posts, String message) {
+    return RefreshIndicator(
+      onRefresh: _refreshPosts,
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // Error banner at the top
+          SliverToBoxAdapter(
+            child: Container(
+              color: Colors.red.shade100,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Error: $message',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _refreshPosts,
+                    child: const Text('RETRY'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Posts list
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index >= posts.length) {
+                  return null;
+                }
+                final post = posts[index];
+                return PostCard(
+                  post: post,
+                  onLike: () {
+                    // Handle like action
+                    _logger.d('Like button pressed for post: ${post.id}', tag: 'AllPostsTab');
+                    
+                    // Get current user ID from Supabase
+                    final currentUserId = supabase.auth.currentUser?.id;
+                    if (currentUserId != null) {
+                      // Dispatch LikePost event to the HomeBloc
+                      context.read<HomeBloc>().add(LikePost(
+                        postId: post.id,
+                        userId: currentUserId,
+                        like: !post.isLiked, // Toggle the current like state
+                      ));
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('You need to be logged in to like posts'),
+                        ),
+                      );
+                    }
+                  },
+                  onComment: () {
+                    // Navigate to comments screen
+                    final currentUserId = supabase.auth.currentUser?.id;
+                    if (currentUserId != null) {
+                      // Get the HomeBloc from the current context
+                      final homeBloc = context.read<HomeBloc>();
+                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostCommentsScreen(
+                            post: post,
+                            userId: currentUserId,
+                            homeBloc: homeBloc,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('You need to be logged in to comment'),
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
+              childCount: posts.length,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.error,
+            color: Colors.red,
+            size: 60,
           ),
           const SizedBox(height: 16),
           Text(
             'Error loading posts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
             textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
-              // Use the centralized refresh mechanism
-              _refreshPosts();
-            },
-            child: const Text('Retry'),
+            onPressed: _refreshPosts,
+            child: const Text('Try Again'),
           ),
         ],
       ),

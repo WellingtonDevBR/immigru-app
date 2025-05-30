@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:immigru/core/config/url_builder.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:immigru/features/media/presentation/bloc/media_bloc.dart';
+import 'package:immigru/features/media/presentation/screens/media_tab_screen.dart';
 import 'package:immigru/features/home/presentation/bloc/home_bloc.dart';
 import 'package:immigru/features/home/presentation/bloc/home_event.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_event.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_state.dart';
-import 'package:immigru/features/profile/presentation/widgets/profile_tabs.dart';
+import 'package:immigru/features/profile/presentation/widgets/profile_posts_tab.dart';
 import 'package:immigru/shared/widgets/post_creation/shared_post_creation_modal.dart';
 import 'package:immigru/shared/widgets/loading_indicator.dart';
 import 'package:immigru/shared/widgets/error_message_widget.dart';
@@ -52,12 +54,31 @@ class _ProfileScreenState extends State<ProfileScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
     _scrollController.addListener(_onScroll);
     _loadProfileData();
   }
 
+  /// Handle tab changes to load appropriate content
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      switch (_tabController.index) {
+        case 0: // Posts tab
+          // Posts are already loaded in ProfilePostsTab
+          break;
+        case 1: // Media tab
+          // Media is loaded in MediaTabScreen's initState
+          break;
+        case 2: // Likes tab
+          // TODO: Implement likes loading when available
+          break;
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _tabController.dispose();
@@ -1000,17 +1021,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                   TabBar(
                     controller: _tabController,
                     labelColor: Theme.of(context).colorScheme.primary,
-                    unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     indicatorColor: Theme.of(context).colorScheme.primary,
                     indicatorWeight: 3,
                     indicatorSize: TabBarIndicatorSize.label,
                     // Use theme-aware background color for the tab bar
                     dividerColor: Colors.transparent,
                     // Use theme-aware background color for the tab bar
-                    overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                      (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.hovered)) {
-                          return Theme.of(context).colorScheme.primary.withOpacity(0.1);
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.hovered)) {
+                          return Theme.of(context).colorScheme.primary.withValues(alpha: 0.1);
                         }
                         return null;
                       },
@@ -1051,18 +1072,48 @@ class _ProfileScreenState extends State<ProfileScreen>
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
                     // Posts tab
-                    ProfileTabs(
-                      tabController: _tabController,
+                    ProfilePostsTab(
                       userId: widget.userId,
-                      disableScrolling:
-                          !_enablePostsScrolling, // Enable scrolling when header is not visible
+                      disableScrolling: !_enablePostsScrolling,
                     ),
-
-                    // Media tab
-                    const Center(child: Text('Media Coming Soon')),
-
+                    
+                    // Media tab - Use BlocProvider to provide a new instance of MediaBloc
+                    BlocProvider<MediaBloc>(
+                      create: (_) => GetIt.I<MediaBloc>(),
+                      child: MediaTabScreen(
+                        user: profile.user,
+                        isCurrentUser: widget.isCurrentUser,
+                      ),
+                    ),
+                    
                     // Likes tab
-                    const Center(child: Text('Likes Coming Soon')),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.favorite_outline,
+                            size: 80,
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'User Likes',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'This is where the posts liked by the user will appear.',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                     ),
                   ),
@@ -1070,7 +1121,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
-          floatingActionButton: widget.isCurrentUser
+          // Only show the FAB on the Posts tab (index 0)
+          floatingActionButton: widget.isCurrentUser && _tabController.index == 0
               ? FloatingActionButton(
                   onPressed: () => _showPostCreationModal(context, state),
                   backgroundColor: Theme.of(context).colorScheme.primary,

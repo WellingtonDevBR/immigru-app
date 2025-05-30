@@ -149,18 +149,36 @@ class _CommentInputWidgetState extends State<CommentInputWidget> {
                   textCapitalization: TextCapitalization.sentences,
                 ),
               ),
-              // Submit button
-              IconButton(
-                onPressed: _isSubmitting ? null : _handleSubmit,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+              // Submit button with proper theme-aware colors
+              Container(
+                margin: const EdgeInsets.only(left: 8.0),
+                decoration: BoxDecoration(
+                  // Use colorScheme.primary which adapts to theme brightness
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: _isSubmitting ? null : _handleSubmit,
+                  icon: _isSubmitting
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            // Use onPrimary for proper contrast
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.send,
+                          // Use onPrimary for proper contrast with primary color
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          size: 20,
                         ),
-                      )
-                    : Icon(Icons.send, color: Theme.of(context).primaryColor),
+                  iconSize: 24,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
               ),
             ],
           ),

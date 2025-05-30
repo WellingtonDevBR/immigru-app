@@ -94,10 +94,15 @@ class PostsLoaded extends HomeState {
 class PostsError extends HomeState {
   /// Error message
   final String message;
+  
+  /// Optional list of posts to display during error state
+  /// This allows us to show existing posts even when new posts fail to load
+  final List<Post>? posts;
 
   /// Constructor
   const PostsError({
     required this.message,
+    this.posts,
   });
 
   @override

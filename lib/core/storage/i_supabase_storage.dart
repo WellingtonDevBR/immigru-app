@@ -31,4 +31,7 @@ abstract class ISupabaseStorage {
   /// Fixes a potentially malformed URL by ensuring it uses the proper storage URL format
   /// If the URL is invalid, it will generate a UI Avatar using the displayName
   String fixImageUrl(String? url, {String? displayName});
+  
+  /// Removes a file from storage
+  Future<void> removeFile(String bucket, String path);
 }

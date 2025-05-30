@@ -5,6 +5,7 @@ import 'package:immigru/features/home/di/event_module.dart';
 import 'package:immigru/features/home/di/home_module.dart';
 import 'package:immigru/features/home/di/immi_grove_module.dart';
 import 'package:immigru/features/home/di/post_module.dart';
+import 'package:immigru/features/media/di/media_module.dart';
 import 'package:immigru/features/onboarding/di/onboarding_module.dart';
 import 'package:immigru/features/profile/di/profile_module.dart';
 import 'package:immigru/features/welcome/di/welcome_module.dart';
@@ -40,5 +41,8 @@ class FeatureModule {
     
     // Register profile feature
     registerProfileDependencies(sl);
+    
+    // Register media feature
+    MediaModule.register(sl);
   }
 }

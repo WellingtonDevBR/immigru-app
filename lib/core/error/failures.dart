@@ -60,3 +60,17 @@ class AuthFailure extends Failure {
     this.originalError,
   });
 }
+
+/// Represents a failure that occurred due to network connectivity issues.
+class NetworkFailure extends Failure {
+  /// Creates a new [NetworkFailure] instance.
+  ///
+  /// [message] is required and describes the failure.
+  /// [code] is optional and can be used to provide an error code.
+  /// [exception] is optional and can be used to provide the exception that caused the failure.
+  const NetworkFailure({
+    required super.message,
+    super.code,
+    super.exception,
+  });
+}

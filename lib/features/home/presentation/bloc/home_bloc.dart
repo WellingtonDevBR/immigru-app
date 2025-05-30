@@ -224,124 +224,126 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final requestId = DateTime.now().millisecondsSinceEpoch.toString();
       logger.d('Post fetch request ID: $requestId', tag: 'HomeBloc');
 
-      // SIMPLIFIED APPROACH: Get posts from the repository
-      // The key is to always pass the currentUserId to ensure proper filtering
-      // Use a timeout to prevent getting stuck in API calls
-      final result = await Future.any([
-        getPostsUseCase(
-          // Only pass parameters that are actually needed and used
-          category: event.category, // Pass category if provided
-          currentUserId:
-              event.currentUserId, // CRITICAL: Always pass current user ID
-          excludeCurrentUser: true, // Always exclude current user's posts
+      // SIMPLIFIED APPROACH: Get posts from the repository with timeout protection
+      try {
+        // Add a timeout to prevent getting stuck in API calls
+        final result = await getPostsUseCase(
+          category: event.category,
+          currentUserId: event.currentUserId,
+          excludeCurrentUser: true,
           limit: _postsLimit,
           offset: 0,
-          bypassCache: event.bypassCache, // Use bypassCache parameter to ensure fresh data
-        ),
-        Future.delayed(const Duration(seconds: 8), () {
-          logger.w('Post fetch request timed out after 8 seconds', tag: 'HomeBloc');
-          throw Exception('Request timed out after 8 seconds');
-        }),
-      ]);
+          bypassCache: event.bypassCache,
+        ).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => throw TimeoutException('Request timed out after 5 seconds'),
+        );
+        
+        // Process the result
+        result.fold(
+          (failure) {
+            logger.e('Error fetching posts: ${failure.message}', tag: 'HomeBloc');
+            // If we have existing posts, preserve them in the error state
+            final existingPosts = state is PostsLoaded ? (state as PostsLoaded).posts : null;
+            emit(PostsError(message: failure.message, posts: existingPosts));
+          },
+          (posts) {
+            // Generate a unique request ID for logging
+            final logId = DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+            logger.d('[FETCH_POSTS:$logId] Fetched ${posts.length} posts', tag: 'HomeBloc');
 
-      // Check if the widget is still mounted by verifying we can emit a state
-      // This is a safety check to prevent emitting after the bloc is closed
-      result.fold(
-        (failure) {
-          logger.e('Error fetching posts: ${failure.message}', tag: 'HomeBloc');
-          emit(PostsError(message: failure.message));
-        },
-        (posts) {
-          // Generate a unique request ID for logging
-          final requestId =
-              DateTime.now().millisecondsSinceEpoch.toString().substring(7);
-          logger.d('[FETCH_POSTS:$requestId] Fetched ${posts.length} posts',
-              tag: 'HomeBloc');
-
-          // Log the first few post IDs to help identify duplicates
-          if (posts.isNotEmpty) {
-            final postIds = posts.take(3).map((p) => p.id).join(', ');
-            logger.d('[FETCH_POSTS:$requestId] Sample post IDs: $postIds',
-                tag: 'HomeBloc');
-          }
-
-          // Comprehensive deduplication to prevent duplicates
-          // 1. First deduplicate within this batch
-          final Map<String, Post> uniquePostsMap = {};
-
-          for (final post in posts) {
-            uniquePostsMap[post.id] = post;
-          }
-
-          // 2. For refresh, we already cleared the processed IDs set, so we can just use all posts
-          // For non-refresh, we still want to filter out duplicates
-          final List<Post> newUniquePosts = [];
-
-          if (event.refresh) {
-            // For refresh, use all posts from this batch
-            newUniquePosts.addAll(uniquePostsMap.values);
-
-            // Update the processed IDs set with these posts
-            for (final post in newUniquePosts) {
-              _processedPostIds.add(post.id);
+            // Log the first few post IDs to help identify duplicates
+            if (posts.isNotEmpty) {
+              final postIds = posts.take(3).map((p) => p.id).join(', ');
+              logger.d('[FETCH_POSTS:$logId] Sample post IDs: $postIds', tag: 'HomeBloc');
             }
-          } else {
-            // For non-refresh, filter out posts we've already seen
-            for (final post in uniquePostsMap.values) {
-              // Skip posts we've already seen
-              if (_processedPostIds.contains(post.id)) {
-                logger.d(
-                    '[FETCH_POSTS:$requestId] Filtered out already processed post: ${post.id}',
-                    tag: 'HomeBloc');
-                continue;
+
+            // Deduplicate posts
+            final Map<String, Post> uniquePostsMap = {};
+            for (final post in posts) {
+              uniquePostsMap[post.id] = post;
+            }
+
+            final List<Post> newUniquePosts = [];
+            if (event.refresh) {
+              // For refresh, use all posts from this batch
+              newUniquePosts.addAll(uniquePostsMap.values);
+              
+              // Update tracking
+              _processedPostIds.clear();
+              _allPosts.clear();
+              for (final post in newUniquePosts) {
+                _processedPostIds.add(post.id);
               }
-
-              // Add to our tracking set and the result list
-              _processedPostIds.add(post.id);
-              newUniquePosts.add(post);
+              _allPosts.addAll(newUniquePosts);
+            } else {
+              // For pagination, filter out posts we've already seen
+              for (final post in uniquePostsMap.values) {
+                if (!_processedPostIds.contains(post.id)) {
+                  _processedPostIds.add(post.id);
+                  newUniquePosts.add(post);
+                  _allPosts.add(post);
+                }
+              }
             }
-          }
 
-          // Log deduplication results
-          if (posts.length != newUniquePosts.length) {
-            logger.w(
-                '[FETCH_POSTS:$requestId] Removed ${posts.length - newUniquePosts.length} duplicate posts',
-                tag: 'HomeBloc');
-          }
+            // Update the last refresh time
+            _lastRefreshTime = DateTime.now();
 
-          // 3. Update our static cache with the deduplicated posts
-          // For a refresh, replace the entire list; for pagination, append
-          if (event.refresh) {
-            _allPosts.clear();
-            _allPosts.addAll(newUniquePosts);
-          } else {
-            _allPosts.addAll(newUniquePosts);
-          }
-
-          // Sort by creation date (newest first)
-          _allPosts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-          // Use the cached posts as our source of truth
-          final finalPosts = List<Post>.from(_allPosts);
-
-          // Create the loaded state with simplified parameters
-          // Add initialFetchPerformed flag to track if posts have been fetched
-          // This helps prevent duplicate fetches between HomeScreen and AllPostsTab
-          final loadedState = PostsLoaded(
-            posts: finalPosts,
-            hasReachedMax: newUniquePosts.length < _postsLimit,
-            currentUserId: event.currentUserId,
+            // Emit the loaded state
+            emit(PostsLoaded(
+              posts: _allPosts,
+              hasReachedMax: posts.length < _postsLimit,
+              initialFetchPerformed: true,
+              isLoadingMore: false,
+            ));
+          },
+        );
+      } catch (e) {
+        // Handle timeout or any other exception
+        logger.e('Exception during post fetch: $e', tag: 'HomeBloc');
+        
+        // If we have existing posts, show them instead of a blank error screen
+        if (state is PostsLoaded) {
+          final currentState = state as PostsLoaded;
+          emit(PostsError(
+            message: 'Failed to load new posts. Please try again.',
+            posts: currentState.posts,
+          ));
+        } else if (_allPosts.isNotEmpty) {
+          // Recover by showing cached posts
+          emit(PostsLoaded(
+            posts: _allPosts,
+            hasReachedMax: false,
+            initialFetchPerformed: true,
             isLoadingMore: false,
-            initialFetchPerformed:
-                true, // Mark that initial fetch has been performed
-          );
-
-          emit(loadedState);
-        },
-      );
+          ));
+        } else {
+          emit(const PostsError(message: 'Failed to load posts. Please try again.'));
+        }
+      }
     } catch (e) {
-      logger.e('Error fetching posts: $e', tag: 'HomeBloc');
-      emit(PostsError(message: 'Failed to fetch posts: $e'));
+      // Global error handler for the entire fetch posts operation
+      logger.e('Unexpected error in _onFetchPosts: $e', tag: 'HomeBloc');
+      
+      // Try to recover by showing any existing posts
+      if (state is PostsLoaded) {
+        final currentState = state as PostsLoaded;
+        emit(PostsError(
+          message: 'An unexpected error occurred. Please try again.',
+          posts: currentState.posts,
+        ));
+      } else if (_allPosts.isNotEmpty) {
+        // Use cached posts as a fallback
+        emit(PostsLoaded(
+          posts: _allPosts,
+          hasReachedMax: false,
+          initialFetchPerformed: true,
+          isLoadingMore: false,
+        ));
+      } else {
+        emit(const PostsError(message: 'An unexpected error occurred. Please try again.'));
+      }
     }
   }
 
