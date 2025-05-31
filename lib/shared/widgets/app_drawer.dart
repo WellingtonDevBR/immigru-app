@@ -7,6 +7,7 @@ import 'package:immigru/shared/theme/theme_provider.dart';
 import 'package:immigru/features/auth/domain/entities/user.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:immigru/features/auth/presentation/bloc/auth_state.dart';
+import 'package:immigru/features/auth/presentation/bloc/auth_event.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:immigru/features/profile/presentation/bloc/profile_event.dart';
 import 'package:immigru/features/profile/presentation/screens/profile_screen.dart';
@@ -164,8 +165,34 @@ class AppDrawer extends StatelessWidget {
                   title: 'Sign Out',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Implement sign out functionality
-                    // context.read<AuthBloc>().add(SignOut());
+                    // Show confirmation dialog before signing out
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Sign Out'),
+                        content: const Text('Are you sure you want to sign out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              // Dispatch sign out event to the AuthBloc
+                              context.read<AuthBloc>().add(AuthSignOutEvent());
+                              // Navigate to the login screen after signing out
+                              Navigator.pushNamedAndRemoveUntil(
+                                context, 
+                                '/login', 
+                                (route) => false,
+                              );
+                            },
+                            child: const Text('Sign Out'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               

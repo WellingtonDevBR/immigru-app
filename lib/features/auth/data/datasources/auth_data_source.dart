@@ -728,10 +728,36 @@ class AuthDataSource {
   }
 
   /// Sign out the current user
+  /// Sign out the current user and clear all cached data
   Future<void> signOut() async {
     try {
+      _logger.d('Signing out user', tag: 'AuthDataSource');
+      
+      // Clear all cached user data
+      _cachedUserProfile = null;
+      _cachedUserData = null;
+      _lastFetchTime = null;
+      
+      // Sign out from Supabase
       await _client.auth.signOut();
+      
+      // Sign out from Google if it was used for authentication
+      try {
+        final googleSignIn = GoogleSignIn(
+          clientId: GoogleAuthConfig.webClientId,
+        );
+        if (await googleSignIn.isSignedIn()) {
+          await googleSignIn.signOut();
+          _logger.d('Signed out from Google', tag: 'AuthDataSource');
+        }
+      } catch (googleError) {
+        // Log but don't fail if Google sign out fails
+        _logger.e('Error signing out from Google: $googleError', tag: 'AuthDataSource');
+      }
+      
+      _logger.d('Successfully signed out', tag: 'AuthDataSource');
     } catch (e) {
+      _logger.e('Failed to sign out: $e', tag: 'AuthDataSource');
       throw AuthException(
         'Failed to sign out: ${e.toString()}',
         code: 'sign_out_failed',

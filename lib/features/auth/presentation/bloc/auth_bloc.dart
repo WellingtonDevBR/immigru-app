@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:immigru/core/error/failures.dart';
+import 'package:immigru/core/logging/unified_logger.dart';
 import 'package:immigru/features/auth/domain/entities/auth_error.dart';
 import 'package:immigru/features/auth/domain/usecases/login_usecase.dart';
 import 'package:immigru/features/auth/domain/usecases/logout_usecase.dart';
@@ -18,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignUpWithEmailUseCase _signUpWithEmailUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final ResetPasswordUseCase _resetPasswordUseCase;
+  final UnifiedLogger _logger = UnifiedLogger();
 
   StreamSubscription? _authStateSubscription;
 
@@ -245,26 +247,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
+  /// Handle sign out event
+  /// This will clear all authentication state and cached data
   Future<void> _onSignOut(
     AuthSignOutEvent event,
     Emitter<AuthState> emit,
   ) async {
+    _logger.d('Processing sign out request', tag: 'AuthBloc');
     emit(state.loading());
 
-    final result = await _logoutUseCase();
+    try {
+      // Execute the logout use case
+      final result = await _logoutUseCase();
 
-    result.fold(
-      (failure) {
-        if (failure is AuthFailure && failure.originalError is AuthError) {
-          final errorState =
-              state.errorFromAuthError(failure.originalError as AuthError);
-          emit(errorState);
-        }
-        // Even if sign out fails, we still want to show the user as signed out in the UI
-        emit(state.unauthenticated());
-      },
-      (_) => emit(state.unauthenticated()),
-    );
+      result.fold(
+        (failure) {
+          _logger.e('Sign out failed: ${failure.message}', tag: 'AuthBloc');
+          if (failure is AuthFailure && failure.originalError is AuthError) {
+            final errorState =
+                state.errorFromAuthError(failure.originalError as AuthError);
+            emit(errorState);
+          }
+          // Even if sign out fails, we still want to show the user as signed out in the UI
+          _logger.d('Setting state to unauthenticated despite failure', tag: 'AuthBloc');
+          emit(state.unauthenticated());
+        },
+        (_) {
+          _logger.d('Sign out successful', tag: 'AuthBloc');
+          emit(state.unauthenticated());
+        },
+      );
+    } catch (e) {
+      // Catch any unexpected errors
+      _logger.e('Unexpected error during sign out: $e', tag: 'AuthBloc');
+      emit(state.unauthenticated());
+    }
   }
 
   /// Handle refresh user event

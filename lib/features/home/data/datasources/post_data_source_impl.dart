@@ -3,10 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:immigru/core/network/api_client.dart';
 import 'package:immigru/core/error/exceptions.dart';
 import 'package:immigru/core/logging/unified_logger.dart';
-import 'package:immigru/features/home/domain/entities/post_media.dart';
 import 'package:immigru/features/home/data/models/post_media_model.dart';
+import 'package:immigru/features/home/data/models/author_model.dart';
 import 'package:immigru/features/home/domain/datasources/post_data_source.dart';
 import 'package:immigru/features/home/domain/entities/post.dart';
+import 'package:immigru/features/home/domain/entities/post_media.dart';
 
 /// Implementation of PostDataSource using Supabase
 class PostDataSourceImpl implements PostDataSource {
@@ -298,6 +299,20 @@ class PostDataSourceImpl implements PostDataSource {
           return PostMediaModel.fromJson(mediaItem);
         }).toList();
 
+        // Log user profile information for debugging
+        _logger.d('User profile for post $postId: ${userProfile != null ? 'found' : 'not found'}', 
+            tag: 'PostDataSourceImpl');
+        if (userProfile != null) {
+          _logger.d('User profile details - DisplayName: ${userProfile['DisplayName']}, ' 'AvatarUrl: ${userProfile['AvatarUrl']}', tag: 'PostDataSourceImpl');
+        }
+        
+        // Create author model from user profile
+        final authorModel = userProfile != null ? AuthorModel(
+          id: userId,
+          displayName: userProfile['DisplayName'] as String?,
+          avatarUrl: userProfile['AvatarUrl'] as String?,
+        ) : null;
+        
         // Create a PostModel with all the data
         final postModel = PostModel(
           id: postId,
@@ -312,6 +327,8 @@ class PostDataSourceImpl implements PostDataSource {
           isLiked: isLikedByCurrentUser,
           userName: userProfile?['DisplayName'] as String? ?? 'User',
           userAvatar: userProfile?['AvatarUrl'] as String? ?? '',
+          // Add the author model to ensure proper display in UI
+          author: authorModel,
         );
         
         // Log media information for debugging

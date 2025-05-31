@@ -292,7 +292,7 @@ class _MediaTabScreenState extends State<MediaTabScreen> {
         imageQuality: 80,
       );
       
-      if (photos != null && photos.isNotEmpty) {
+      if (photos.isNotEmpty) {
         if (photos.length == 1) {
           // Single photo upload
           _uploadPhoto(albumId, photos.first);

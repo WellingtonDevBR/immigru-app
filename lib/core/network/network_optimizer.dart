@@ -191,7 +191,6 @@ class NetworkOptimizer {
   /// 
   /// Returns a tuple with (isValid, mimeType, errorMessage)
   Future<(bool, String, String?)> validateMediaFile(File file) async {
-    final fileName = path.basename(file.path);
     final fileExtension = path.extension(file.path).replaceAll('.', '').toLowerCase();
     
     // Map common image extensions to MIME types
